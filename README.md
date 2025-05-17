@@ -1,11 +1,13 @@
 # LEG - Lineage Exploration and Genealogy
 
+<!-- 
 [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d2aca4cf4c6f32d313e95770f38dd59d/media/badge.svg)](https://github.com/sindresorhus/awesome)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![GitHub Issues](https://img.shields.io/github/issues/pratikid/LEG.svg)](https://github.com/pratikid/LEG/issues)
 [![GitHub Pull Requests](https://img.shields.io/github/pulls/pratikid/LEG.svg)](https://github.com/pratikid/LEG/pulls)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Open Source Love](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://opensource.org/)
+ -->
 
 **LEG** is a project dedicated to **Lineage Exploration and Genealogy**. It aims to provide resources, tools, and information for individuals interested in discovering, documenting, and understanding their family history. Whether you're a seasoned genealogist or just starting your ancestral journey, LEG offers a community and a collection of valuable materials to aid your exploration.
 
