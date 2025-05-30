@@ -15,9 +15,7 @@
 
 * [Introduction](#introduction)
 * [Project Goals](#project-goals)
-* [Key Features](#key-features)
-* [Detailed Feature List](#detailed-feature-list)
-* [User Interface & Experience Design](#user-interface--experience-design)
+* [Documentation](#documentation)
 * [Getting Started](#getting-started)
     * [Contributing](#contributing)
     * [Code of Conduct](#code-of-conduct)
@@ -47,184 +45,12 @@ The primary goals of the LEG project are:
 * **Explore Technological Solutions:** To investigate and potentially develop open-source tools and utilities that can streamline and enhance the genealogical research process (this is a future aspiration).
 * **Democratize Genealogy:** To make genealogical research more accessible to individuals regardless of their background or resources.
 
-## Key Features
+## Documentation
 
-As a repository of resources and a community hub, LEG currently offers (or aims to offer):
-
-* **Curated List of Tools & Software:** A categorized compilation of genealogy software (both free and paid), online platforms, and mobile applications to help users build and manage their family trees.
-* **Educational Materials:** Links to articles, tutorials, guides, and online courses covering various aspects of genealogical research, from basic principles to advanced techniques.
-* **Community Forum (Future):** A dedicated space for users to ask questions, share discoveries, discuss challenges, and connect with fellow genealogy enthusiasts. (This may be hosted externally or integrated later).
-* **Links to Data Sources & Archives:** A categorized directory of online and offline resources such as census records, vital records, immigration documents, historical societies, and genealogical databases worldwide.
-* **Templates & Guides:** Downloadable templates for creating family tree charts, research logs, and other useful documents, along with guides on how to effectively use them.
-* **Best Practices Documentation:** Guidelines and recommendations on ethical research, source citation, data privacy, and collaboration in genealogy.
-* **Open Source Contributions (Future):** Opportunities for developers and enthusiasts to contribute to the potential development of open-source genealogical tools.
-
-## Detailed Feature List
-
-The LEG project aims to implement a comprehensive set of features, organized by complexity level:
-
-### Lower Complexity Features
-* User Account Creation
-* Different User Roles
-* Comprehensive User Guide
-* Timeline View: Displaying a chronological list of events for an individual or family
-* Printable Charts and Reports (Basic): Generating simple PDF outputs of the current tree view or basic reports
-* Interactive Tutorials and Tooltips: Guiding new users with on-screen help
-* Advanced Search and Filtering (Basic): Allowing users to search by name, birth date, etc., and filter the tree view
-* Customizable Node Appearance (Basic): Allowing users to change node colors or choose basic display options
-* User Activity Logs (Admin-focused): Tracking basic user actions within family groups
-* Guest Access (View-only): Allowing logged-in users to share a view-only link to their tree
-* Discussion Forums within Groups (Basic): Implementing a simple forum structure within each family group
-* Shared Media Library (Basic): Allowing file uploads and association with individuals (basic organization)
-* Notification Bar for Admins
-
-### Medium Complexity Features
-* Source Citation and Management (Basic): Allowing users to add text-based citations to facts
-* Visually Pleasing Family Tree (Basic): Creating a basic, interactive family tree using nodes and relationships
-* Multiple Tree Styles: Implementing different visual layouts like fan charts or descendant charts
-* Customizable Node Appearance (Advanced): Offering more granular control over node elements and information displayed
-* Relationship Visualizations: Highlighting specific relationship paths within the tree
-* Bulk Import/Export (GEDCOM Support): Parsing and generating GEDCOM files
-* Advanced Search and Filtering (Complex): Allowing searches based on relationships, events, and other criteria
-* Storytelling Features (Text-based): Allowing users to write and associate stories with individuals
-* Event Planning & RSVP: Implementing a system for creating and managing family events with RSVP functionality
-* Intuitive Drag-and-Drop Interface: For visually editing the family tree
-* Geographic Mapping (Basic): Displaying event locations on a map using basic markers
-* Option to create community/groups for the family tree
-
-### Higher Complexity Features
-* Detailed Node Information:
-  * Name
-  * Date of Birth
-  * Profile Picture
-  * Link to Social Profile
-  * Achievements (listed date-wise)
-* Customizable Layout of the Family Tree
-* Fiction Character Example (Harry Potter)
-* Record Hints/Suggestions: Integrating with external databases to suggest potential matches
-* DNA Integration: Allowing users to link DNA results to their tree
-* Research Collaboration Tools (Advanced): Implementing features like shared research logs and task assignment
-* Privacy Controls (Granular): Implementing detailed privacy settings
-* Shared Media Library (Advanced): Implementing features like tagging, searching within media, and version control
-* Storytelling Features (Multimedia): Allowing the inclusion of photos, audio, and video in stories
-* Printable Charts and Reports (Advanced): Generating highly customizable and visually rich reports
-* Geographic Mapping (Advanced): Showing migration patterns and detailed historical maps
-* Scalability and Performance Optimization (Ongoing)
-* Accessibility (Comprehensive)
-* Internationalization (i18n) and Localization (l10n)
-
-## User Interface & Experience Design
-
-The LEG application aims to provide a comprehensive platform for users to discover, document, and understand their family history through a clean, intuitive interface that makes complex information accessible.
-
-### Overall Visual Style & Layout
-
-#### Theme
-* A blend of modern and classic aesthetics
-* Clean, minimalist interface with an optional traditional theme (e.g., parchment backgrounds, serif fonts)
-* Primary Colors: Earthy tones (browns, greens, creams) with modern accent colors (muted blue or deep red)
-
-#### Layout Structure
-* **Main Navigation:**
-  * Persistent sidebar (collapsible on smaller screens) or top navigation bar
-  * Key sections: Dashboard/Home, My Trees, Individuals, Sources, Media Library, Stories, Events, Community/Groups, Tools, Help/User Guide
-* **Main Content Area:** Dynamic and interactive space powered by Livewire components
-* **Footer:** Links to About, Privacy Policy, Code of Conduct, Support
-
-### Key Screens and Visual Elements
-
-#### 1. Dashboard/Home Screen
-* Welcome message
-* Summary statistics (number of individuals, recent activity)
-* Recently viewed individuals or trees
-* Quick action buttons (Add New Individual, Start New Tree, Import GEDCOM)
-* Notifications and record hints section
-* Community forum activity feed (if implemented)
-
-#### 2. Family Tree View (D3.js Implementation)
-* **Central Canvas:**
-  * Interactive family tree visualization
-  * Node representation for individuals
-  * Default view: Clean boxes/circles with Name, Birth/Death Dates, Profile Picture
-  * Detailed node view on hover/click
-* **Customization Options:**
-  * Control panel for node appearance
-  * Multiple tree styles (Traditional Pedigree, Descendant, Fan, Radial)
-* **Interactivity:**
-  * Zoom and pan functionality
-  * Click-to-expand node details
-  * Drag-and-drop interface
-  * Relationship path highlighting
-* **Controls Toolbar:**
-  * Zoom controls
-  * Layout switcher
-  * Search functionality
-  * Add/Edit options
-  * Print/Export features
-
-#### 3. Individual Profile Page
-* Header with key information
-* Tabbed sections:
-  * Overview
-  * Timeline View
-  * Facts/Events
-  * Sources
-  * Media Gallery
-  * Stories
-  * Relationships
-  * Notes
-* Action buttons for editing and adding content
-
-#### 4. Source Citation Management
-* Source list with filtering and search
-* Detailed source entry forms
-* Easy source linking interface
-* Document upload and management
-
-#### 5. Search and Filtering
-* Advanced search interface
-* Multiple filter options
-* Results display with quick access to profiles
-
-#### 6. Media Library
-* Grid/List view of media items
-* Advanced filtering and sorting
-* Upload interface
-* Detailed media view with metadata
-
-#### 7. Storytelling Features
-* Rich text editor
-* Multimedia integration
-* Clean story display interface
-
-#### 8. Event Planning
-* Event creation forms
-* Guest list management
-* Calendar view
-* RSVP tracking
-
-#### 9. Geographic Mapping
-* Interactive map interface
-* Location markers
-* Migration pattern visualization
-* Historical map overlays
-
-#### 10. User Account Management
-* Login/Registration pages
-* User profile management
-* Settings and preferences
-* Admin dashboard
-
-#### 11. Community/Groups
-* Group directory
-* Group home pages
-* Discussion forums
-* Shared resources section
-
-#### 12. Interactive Tutorials
-* Onboarding tour
-* Contextual tooltips
-* Help documentation
+- [Features](docs/FEATURES.md)
+- [User Guide](docs/USER_GUIDE.md)
+- [Setup Guide](docs/SETUP_GUIDE.md)
+- [UI/UX Guide](docs/UI_UX.md)
 
 ### Technology Integration
 

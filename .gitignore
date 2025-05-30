@@ -1,0 +1,50 @@
+# Laravel & PHP
+/vendor
+/.phpunit.cache
+/.phpunit.result.cache
+/.phpactor.json
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+Homestead.json
+Homestead.yaml
+/auth.json
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Node & Frontend
+/node_modules
+npm-debug.log*
+yarn-error.log*
+/public/build
+/public/hot
+
+# Storage (keep only versioned stubs)
+storage/*.key
+storage/pail
+storage/logs/*
+!storage/logs/.gitignore
+storage/framework/*
+!storage/framework/.gitignore
+storage/app/*
+!storage/app/.gitignore
+!storage/app/public/
+!storage/app/private/
+
+# Public storage symlink (created by artisan storage:link)
+public/storage
+
+# Docker
+docker-compose.override.yml
+
+# OS/Editor
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log

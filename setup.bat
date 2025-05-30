@@ -1,0 +1,39 @@
+@echo off
+echo Starting LEG project setup...
+
+echo Creating necessary directories...
+mkdir docker\nginx\conf.d 2>nul
+
+echo Starting Docker containers...
+docker-compose up -d
+
+echo Creating a new Laravel project...
+docker-compose exec app composer create-project laravel/laravel .
+
+echo Installing Livewire...
+docker-compose exec app composer require livewire/livewire
+
+echo Installing Alpine.js...
+docker-compose exec node npm install alpinejs
+
+echo Installing TailwindCSS...
+docker-compose exec node npm install -D tailwindcss postcss autoprefixer
+docker-compose exec node npx tailwindcss init -p
+
+echo Generating application key...
+docker-compose exec app php artisan key:generate
+
+echo Installing Neo4j client...
+docker-compose exec app composer require laudis/neo4j-php-client
+
+echo Installing MongoDB Laravel package...
+docker-compose exec app composer require mongodb/laravel-mongodb
+
+echo Installing Redis Laravel package...
+docker-compose exec app composer require predis/predis
+
+echo Installing D3.js...
+docker-compose exec node npm install d3
+
+echo Setup complete! Your Laravel application with Livewire and Alpine.js is ready.
+echo Access your application at http://localhost 
