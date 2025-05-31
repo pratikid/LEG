@@ -7,13 +7,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Models\Group;
 
 class GroupController extends Controller
 {
     public function index(): View
     {
-        // TODO: Fetch groups
-        return view('groups.index');
+        $groups = Group::latest()->paginate(10);
+        return view('groups.index', compact('groups'));
     }
 
     public function create(): View
@@ -23,31 +24,43 @@ class GroupController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        // TODO: Implement validation and storage logic
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'tree_id' => ['required', 'integer', 'exists:trees,id'],
+        ]);
+        Group::create($validated);
         return redirect()->route('groups.index')->with('success', 'Group created successfully.');
     }
 
     public function show(int $id): View
     {
-        // TODO: Fetch group by ID
-        return view('groups.show', compact('id'));
+        $group = Group::findOrFail($id);
+        return view('groups.show', compact('group'));
     }
 
     public function edit(int $id): View
     {
-        // TODO: Fetch group by ID
-        return view('groups.edit', compact('id'));
+        $group = Group::findOrFail($id);
+        return view('groups.edit', compact('group'));
     }
 
     public function update(Request $request, int $id): RedirectResponse
     {
-        // TODO: Implement update logic
+        $group = Group::findOrFail($id);
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'tree_id' => ['required', 'integer', 'exists:trees,id'],
+        ]);
+        $group->update($validated);
         return redirect()->route('groups.index')->with('success', 'Group updated successfully.');
     }
 
     public function destroy(int $id): RedirectResponse
     {
-        // TODO: Implement delete logic
+        $group = Group::findOrFail($id);
+        $group->delete();
         return redirect()->route('groups.index')->with('success', 'Group deleted successfully.');
     }
 } 

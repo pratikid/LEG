@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Models\Individual;
 
 class IndividualController extends Controller
 {
@@ -15,8 +16,8 @@ class IndividualController extends Controller
      */
     public function index(): View
     {
-        // TODO: Fetch individuals
-        return view('individuals.index');
+        $individuals = Individual::latest()->paginate(10);
+        return view('individuals.index', compact('individuals'));
     }
 
     /**
@@ -32,7 +33,14 @@ class IndividualController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        // TODO: Implement validation and storage logic
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'birth_date' => ['nullable', 'date'],
+            'death_date' => ['nullable', 'date', 'after:birth_date'],
+            'tree_id' => ['required', 'integer', 'exists:trees,id'],
+        ]);
+        Individual::create($validated);
         return redirect()->route('individuals.index')->with('success', 'Individual created successfully.');
     }
 
@@ -41,8 +49,8 @@ class IndividualController extends Controller
      */
     public function show(int $id): View
     {
-        // TODO: Fetch individual by ID
-        return view('individuals.show', compact('id'));
+        $individual = Individual::findOrFail($id);
+        return view('individuals.show', compact('individual'));
     }
 
     /**
@@ -50,8 +58,8 @@ class IndividualController extends Controller
      */
     public function edit(int $id): View
     {
-        // TODO: Fetch individual by ID
-        return view('individuals.edit', compact('id'));
+        $individual = Individual::findOrFail($id);
+        return view('individuals.edit', compact('individual'));
     }
 
     /**
@@ -59,7 +67,15 @@ class IndividualController extends Controller
      */
     public function update(Request $request, int $id): RedirectResponse
     {
-        // TODO: Implement update logic
+        $individual = Individual::findOrFail($id);
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'birth_date' => ['nullable', 'date'],
+            'death_date' => ['nullable', 'date', 'after:birth_date'],
+            'tree_id' => ['required', 'integer', 'exists:trees,id'],
+        ]);
+        $individual->update($validated);
         return redirect()->route('individuals.index')->with('success', 'Individual updated successfully.');
     }
 
@@ -68,7 +84,8 @@ class IndividualController extends Controller
      */
     public function destroy(int $id): RedirectResponse
     {
-        // TODO: Implement delete logic
+        $individual = Individual::findOrFail($id);
+        $individual->delete();
         return redirect()->route('individuals.index')->with('success', 'Individual deleted successfully.');
     }
 }
