@@ -7,5 +7,5 @@ $classes = ($active ?? false)
 @endphp
 
 <a {{ $attributes->merge(['class' => $classes]) }}>
-    {{ $slot }}
+    {{ isset($slot) && !$slot->isEmpty() ? $slot : 'Link' }}
 </a> 

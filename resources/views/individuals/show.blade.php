@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('content')
 <div class="container mx-auto mt-8">
-    <h1 class="text-2xl font-bold mb-4">Individual Details (ID: {{ $id }})</h1>
+    <h1 class="text-2xl font-bold mb-4">Individual Details (ID: {{ $id ?? '-' }})</h1>
     <p>Individual details will be shown here.</p>
 </div>
 @endsection 

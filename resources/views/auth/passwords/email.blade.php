@@ -22,7 +22,10 @@
             @csrf
             <div>
                 <label for="email" class="block text-sm font-medium">Email</label>
-                <input id="email" type="email" name="email" required autofocus class="w-full border rounded px-3 py-2 mt-1">
+                <input id="email" type="email" name="email" value="{{ old('email', '') }}" required autofocus class="w-full border rounded px-3 py-2 mt-1">
+                @if($errors && $errors->has('email'))
+                    <span class="text-red-600 text-sm">{{ $errors->first('email') }}</span>
+                @endif
             </div>
             <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Send Password Reset Link</button>
         </form>

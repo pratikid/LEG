@@ -82,7 +82,7 @@
 
             <!-- Page Content -->
             <main>
-                {{ $slot }}
+                {{ isset($slot) && !$slot->isEmpty() ? $slot : 'Content goes here.' }}
             </main>
         </div>
     </body>

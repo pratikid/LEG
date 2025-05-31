@@ -16,8 +16,8 @@
     </style>
 </head>
 <body>
-    <h1>404 - Page Not Found</h1>
-    <p>The page you are looking for does not exist.</p>
+    <h1 class="text-4xl font-bold mb-4">{{ $title ?? '404 - Page Not Found' }}</h1>
+    <p class="mb-8">{{ $message ?? 'Sorry, the page you are looking for could not be found.' }}</p>
     <a href="{{ url('/') }}">Return to Home</a>
 </body>
 </html> 

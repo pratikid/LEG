@@ -30,11 +30,21 @@ Route::post('/register', [RegisterController::class, 'register'])
 
 // Dashboard Route
 Route::get('/dashboard', function () {
-    $totalIndividuals = \App\Models\User::count();
-    $totalTrees = 0; // Replace with actual count if you have a Tree model
-    $recentActivity = 'No recent activity'; // Replace with actual logic
-    $activities = []; // Replace with actual activity log if available
-    return view('dashboard', compact('totalIndividuals', 'totalTrees', 'recentActivity', 'activities'));
+    // $totalMembers = \App\Models\Individual::count();
+    $totalMembers = 0;
+    $generations = 6; // TODO: Replace with actual calculation if available
+    // $totalPhotos = \App\Models\TimelineEvent::count(); // Placeholder for photos
+    $totalPhotos = 0;
+    $activities = \App\Models\ActivityLog::with('user')
+        ->where('user_id', auth()->id())
+        ->orderByDesc('created_at')
+        ->limit(3)
+        ->get();
+    // $userTrees = \App\Models\Tree::where('user_id', auth()->id())->limit(3)->get();
+    $userTrees = [];
+    // $recentIndividuals = \App\Models\Individual::orderByDesc('created_at')->limit(3)->get();
+    $recentIndividuals = [];
+    return view('dashboard', compact('totalMembers', 'generations', 'totalPhotos', 'activities', 'userTrees', 'recentIndividuals'));
 })->middleware(['auth'])->name('dashboard');
 
 // Timeline Routes

@@ -6,10 +6,10 @@
         <h2 class="text-2xl font-semibold text-gray-800 mb-6">My Profile</h2>
         <!-- Profile Info -->
         <div class="flex items-center mb-6">
-            <img src="{{ Auth::user()->profile_photo_url ?? 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->name) }}" alt="Profile Photo" class="h-16 w-16 rounded-full object-cover">
+            <img src="{{ optional(Auth::user())->profile_photo_url ?? 'https://ui-avatars.com/api/?name=' . urlencode(optional(Auth::user())->name ?? 'User') }}" alt="Profile Photo" class="h-16 w-16 rounded-full object-cover">
             <div class="ml-4">
-                <div class="text-lg font-medium text-gray-900">{{ Auth::user()->name }}</div>
-                <div class="text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                <div class="text-lg font-medium text-gray-900">{{ optional(Auth::user())->name ?? 'User' }}</div>
+                <div class="text-sm text-gray-500">{{ optional(Auth::user())->email ?? '-' }}</div>
             </div>
         </div>
         <!-- Edit Profile Form -->
@@ -18,11 +18,11 @@
             @method('PUT')
             <div>
                 <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                <input type="text" name="name" id="name" value="{{ old('name', Auth::user()->name) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm">
+                <input type="text" name="name" id="name" value="{{ old('name', optional(Auth::user())->name) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm">
             </div>
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" name="email" id="email" value="{{ old('email', Auth::user()->email) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm">
+                <input type="email" name="email" id="email" value="{{ old('email', optional(Auth::user())->email) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm">
             </div>
             <div>
                 <label for="profile_photo" class="block text-sm font-medium text-gray-700">Profile Photo</label>
@@ -61,11 +61,11 @@
             <form action="{{ route('profile.notifications') }}" method="POST" class="space-y-4">
                 @csrf
                 <div class="flex items-center">
-                    <input id="email_notifications" name="email_notifications" type="checkbox" class="h-4 w-4 text-amber-600 border-gray-300 rounded" {{ Auth::user()->email_notifications ? 'checked' : '' }}>
+                    <input id="email_notifications" name="email_notifications" type="checkbox" class="h-4 w-4 text-amber-600 border-gray-300 rounded" {{ optional(Auth::user())->email_notifications ? 'checked' : '' }}>
                     <label for="email_notifications" class="ml-2 block text-sm text-gray-700">Email notifications</label>
                 </div>
                 <div class="flex items-center">
-                    <input id="sms_notifications" name="sms_notifications" type="checkbox" class="h-4 w-4 text-amber-600 border-gray-300 rounded" {{ Auth::user()->sms_notifications ? 'checked' : '' }}>
+                    <input id="sms_notifications" name="sms_notifications" type="checkbox" class="h-4 w-4 text-amber-600 border-gray-300 rounded" {{ optional(Auth::user())->sms_notifications ? 'checked' : '' }}>
                     <label for="sms_notifications" class="ml-2 block text-sm text-gray-700">SMS notifications</label>
                 </div>
                 <div>
