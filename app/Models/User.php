@@ -26,6 +26,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'role',
         'is_active',
         'is_admin',
+        'profile_photo_path',
+        'email_notifications',
+        'sms_notifications',
     ];
 
     /**
@@ -48,6 +51,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'password' => 'hashed',
         'is_active' => 'boolean',
         'is_admin' => 'boolean',
+        'email_notifications' => 'boolean',
+        'sms_notifications' => 'boolean',
     ];
 
     public function roles(): BelongsToMany
@@ -75,5 +80,15 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $roleModel = Role::where('slug', $role)->firstOrFail();
         $this->roles()->detach($roleModel);
+    }
+
+    /**
+     * Get the URL to the user's profile photo.
+     */
+    public function getProfilePhotoUrlAttribute(): string
+    {
+        return $this->profile_photo_path
+            ? asset('storage/' . $this->profile_photo_path)
+            : 'https://ui-avatars.com/api/?name=' . urlencode($this->name);
     }
 }

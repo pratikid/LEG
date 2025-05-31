@@ -151,6 +151,63 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Notifications and Record Hints -->
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Notifications & Record Hints</h3>
+                            <ul class="list-disc pl-5 text-gray-700">
+                                @forelse($notifications ?? [] as $notification)
+                                    <li>{{ $notification }}</li>
+                                @empty
+                                    <li class="text-gray-500 text-sm">No notifications or hints at this time.</li>
+                                @endforelse
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Recently Viewed Individuals/Trees -->
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Recently Viewed</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-2">Individuals</h4>
+                                    <ul class="list-disc pl-5 text-gray-700">
+                                        @forelse($recentIndividuals ?? [] as $individual)
+                                            <li>{{ $individual }}</li>
+                                        @empty
+                                            <li class="text-gray-500 text-sm">No recently viewed individuals.</li>
+                                        @endforelse
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-2">Trees</h4>
+                                    <ul class="list-disc pl-5 text-gray-700">
+                                        @forelse($recentTrees ?? [] as $tree)
+                                            <li>{{ $tree }}</li>
+                                        @empty
+                                            <li class="text-gray-500 text-sm">No recently viewed trees.</li>
+                                        @endforelse
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Community Forum Activity Feed (if implemented) -->
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Community Forum Activity</h3>
+                            <ul class="list-disc pl-5 text-gray-700">
+                                @forelse($communityActivity ?? [] as $activity)
+                                    <li>{{ $activity }}</li>
+                                @empty
+                                    <li class="text-gray-500 text-sm">No community activity to display.</li>
+                                @endforelse
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>

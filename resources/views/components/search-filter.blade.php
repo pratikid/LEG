@@ -121,8 +121,20 @@
 
     <!-- Search Results -->
     <div class="border-t border-gray-200">
-        <div class="px-4 py-5 sm:px-6">
-            <h4 class="text-lg font-medium text-gray-900">Search Results</h4>
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+            <div>
+                <h4 class="text-lg font-medium text-gray-900">Search Results</h4>
+                <div class="mt-2 flex space-x-2">
+                    <button class="result-tab px-3 py-1 rounded bg-amber-600 text-white" data-type="individuals">Individuals</button>
+                    <button class="result-tab px-3 py-1 rounded bg-gray-200 text-gray-700" data-type="trees">Trees</button>
+                    <button class="result-tab px-3 py-1 rounded bg-gray-200 text-gray-700" data-type="events">Events</button>
+                    <button class="result-tab px-3 py-1 rounded bg-gray-200 text-gray-700" data-type="sources">Sources</button>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button class="px-3 py-2 bg-amber-500 text-white rounded hover:bg-amber-600">Export Results</button>
+                <button class="px-3 py-2 bg-white border border-gray-300 rounded text-gray-700 hover:bg-gray-50">Save Search</button>
+            </div>
         </div>
         <div class="border-t border-gray-200">
             <ul role="list" class="divide-y divide-gray-200">

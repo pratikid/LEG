@@ -2,7 +2,7 @@
 
 <div class="bg-white shadow overflow-hidden sm:rounded-lg">
     <!-- Profile Header -->
-    <div class="px-4 py-5 sm:px-6">
+    <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
         <div class="flex items-center">
             <div class="flex-shrink-0 h-20 w-20">
                 <img class="h-20 w-20 rounded-full" src="{{ $individual->profile_photo_url }}" alt="{{ $individual->name }}">
@@ -12,23 +12,26 @@
                 <p class="text-sm text-gray-500">{{ $individual->birth_date }} - {{ $individual->death_date ?? 'Present' }}</p>
             </div>
         </div>
+        <div class="space-x-2">
+            <a href="{{ route('individuals.edit', $individual) }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700">Edit Profile</a>
+            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-500 hover:bg-amber-600">Add Fact</button>
+            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-500 hover:bg-amber-600">Add Source</button>
+            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-500 hover:bg-amber-600">Add Media</button>
+            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-500 hover:bg-amber-600">Add Story</button>
+        </div>
     </div>
 
     <!-- Tabs -->
     <div class="border-b border-gray-200">
-        <nav class="-mb-px flex" aria-label="Tabs">
-            <button class="tab-button active w-1/4 py-4 px-1 text-center border-b-2 border-amber-500 font-medium text-sm text-amber-600" data-tab="overview">
-                Overview
-            </button>
-            <button class="tab-button w-1/4 py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="timeline">
-                Timeline
-            </button>
-            <button class="tab-button w-1/4 py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="facts">
-                Facts
-            </button>
-            <button class="tab-button w-1/4 py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="sources">
-                Sources
-            </button>
+        <nav class="-mb-px flex flex-wrap" aria-label="Tabs">
+            <button class="tab-button active w-1/6 py-4 px-1 text-center border-b-2 border-amber-500 font-medium text-sm text-amber-600" data-tab="overview">Overview</button>
+            <button class="tab-button w-1/6 py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="timeline">Timeline</button>
+            <button class="tab-button w-1/6 py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="facts">Facts</button>
+            <button class="tab-button w-1/6 py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="sources">Sources</button>
+            <button class="tab-button w-1/6 py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="media">Media Gallery</button>
+            <button class="tab-button w-1/6 py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="stories">Stories</button>
+            <button class="tab-button w-1/6 py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="relationships">Relationships</button>
+            <button class="tab-button w-1/6 py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="notes">Notes</button>
         </nav>
     </div>
 
@@ -137,6 +140,34 @@
                     </li>
                     @endforeach
                 </ul>
+            </div>
+        </div>
+
+        <!-- Media Gallery Tab -->
+        <div class="tab-pane hidden" id="media">
+            <div class="px-4 py-5 sm:p-6">
+                <p class="text-gray-500">Media gallery coming soon.</p>
+            </div>
+        </div>
+
+        <!-- Stories Tab -->
+        <div class="tab-pane hidden" id="stories">
+            <div class="px-4 py-5 sm:p-6">
+                <p class="text-gray-500">Stories coming soon.</p>
+            </div>
+        </div>
+
+        <!-- Relationships Tab -->
+        <div class="tab-pane hidden" id="relationships">
+            <div class="px-4 py-5 sm:p-6">
+                <p class="text-gray-500">Relationships coming soon.</p>
+            </div>
+        </div>
+
+        <!-- Notes Tab -->
+        <div class="tab-pane hidden" id="notes">
+            <div class="px-4 py-5 sm:p-6">
+                <p class="text-gray-500">Notes coming soon.</p>
             </div>
         </div>
     </div>

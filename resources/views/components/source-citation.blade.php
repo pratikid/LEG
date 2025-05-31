@@ -8,7 +8,7 @@
 
     <!-- Add New Source Form -->
     <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
-        <form action="{{ route('sources.store') }}" method="POST" class="space-y-6">
+        <form action="{{ route('sources.store') }}" method="POST" class="space-y-6" enctype="multipart/form-data">
             @csrf
             <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                 <div class="sm:col-span-3">
@@ -62,6 +62,18 @@
                 </div>
 
                 <div class="sm:col-span-6">
+                    <label for="link_to" class="block text-sm font-medium text-gray-700">Link to Individual/Event</label>
+                    <div class="mt-1">
+                        <select id="link_to" name="link_to" class="shadow-sm focus:ring-amber-500 focus:border-amber-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                            <option value="">-- Select --</option>
+                            @foreach($linkableEntities ?? [] as $entity)
+                                <option value="{{ $entity->id }}">{{ $entity->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="sm:col-span-6">
                     <label for="file" class="block text-sm font-medium text-gray-700">Document</label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                         <div class="space-y-1 text-center">
@@ -96,8 +108,22 @@
 
     <!-- Sources List -->
     <div class="border-t border-gray-200">
-        <div class="px-4 py-5 sm:px-6">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
             <h4 class="text-lg font-medium text-gray-900">Existing Sources</h4>
+            <form method="GET" action="{{ route('sources.index') }}" class="flex space-x-2">
+                <input type="text" name="search" placeholder="Search sources..." value="{{ request('search') }}" class="border border-gray-300 rounded px-2 py-1" />
+                <select name="type" class="border border-gray-300 rounded px-2 py-1">
+                    <option value="">All Types</option>
+                    <option value="birth">Birth</option>
+                    <option value="death">Death</option>
+                    <option value="marriage">Marriage</option>
+                    <option value="census">Census</option>
+                    <option value="immigration">Immigration</option>
+                    <option value="military">Military</option>
+                    <option value="other">Other</option>
+                </select>
+                <button type="submit" class="px-3 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">Filter</button>
+            </form>
         </div>
         <div class="border-t border-gray-200">
             <ul role="list" class="divide-y divide-gray-200">
@@ -108,39 +134,48 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     @if($source->file_path)
-                                    <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                                    </svg>
-                                    @else
-                                    <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
-                                    </svg>
+                                    <a href="{{ route('sources.download', $source) }}" class="mr-2" title="Download/Preview">
+                                        <svg class="h-6 w-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </a>
                                     @endif
+                                    <div class="flex-shrink-0">
+                                        @if($source->file_path)
+                                        <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                        </svg>
+                                        @else
+                                        <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                        </svg>
+                                        @endif
+                                    </div>
+                                    <div class="ml-4">
+                                        <h4 class="text-sm font-medium text-gray-900">{{ $source->title }}</h4>
+                                        <p class="text-sm text-gray-500">{{ $source->type }} - {{ $source->date }}</p>
+                                    </div>
                                 </div>
-                                <div class="ml-4">
-                                    <h4 class="text-sm font-medium text-gray-900">{{ $source->title }}</h4>
-                                    <p class="text-sm text-gray-500">{{ $source->type }} - {{ $source->date }}</p>
+                                <div class="ml-2 flex-shrink-0 flex">
+                                    <a href="{{ route('sources.edit', $source) }}" class="font-medium text-amber-600 hover:text-amber-500">Edit</a>
+                                    <form action="{{ route('sources.destroy', $source) }}" method="POST" class="ml-4">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="font-medium text-red-600 hover:text-red-500">Delete</button>
+                                    </form>
                                 </div>
                             </div>
-                            <div class="ml-2 flex-shrink-0 flex">
-                                <a href="{{ route('sources.edit', $source) }}" class="font-medium text-amber-600 hover:text-amber-500">Edit</a>
-                                <form action="{{ route('sources.destroy', $source) }}" method="POST" class="ml-4">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="font-medium text-red-600 hover:text-red-500">Delete</button>
-                                </form>
-                            </div>
-                        </div>
-                        <div class="mt-2 sm:flex sm:justify-between">
-                            <div class="sm:flex">
-                                <p class="flex items-center text-sm text-gray-500">
-                                    {{ $source->description }}
-                                </p>
-                            </div>
-                            <div class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                                <p>
-                                    Added {{ $source->created_at->diffForHumans() }}
-                                </p>
+                            <div class="mt-2 sm:flex sm:justify-between">
+                                <div class="sm:flex">
+                                    <p class="flex items-center text-sm text-gray-500">
+                                        {{ $source->description }}
+                                    </p>
+                                </div>
+                                <div class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                                    <p>
+                                        Added {{ $source->created_at->diffForHumans() }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>

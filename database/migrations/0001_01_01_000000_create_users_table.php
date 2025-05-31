@@ -20,6 +20,9 @@ return new class extends Migration
             $table->boolean('is_admin')->default(false);
             $table->string('role')->default('user');
             $table->boolean('is_active')->default(true);
+            $table->string('profile_photo_path')->nullable();
+            $table->boolean('email_notifications')->default(false);
+            $table->boolean('sms_notifications')->default(false);
             $table->rememberToken();
             $table->timestamps();
         });

@@ -1,21 +1,27 @@
 @props(['media' => []])
 
 <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-    <div class="px-4 py-5 sm:px-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Media Library</h3>
-                <p class="mt-1 max-w-2xl text-sm text-gray-500">Manage your family photos, documents, and other media.</p>
-            </div>
-            <div>
-                <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
-                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    Upload Media
-                </button>
-            </div>
+    <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Media Library</h3>
+            <button id="grid-view" class="ml-2 px-2 py-1 rounded bg-amber-600 text-white">Grid</button>
+            <button id="list-view" class="px-2 py-1 rounded bg-gray-200 text-gray-700">List</button>
         </div>
+        <div>
+            <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Upload Media
+            </button>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    <div id="bulk-actions" class="hidden px-4 py-2 bg-amber-50 border-b border-amber-200 flex items-center space-x-2">
+        <span class="font-medium">Bulk Actions:</span>
+        <button class="px-3 py-1 bg-amber-600 text-white rounded">Delete</button>
+        <button class="px-3 py-1 bg-amber-600 text-white rounded">Download</button>
     </div>
 
     <!-- Filters -->
@@ -55,13 +61,14 @@
         </div>
     </div>
 
-    <!-- Media Grid -->
+    <!-- Media Grid/List -->
     <div class="border-t border-gray-200">
         <div class="px-4 py-5 sm:px-6">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div id="media-list" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 @foreach($media as $item)
                 <div class="relative group">
-                    <div class="aspect-w-10 aspect-h-7 rounded-lg bg-gray-100 overflow-hidden">
+                    <input type="checkbox" class="absolute top-2 left-2 z-10 bulk-checkbox" />
+                    <div class="aspect-w-10 aspect-h-7 rounded-lg bg-gray-100 overflow-hidden cursor-pointer preview-trigger">
                         @if($item->type === 'photo')
                         <img src="{{ $item->url }}" alt="{{ $item->title }}" class="object-cover">
                         @elseif($item->type === 'document')
@@ -90,7 +97,7 @@
                     </div>
                     <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
                         <div class="flex space-x-2">
-                            <button type="button" class="p-2 rounded-full bg-white text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                            <button type="button" class="p-2 rounded-full bg-white text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 preview-trigger">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -110,6 +117,69 @@
                     </div>
                 </div>
                 @endforeach
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Preview Modal -->
+    <div id="media-preview-modal" class="hidden fixed z-20 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
+                <div id="media-preview-content">
+                    <!-- Populated dynamically -->
+                </div>
+                <div class="mt-5 sm:mt-6">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:text-sm" id="close-preview-modal">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between sm:px-6">
+        <div class="flex-1 flex justify-between sm:hidden">
+            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Previous</a>
+            <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Next</a>
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Showing
+                    <span class="font-medium">1</span>
+                    to
+                    <span class="font-medium">10</span>
+                    of
+                    <span class="font-medium">{{ count($media) }}</span>
+                    results
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Previous</span>
+                        <!-- Heroicon name: solid/chevron-left -->
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M12.293 15.707a1 1 0 010-1.414L15.586 11H4a1 1 0 110-2h11.586l-3.293-3.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                    <!-- Pagination numbers (placeholder) -->
+                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
+                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">2</a>
+                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">3</a>
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">10</a>
+                    <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Next</span>
+                        <!-- Heroicon name: solid/chevron-right -->
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.707 4.293a1 1 0 010 1.414L4.414 9H16a1 1 0 110 2H4.414l3.293 3.293a1 1 0 11-1.414 1.414l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                </nav>
             </div>
         </div>
     </div>

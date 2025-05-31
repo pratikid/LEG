@@ -18,6 +18,20 @@
         </div>
     </div>
 
+    <!-- Search/Filter Bar -->
+    <div class="border-t border-gray-200 px-4 py-5 sm:px-6 flex justify-between items-center">
+        <form method="GET" action="{{ route('stories.index') }}" class="flex space-x-2">
+            <input type="text" name="search" placeholder="Search stories..." value="{{ request('search') }}" class="border border-gray-300 rounded px-2 py-1" />
+            <select name="tag" class="border border-gray-300 rounded px-2 py-1">
+                <option value="">All Tags</option>
+                @foreach($allTags ?? [] as $tag)
+                    <option value="{{ $tag }}">{{ $tag }}</option>
+                @endforeach
+            </select>
+            <button type="submit" class="px-3 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">Filter</button>
+        </form>
+    </div>
+
     <!-- Story Timeline -->
     <div class="border-t border-gray-200">
         <div class="px-4 py-5 sm:px-6">

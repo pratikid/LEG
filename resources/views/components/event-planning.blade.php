@@ -18,6 +18,22 @@
         </div>
     </div>
 
+    <!-- Search/Filter Bar -->
+    <div class="border-t border-gray-200 px-4 py-5 sm:px-6 flex justify-between items-center">
+        <form method="GET" action="{{ route('events.index') }}" class="flex space-x-2">
+            <input type="text" name="search" placeholder="Search events..." value="{{ request('search') }}" class="border border-gray-300 rounded px-2 py-1" />
+            <select name="type" class="border border-gray-300 rounded px-2 py-1">
+                <option value="">All Types</option>
+                <option value="reunion">Reunion</option>
+                <option value="birthday">Birthday</option>
+                <option value="wedding">Wedding</option>
+                <option value="other">Other</option>
+            </select>
+            <button type="submit" class="px-3 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">Filter</button>
+        </form>
+        <button class="px-3 py-2 bg-amber-500 text-white rounded hover:bg-amber-600">Export Calendar</button>
+    </div>
+
     <!-- Calendar View -->
     <div class="border-t border-gray-200">
         <div class="px-4 py-5 sm:px-6">
@@ -145,12 +161,20 @@
                                     <input type="text" name="location" id="location" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm">
                                 </div>
                                 <div>
-                                    <label for="attendees" class="block text-sm font-medium text-gray-700">Attendees</label>
-                                    <select name="attendees[]" id="attendees" multiple class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm">
+                                    <label for="attendees" class="block text-sm font-medium text-gray-700">Attendees & RSVP</label>
+                                    <div class="space-y-2">
                                         @foreach($familyMembers as $member)
-                                        <option value="{{ $member->id }}">{{ $member->name }}</option>
+                                        <div class="flex items-center space-x-2">
+                                            <input type="checkbox" name="attendees[]" value="{{ $member->id }}" id="attendee-{{ $member->id }}" class="rounded border-gray-300">
+                                            <label for="attendee-{{ $member->id }}" class="text-sm text-gray-700">{{ $member->name }}</label>
+                                            <select name="rsvp[{{ $member->id }}]" class="ml-2 border border-gray-300 rounded px-2 py-1 text-sm">
+                                                <option value="pending">Pending</option>
+                                                <option value="accepted">Accepted</option>
+                                                <option value="declined">Declined</option>
+                                            </select>
+                                        </div>
                                         @endforeach
-                                    </select>
+                                    </div>
                                 </div>
                                 <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
                                     <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:col-start-2 sm:text-sm">
@@ -163,6 +187,24 @@
                             </form>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Detail Modal -->
+    <div id="event-detail-modal" class="hidden fixed z-20 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
+                <div id="event-detail-content">
+                    <!-- Populated dynamically -->
+                </div>
+                <div class="mt-5 sm:mt-6">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:text-sm" id="close-event-detail-modal">
+                        Close
+                    </button>
                 </div>
             </div>
         </div>
