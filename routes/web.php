@@ -16,7 +16,7 @@ use App\Http\Controllers\GroupController;
 use App\Http\Controllers\IndividualController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('auth.login');
 });
 
 // Registration Routes
@@ -36,7 +36,7 @@ Route::get('/dashboard', function () {
     // $totalPhotos = \App\Models\TimelineEvent::count(); // Placeholder for photos
     $totalPhotos = 0;
     $activities = \App\Models\ActivityLog::with('user')
-        ->where('user_id', auth()->id())
+        ->where('user_id', Auth::id())
         ->orderByDesc('created_at')
         ->limit(3)
         ->get();

@@ -145,7 +145,8 @@ services:
     image: node:lts-alpine
     container_name: leg-node
     working_dir: /var/www/html
-    command: sh -c "npm install && npm run dev"
+#    command: sh -c "npm install && npm run dev"
+    command: sh -c "npm install && npm run build"
     volumes:
       - ./:/var/www/html
       - node_modules:/var/www/html/node_modules

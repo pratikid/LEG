@@ -19,36 +19,46 @@ class LoginController extends Controller
 
     public function login(Request $request): RedirectResponse
     {
-        $credentials = $request->validate([
-            'email' => [
-                'required',
-                function (
-                    $attribute,
-                    $value,
-                    $fail
-                ) {
-                    if ($value === 'admin@admin.com') {
-                        return;
-                    }
-                    if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                        $fail(__('validation.email', ['attribute' => $attribute]));
-                    }
-                },
-            ],
-            'password' => ['required'],
-        ]);
+        $loginField = $request->input('email') ? 'email' : 'username';
+        $loginValue = $request->input($loginField);
+        // If username is used, treat it as email for validation and authentication
+        $request->merge(['email' => $loginValue]);
+        try {
+            $credentials = $request->validate([
+                'email' => [
+                    'required',
+                    function (
+                        $attribute,
+                        $value,
+                        $fail
+                    ) {
+                        if ($value === 'admin@admin.com') {
+                            return;
+                        }
+                        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                            $fail(__('validation.email', ['attribute' => $attribute]));
+                        }
+                    },
+                ],
+                'password' => ['required'],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        }
 
         // Allow admin login with username 'admin@admin.com' and password 'admin'
         if ($credentials['email'] === 'admin@admin.com' && $credentials['password'] === 'admin') {
-            // Log in a fake admin user (without DB)
-            $admin = new \App\Models\User([
-                'name' => 'Admin',
-                'email' => 'admin@admin.com',
-                'role' => 'admin',
-                'is_active' => true,
-                'is_admin' => true,
-                'password' => bcrypt('admin'),
-            ]);
+            // Ensure the admin user exists in the database
+            $admin = \App\Models\User::firstOrCreate(
+                ['email' => 'admin@admin.com'],
+                [
+                    'name' => 'Admin',
+                    'role' => 'admin',
+                    'is_active' => true,
+                    'is_admin' => true,
+                    'password' => bcrypt('admin'),
+                ]
+            );
             Auth::login($admin, true);
             $request->session()->regenerate();
             return redirect()->intended(route('dashboard'));

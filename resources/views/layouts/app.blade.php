@@ -18,6 +18,9 @@
 <body class="font-sans antialiased">
     <div class="min-h-screen bg-gray-100">
         <!-- Sidebar Navigation -->
+        @isset($sidebar)
+            {{ $sidebar }}
+        @else
         <aside class="fixed inset-y-0 left-0 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out" x-data="{ open: true }" :class="{'translate-x-0': open, '-translate-x-full': !open}">
             <div class="flex items-center justify-between h-16 px-4 bg-amber-800">
                 <h1 class="text-xl font-bold text-white">LEG</h1>
@@ -43,10 +46,14 @@
                 <!-- Add more navigation items here -->
             </nav>
         </aside>
+        @endisset
 
         <!-- Main Content -->
         <div class="pl-64">
             <!-- Top Navigation -->
+            @isset($topbar)
+                {{ $topbar }}
+            @else
             <nav class="bg-white shadow">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex justify-between h-16">
@@ -59,11 +66,12 @@
                     </div>
                 </div>
             </nav>
+            @endisset
 
             <!-- Page Content -->
             <main class="py-10">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    @yield('content')
+                    {{ $slot }}
                 </div>
             </main>
         </div>
