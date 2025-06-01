@@ -88,4 +88,13 @@ class IndividualController extends Controller
         $individual->delete();
         return redirect()->route('individuals.index')->with('success', 'Individual deleted successfully.');
     }
+
+    /**
+     * Show a timeline view of individuals (future feature).
+     */
+    public function timeline(): View
+    {
+        // Placeholder implementation
+        return view('individuals.timeline');
+    }
 }

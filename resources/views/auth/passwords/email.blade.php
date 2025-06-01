@@ -1,6 +1,4 @@
-@extends('layouts.app')
-
-@section('content')
+<x-guest-layout>
     <div class="container mx-auto max-w-md mt-10 p-6 bg-[#232a32] rounded shadow">
         @if (session('status'))
             <div class="mb-4 text-green-400">
@@ -29,4 +27,4 @@
             <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition">Send Password Reset Link</button>
         </form>
     </div>
-@endsection 
+</x-guest-layout> 

@@ -73,4 +73,14 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
         return redirect('/')->with('success', 'Your account has been deleted.');
     }
+
+    public function settings(): \Illuminate\View\View
+    {
+        return view('profile.settings');
+    }
+
+    public function preferences(): \Illuminate\View\View
+    {
+        return view('profile.preferences');
+    }
 } 

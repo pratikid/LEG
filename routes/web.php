@@ -14,6 +14,15 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\TreeController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\IndividualController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CommunityController;
+use App\Http\Controllers\ToolsController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\MediaController;
+use App\Http\Controllers\StoryController;
+use App\Http\Controllers\SourceController;
+use App\Http\Controllers\HelpController;
+use App\Http\Controllers\AdminController;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -76,6 +85,11 @@ Route::prefix('tutorials')->middleware(['auth'])->group(function () {
 
 // Timeline Preferences Routes
 Route::middleware(['auth'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::post('/profile/notifications', [ProfileController::class, 'updateNotifications'])->name('profile.notifications');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::put('/timeline/preferences', [TimelinePreferencesController::class, 'update'])->name('timeline.preferences.update');
 });
 
@@ -108,3 +122,47 @@ Route::post('trees/import', [TreeController::class, 'handleImport'])->name('tree
 
 Route::resource('groups', GroupController::class)->middleware(['auth']);
 Route::resource('individuals', IndividualController::class)->middleware(['auth']);
+
+Route::get('/individuals/timeline', [IndividualController::class, 'timeline'])->name('individuals.timeline')->middleware(['auth']);
+
+// Community
+Route::get('/community/directory', [CommunityController::class, 'directory'])->name('community.directory')->middleware(['auth']);
+Route::get('/community/my-groups', [CommunityController::class, 'myGroups'])->name('community.my-groups')->middleware(['auth']);
+Route::get('/community/forums', [CommunityController::class, 'forums'])->name('community.forums')->middleware(['auth']);
+
+// Tools
+Route::get('/tools/templates', [ToolsController::class, 'templates'])->name('tools.templates')->middleware(['auth']);
+Route::get('/tools/export', [ToolsController::class, 'export'])->name('tools.export')->middleware(['auth']);
+Route::get('/tools/reports', [ToolsController::class, 'reports'])->name('tools.reports')->middleware(['auth']);
+
+// Events
+Route::resource('events', EventController::class)->middleware(['auth']);
+Route::get('/events/calendar', [EventController::class, 'calendar'])->name('events.calendar')->middleware(['auth']);
+
+// Media
+Route::resource('media', MediaController::class)->middleware(['auth']);
+
+// Stories
+Route::resource('stories', StoryController::class)->middleware(['auth']);
+
+// Sources
+Route::resource('sources', SourceController::class)->middleware(['auth']);
+
+// Help
+Route::get('/help/user-guide', [HelpController::class, 'userGuide'])->name('help.user-guide');
+Route::get('/help/tutorials', [HelpController::class, 'tutorials'])->name('help.tutorials');
+Route::get('/help/support', [HelpController::class, 'support'])->name('help.support');
+
+// Profile
+Route::get('/profile/settings', [ProfileController::class, 'settings'])->name('profile.settings')->middleware(['auth']);
+Route::get('/profile/preferences', [ProfileController::class, 'preferences'])->name('profile.preferences')->middleware(['auth']);
+
+// Admin
+Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users')->middleware(['auth', 'admin']);
+Route::get('/admin/logs', [AdminController::class, 'logs'])->name('admin.logs')->middleware(['auth', 'admin']);
+Route::get('/admin/settings', [AdminController::class, 'settings'])->name('admin.settings')->middleware(['auth', 'admin']);
+Route::get('/admin/notifications', [AdminController::class, 'notifications'])->name('admin.notifications')->middleware(['auth', 'admin']);
+
+Route::get('/search', function () {
+    return view('search.index');
+})->name('search')->middleware(['auth']);
