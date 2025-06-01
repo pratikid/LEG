@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html class="dark" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,10 +16,10 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="font-sans antialiased bg-gray-50">
-    <div class="flex min-h-screen">
-        <x-sidebar :activeTab="$activeTab ?? ''" />
-        <div class="flex-1 min-h-screen flex flex-col">
+<body class="font-sans antialiased bg-gray-900 text-white">
+    <div x-data="{ open: true }" class="flex min-h-screen">
+        <x-sidebar :activeTab="$activeTab ?? ''" x-model="open" />
+        <div class="flex-1 min-h-screen flex flex-col transition-all duration-200">
             <!-- Top Navigation (optional) -->
             @isset($topbar)
                 {{ $topbar }}

@@ -3,9 +3,9 @@
 @section('content')
     <div class="max-w-3xl mx-auto py-16 text-center">
         <h1 class="text-3xl font-bold mb-4">User Management</h1>
-        <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">This feature is coming soon. Here you will be able to manage users and roles.</p>
+        <p class="text-lg text-gray-300 mb-8">This feature is coming soon. Here you will be able to manage users, assign roles, and control access permissions.</p>
         <div class="mt-8">
-            <span class="inline-block bg-blue-100 text-blue-800 text-sm px-4 py-2 rounded-full">Stay tuned for updates!</span>
+            <span class="inline-block bg-blue-800 text-white text-sm px-4 py-2 rounded-full">Stay tuned for updates!</span>
         </div>
     </div>
 @endsection 
