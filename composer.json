@@ -19,6 +19,7 @@
         "predis/predis": "^3.0"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.15",
         "exin/enlightn": "^2.11",
         "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.2.2",
