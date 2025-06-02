@@ -46,21 +46,21 @@ class TreeController extends Controller
         return redirect()->route('trees.index')->with('success', 'Tree created successfully.');
     }
 
-    public function show(int $id): View
+    public function show($id): View
     {
-        $tree = Tree::findOrFail($id);
+        $tree = Tree::findOrFail((int) $id);
         return view('trees.show', compact('tree'));
     }
 
-    public function edit(int $id): View
+    public function edit($id): View
     {
-        $tree = Tree::findOrFail($id);
+        $tree = Tree::findOrFail((int) $id);
         return view('trees.edit', compact('tree'));
     }
 
-    public function update(Request $request, int $id): \Illuminate\Http\RedirectResponse
+    public function update(Request $request, $id): \Illuminate\Http\RedirectResponse
     {
-        $tree = Tree::findOrFail($id);
+        $tree = Tree::findOrFail((int) $id);
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -69,9 +69,9 @@ class TreeController extends Controller
         return redirect()->route('trees.index')->with('success', 'Tree updated successfully.');
     }
 
-    public function destroy(int $id): \Illuminate\Http\RedirectResponse
+    public function destroy($id): \Illuminate\Http\RedirectResponse
     {
-        $tree = Tree::findOrFail($id);
+        $tree = Tree::findOrFail((int) $id);
         $tree->delete();
         return redirect()->route('trees.index')->with('success', 'Tree deleted successfully.');
     }

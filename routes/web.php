@@ -35,7 +35,6 @@ Route::get('/register', [RegisterController::class, 'showRegistrationForm'])
     ->middleware('guest');
 
 Route::post('/register', [RegisterController::class, 'register'])
-    ->name('register')
     ->middleware('guest');
 
 // Dashboard Route

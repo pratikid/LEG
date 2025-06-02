@@ -52,9 +52,9 @@ class IndividualController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(int $id): View
+    public function show($id): View
     {
-        $individual = Individual::findOrFail($id);
+        $individual = Individual::findOrFail((int) $id);
         $allIndividuals = Individual::all();
         $error = null;
         if ($allIndividuals->isEmpty() || ($allIndividuals->count() === 1 && $allIndividuals->first()->id === $individual->id)) {
@@ -66,18 +66,18 @@ class IndividualController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(int $id): View
+    public function edit($id): View
     {
-        $individual = Individual::findOrFail($id);
+        $individual = Individual::findOrFail((int) $id);
         return view('individuals.edit', compact('individual'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(Request $request, $id): RedirectResponse
     {
-        $individual = Individual::findOrFail($id);
+        $individual = Individual::findOrFail((int) $id);
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
@@ -92,9 +92,9 @@ class IndividualController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(int $id): RedirectResponse
+    public function destroy($id): RedirectResponse
     {
-        $individual = Individual::findOrFail($id);
+        $individual = Individual::findOrFail((int) $id);
         $individual->delete();
         return redirect()->route('individuals.index')->with('success', 'Individual deleted successfully.');
     }

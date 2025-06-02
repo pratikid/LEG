@@ -40,6 +40,7 @@ class Neo4jRelationshipController extends Controller
     // Get all children of a parent
     public function getChildren($parentId)
     {
+        $parentId = (int) $parentId;
         $client = $this->neo4j->getClient();
         $query = 'MATCH (p:Individual {id: $parentId})-[:PARENT_OF]->(c:Individual) RETURN c';
         $result = $client->run($query, ['parentId' => $parentId]);

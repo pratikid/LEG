@@ -10,8 +10,15 @@ class Neo4jIndividualService
 
     public function __construct()
     {
+        $host = env('NEO4J_HOST', 'neo4j');
+        $port = env('NEO4J_PORT', 7687);
+        $user = env('NEO4J_USERNAME', 'neo4j');
+        $pass = env('NEO4J_PASSWORD', 'password123');
+        $scheme = env('NEO4J_SCHEME', 'bolt');
+        $uri = env('NEO4J_URI', "$scheme://$user:$pass@$host:$port");
+
         $this->client = ClientBuilder::create()
-            ->withDriver('default', 'neo4j://neo4j:password@localhost:7687') // Update credentials as needed
+            ->withDriver('default', $uri)
             ->build();
     }
 
