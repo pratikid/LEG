@@ -4,8 +4,12 @@
     <h1 class="text-2xl font-bold mb-4">Individual Details (ID: {{ $individual->id ?? '-' }})</h1>
     <p>{{ $individual->first_name ?? '' }} {{ $individual->last_name ?? '' }}</p>
 
+    @if(isset($error) && $error)
+        <div class="text-red-500 text-xs mb-4">{{ $error }}</div>
+    @endif
+
     <!-- Parent-Child Relationship Form -->
-    <form method="POST" action="{{ route('relationships.parent-child') }}" class="mb-4">
+    <form method="POST" action="{{ route('relationships.parent-child') }}" class="mb-4" @if(isset($error) && $error) style="pointer-events:none;opacity:0.5;" @endif>
         @csrf
         <input type="hidden" name="child_id" value="{{ $individual->id }}">
         <label for="parent_id" class="block mb-2">Add Parent:</label>
@@ -20,7 +24,7 @@
     </form>
 
     <!-- Add Child Relationship Form -->
-    <form method="POST" action="{{ route('relationships.parent-child') }}" class="mb-4">
+    <form method="POST" action="{{ route('relationships.parent-child') }}" class="mb-4" @if(isset($error) && $error) style="pointer-events:none;opacity:0.5;" @endif>
         @csrf
         <input type="hidden" name="parent_id" value="{{ $individual->id }}">
         <label for="child_id" class="block mb-2">Add Child:</label>
@@ -35,7 +39,7 @@
     </form>
 
     <!-- Spouse Relationship Form -->
-    <form method="POST" action="{{ route('relationships.spouse') }}" class="mb-4">
+    <form method="POST" action="{{ route('relationships.spouse') }}" class="mb-4" @if(isset($error) && $error) style="pointer-events:none;opacity:0.5;" @endif>
         @csrf
         <input type="hidden" name="spouse_a_id" value="{{ $individual->id }}">
         <label for="spouse_b_id" class="block mb-2">Add Spouse:</label>
@@ -50,7 +54,7 @@
     </form>
 
     <!-- Add Sibling Relationship Form -->
-    <form method="POST" action="{{ route('relationships.sibling') }}" class="mb-4">
+    <form method="POST" action="{{ route('relationships.sibling') }}" class="mb-4" @if(isset($error) && $error) style="pointer-events:none;opacity:0.5;" @endif>
         @csrf
         <input type="hidden" name="sibling_a_id" value="{{ $individual->id }}">
         <label for="sibling_b_id" class="block mb-2">Add Sibling:</label>
@@ -66,7 +70,7 @@
 
     <!-- Shortest Path Query Form -->
     <div class="mb-4">
-        <form id="shortest-path-form" class="mb-2 flex flex-col md:flex-row items-start md:items-end gap-2">
+        <form id="shortest-path-form" class="mb-2 flex flex-col md:flex-row items-start md:items-end gap-2" @if(isset($error) && $error) style="pointer-events:none;opacity:0.5;" @endif>
             <div>
                 <label for="target_individual_id" class="block mb-1">Find shortest path to:</label>
                 <select id="target_individual_id" class="bg-gray-800 text-white rounded p-2 w-full">

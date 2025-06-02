@@ -25,7 +25,12 @@ class IndividualController extends Controller
      */
     public function create(): View
     {
-        return view('individuals.create');
+        $trees = \App\Models\Tree::all();
+        $error = null;
+        if ($trees->isEmpty()) {
+            $error = 'No trees available. Please create a tree first.';
+        }
+        return view('individuals.create', compact('trees', 'error'));
     }
 
     /**
@@ -51,7 +56,11 @@ class IndividualController extends Controller
     {
         $individual = Individual::findOrFail($id);
         $allIndividuals = Individual::all();
-        return view('individuals.show', compact('individual', 'allIndividuals'));
+        $error = null;
+        if ($allIndividuals->isEmpty() || ($allIndividuals->count() === 1 && $allIndividuals->first()->id === $individual->id)) {
+            $error = 'No other individuals available for relationships.';
+        }
+        return view('individuals.show', compact('individual', 'allIndividuals', 'error'));
     }
 
     /**

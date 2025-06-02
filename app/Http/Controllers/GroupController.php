@@ -19,7 +19,12 @@ class GroupController extends Controller
 
     public function create(): View
     {
-        return view('groups.create');
+        $trees = \App\Models\Tree::all();
+        $error = null;
+        if ($trees->isEmpty()) {
+            $error = 'No trees available. Please create a tree first.';
+        }
+        return view('groups.create', compact('trees', 'error'));
     }
 
     public function store(Request $request): RedirectResponse
