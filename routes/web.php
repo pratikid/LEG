@@ -23,6 +23,7 @@ use App\Http\Controllers\StoryController;
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Neo4jRelationshipController;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -91,6 +92,20 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/notifications', [ProfileController::class, 'updateNotifications'])->name('profile.notifications');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::put('/timeline/preferences', [TimelinePreferencesController::class, 'update'])->name('timeline.preferences.update');
+    Route::post('/relationships/parent-child', [Neo4jRelationshipController::class, 'addParentChild'])->name('relationships.parent-child');
+    Route::post('/relationships/spouse', [Neo4jRelationshipController::class, 'addSpouse'])->name('relationships.spouse');
+    Route::get('/relationships/{id}/children', [Neo4jRelationshipController::class, 'getChildren'])->name('relationships.children');
+    Route::get('/relationships/{id}/parents', [Neo4jRelationshipController::class, 'getParents'])->name('relationships.parents');
+    Route::get('/relationships/{id}/spouses', [Neo4jRelationshipController::class, 'getSpouses'])->name('relationships.spouses');
+    // Advanced Neo4j relationship queries
+    Route::get('/relationships/{id}/ancestors', [Neo4jRelationshipController::class, 'getAncestors'])->name('relationships.ancestors');
+    Route::get('/relationships/{id}/descendants', [Neo4jRelationshipController::class, 'getDescendants'])->name('relationships.descendants');
+    Route::get('/relationships/{id}/siblings', [Neo4jRelationshipController::class, 'getSiblings'])->name('relationships.siblings');
+    Route::get('/relationships/{fromId}/shortest-path/{toId}', [Neo4jRelationshipController::class, 'getShortestPath'])->name('relationships.shortest-path');
+    Route::post('/relationships/sibling', [Neo4jRelationshipController::class, 'addSibling'])->name('relationships.sibling');
+    Route::delete('/relationships/parent-child', [Neo4jRelationshipController::class, 'removeParentChild'])->name('relationships.remove-parent-child');
+    Route::delete('/relationships/spouse', [Neo4jRelationshipController::class, 'removeSpouse'])->name('relationships.remove-spouse');
+    Route::delete('/relationships/sibling', [Neo4jRelationshipController::class, 'removeSibling'])->name('relationships.remove-sibling');
 });
 
 // Admin Routes

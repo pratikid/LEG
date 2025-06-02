@@ -50,7 +50,8 @@ class IndividualController extends Controller
     public function show(int $id): View
     {
         $individual = Individual::findOrFail($id);
-        return view('individuals.show', compact('individual'));
+        $allIndividuals = Individual::all();
+        return view('individuals.show', compact('individual', 'allIndividuals'));
     }
 
     /**

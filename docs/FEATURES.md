@@ -25,12 +25,8 @@ The LEG project aims to implement a comprehensive set of features, organized by 
 * [ ] Customizable Node Appearance (Basic): Allowing users to change node colors or choose basic display options
 * [ ] User Activity Logs (Admin-focused): Tracking basic user actions within family groups
 * [ ] Guest Access (View-only): Allowing logged-in users to share a view-only link to their tree
-* [ ] Discussion Forums within Groups (Basic): Implementing a simple forum structure within each family group
-* [ ] Shared Media Library (Basic): Allowing file uploads and association with individuals (basic organization)
-* [ ] Notification Bar for Admins
 
 ### Medium Complexity Features
-* [ ] Source Citation and Management (Basic): Allowing users to add text-based citations to facts
 * [ ] Visually Pleasing Family Tree (Basic): Creating a basic, interactive family tree using nodes and relationships
 * [ ] Multiple Tree Styles: Implementing different visual layouts like fan charts or descendant charts
 * [ ] Customizable Node Appearance (Advanced): Offering more granular control over node elements and information displayed
@@ -63,6 +59,13 @@ The LEG project aims to implement a comprehensive set of features, organized by 
 * [ ] Scalability and Performance Optimization (Ongoing)
 * [ ] Accessibility (Comprehensive)
 * [ ] Internationalization (i18n) and Localization (l10n)
+
+### Future scope
+* [ ] Source Citation and Management (Basic): Allowing users to add text-based citations to facts
+* [ ] Discussion Forums within Groups (Basic): Implementing a simple forum structure within each family group
+* [ ] Shared Media Library (Basic): Allowing file uploads and association with individuals (basic organization)
+* [ ] Notification Bar for Admins
+
 
 ## TODO
 
