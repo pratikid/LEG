@@ -22,4 +22,13 @@ docker-compose exec app php artisan db:seed
 docker-compose exec app chown -R www-data:www-data /var/www/html/storage
 docker-compose exec app chmod -R 775 /var/www/html/storage
 
+# Run code style check (Laravel Pint)
+docker-compose exec app vendor/bin/pint
+
+# Run Enlightn security/code analysis
+# docker-compose exec app php artisan enlightn
+
+# Run tests
+# docker-compose exec app php artisan test
+
 echo "Setup complete! Your application should now be running with PostgreSQL." 
