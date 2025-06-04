@@ -92,6 +92,53 @@ We appreciate your efforts in making LEG a valuable resource for the genealogica
 
 We are committed to fostering a welcoming and inclusive environment for all contributors and users. By participating in the LEG project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md) (link to be created). Please ensure you read and understand these guidelines.
 
+## Local Development Setup
+
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/pratikid/LEG.git
+   cd LEG
+   ```
+2. Copy the example environment file and configure your environment:
+   ```sh
+   cp .env.example .env
+   # Edit .env as needed
+   ```
+3. Install PHP dependencies:
+   ```sh
+   composer install
+   ```
+4. Install Node dependencies:
+   ```sh
+   npm install
+   ```
+5. Build frontend assets:
+   ```sh
+   npm run dev
+   ```
+6. Run database migrations and seeders:
+   ```sh
+   php artisan migrate --seed
+   ```
+7. Start the local server:
+   ```sh
+   php artisan serve
+   ```
+
+## Running Tests
+
+Run all tests using PHPUnit:
+```sh
+php artisan test
+```
+
+## Code Style
+
+This project uses [Laravel Pint](https://laravel.com/docs/12.x/pint) for code style (PSR-12):
+```sh
+composer run lint
+```
+
 ## Resources
 
 This section provides a categorized list of resources to aid your lineage exploration and genealogy research.
