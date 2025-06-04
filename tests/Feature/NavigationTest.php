@@ -104,4 +104,4 @@ class NavigationTest extends TestCase
         $response->assertRedirect('/');
         $this->assertGuest();
     }
-} 
+}

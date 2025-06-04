@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class UserSettings extends Component
 {
     public string $name;
+
     public string $email;
 
     public function mount(): void
@@ -32,4 +33,4 @@ class UserSettings extends Component
     {
         return view('livewire.user-settings');
     }
-} 
+}

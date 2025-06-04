@@ -10,8 +10,6 @@ class ContentSecurityPolicy
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
      * @return mixed
      */
     public function handle(Request $request, Closure $next)
@@ -21,7 +19,7 @@ class ContentSecurityPolicy
         // Define CSP directives
         $csp = [
             "default-src 'self'",
-            "script-src 'self' 'nonce-" . $this->generateNonce() . "'",
+            "script-src 'self' 'nonce-".$this->generateNonce()."'",
             "style-src 'self' https://fonts.googleapis.com",
             "img-src 'self' data: https:",
             "font-src 'self' https://fonts.gstatic.com",
@@ -31,8 +29,8 @@ class ContentSecurityPolicy
             "base-uri 'self'",
             "form-action 'self'",
             "frame-ancestors 'none'",
-            "block-all-mixed-content",
-            "upgrade-insecure-requests"
+            'block-all-mixed-content',
+            'upgrade-insecure-requests',
         ];
 
         // Add CSP header
@@ -46,11 +44,9 @@ class ContentSecurityPolicy
 
     /**
      * Generate a random nonce for CSP.
-     *
-     * @return string
      */
     public function generateNonce(): string
     {
         return base64_encode(random_bytes(16));
     }
-} 
+}

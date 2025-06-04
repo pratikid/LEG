@@ -84,4 +84,4 @@ return [
         'bootstrap/cache',
         'tests',
     ],
-]; 
+];

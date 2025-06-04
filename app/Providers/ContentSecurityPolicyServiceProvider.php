@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Blade;
 use App\Http\Middleware\ContentSecurityPolicy;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\ServiceProvider;
 
 class ContentSecurityPolicyServiceProvider extends ServiceProvider
 {
@@ -14,7 +14,7 @@ class ContentSecurityPolicyServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(ContentSecurityPolicy::class, function ($app) {
-            return new ContentSecurityPolicy();
+            return new ContentSecurityPolicy;
         });
     }
 
@@ -28,4 +28,4 @@ class ContentSecurityPolicyServiceProvider extends ServiceProvider
             return '<?php echo "nonce=\"" . app(\App\Http\Middleware\ContentSecurityPolicy::class)->generateNonce() . "\""; ?>';
         });
     }
-} 
+}

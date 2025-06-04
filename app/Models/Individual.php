@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Services\Neo4jIndividualService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Services\Neo4jIndividualService;
 
 class Individual extends Model
 {
@@ -57,4 +57,4 @@ class Individual extends Model
             app(Neo4jIndividualService::class)->deleteIndividualNode($individual->id);
         });
     }
-} 
+}

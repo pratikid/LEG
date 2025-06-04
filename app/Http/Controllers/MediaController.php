@@ -13,28 +13,34 @@ class MediaController extends Controller
     {
         return view('media.index');
     }
+
     public function create(): View
     {
         return view('media.create');
     }
+
     public function show($id): View
     {
         return view('media.show');
     }
+
     public function edit($id): View
     {
         return view('media.edit');
     }
+
     public function update(Request $request, $id)
     {
         return redirect()->route('media.index')->with('info', 'Update coming soon.');
     }
+
     public function destroy($id)
     {
         return redirect()->route('media.index')->with('info', 'Delete coming soon.');
     }
+
     public function store(Request $request)
     {
         return redirect()->route('media.index')->with('info', 'Store coming soon.');
     }
-} 
+}

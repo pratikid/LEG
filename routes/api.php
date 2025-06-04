@@ -9,4 +9,4 @@ Route::middleware('api')->get('/ping', function (Request $request) {
 
 Route::prefix('v1')->group(function () {
     Route::apiResource('individuals', App\Http\Controllers\Api\V1\IndividualController::class);
-}); 
+});

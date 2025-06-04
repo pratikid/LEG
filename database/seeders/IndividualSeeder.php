@@ -2,16 +2,18 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Individual;
 use App\Models\Tree;
+use Illuminate\Database\Seeder;
 
 class IndividualSeeder extends Seeder
 {
     public function run(): void
     {
         $trees = Tree::all();
-        if ($trees->isEmpty()) return;
+        if ($trees->isEmpty()) {
+            return;
+        }
         $individuals = [
             ['first_name' => 'John', 'last_name' => 'Smith', 'birth_date' => '1950-01-01', 'death_date' => null],
             ['first_name' => 'Jane', 'last_name' => 'Smith', 'birth_date' => '1952-05-10', 'death_date' => null],
@@ -25,4 +27,4 @@ class IndividualSeeder extends Seeder
             }
         }
     }
-} 
+}

@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Tree;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use App\Models\Tree;
 
 class TreeController extends Controller
 {
     public function index(): View
     {
         $trees = Tree::latest()->paginate(10);
+
         return view('trees.index', compact('trees'));
     }
 
@@ -28,6 +29,7 @@ class TreeController extends Controller
         ]);
         // TODO: Implement actual GEDCOM parsing and import logic
         $path = $request->file('gedcom')->store('gedcoms', 'private');
+
         return redirect()->route('trees.index')->with('success', 'GEDCOM file uploaded successfully.');
     }
 
@@ -43,18 +45,21 @@ class TreeController extends Controller
             'description' => ['nullable', 'string'],
         ]);
         $tree = Tree::create(array_merge($validated, ['user_id' => $request->user()->id]));
+
         return redirect()->route('trees.index')->with('success', 'Tree created successfully.');
     }
 
     public function show($id): View
     {
         $tree = Tree::findOrFail((int) $id);
+
         return view('trees.show', compact('tree'));
     }
 
     public function edit($id): View
     {
         $tree = Tree::findOrFail((int) $id);
+
         return view('trees.edit', compact('tree'));
     }
 
@@ -66,6 +71,7 @@ class TreeController extends Controller
             'description' => ['nullable', 'string'],
         ]);
         $tree->update($validated);
+
         return redirect()->route('trees.index')->with('success', 'Tree updated successfully.');
     }
 
@@ -73,6 +79,7 @@ class TreeController extends Controller
     {
         $tree = Tree::findOrFail((int) $id);
         $tree->delete();
+
         return redirect()->route('trees.index')->with('success', 'Tree deleted successfully.');
     }
-} 
+}

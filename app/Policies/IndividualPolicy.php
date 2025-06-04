@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\Individual;
+use App\Models\User;
 
 class IndividualPolicy
 {
@@ -28,4 +28,4 @@ class IndividualPolicy
     {
         return $user->id === $individual->user_id || $user->isAdmin();
     }
-} 
+}

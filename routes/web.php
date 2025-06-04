@@ -1,29 +1,29 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\TimelineEventController;
-use App\Http\Controllers\TimelineReportController;
-use App\Http\Controllers\TutorialController;
-use App\Http\Controllers\TimelinePreferencesController;
 use App\Http\Controllers\ActivityLogController;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Auth\ResetPasswordController;
-use App\Http\Controllers\TreeController;
-use App\Http\Controllers\GroupController;
-use App\Http\Controllers\IndividualController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\CommunityController;
-use App\Http\Controllers\ToolsController;
-use App\Http\Controllers\EventController;
-use App\Http\Controllers\MediaController;
-use App\Http\Controllers\StoryController;
-use App\Http\Controllers\SourceController;
-use App\Http\Controllers\HelpController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\CommunityController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\GroupController;
+use App\Http\Controllers\HelpController;
+use App\Http\Controllers\IndividualController;
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\Neo4jRelationshipController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SourceController;
+use App\Http\Controllers\StoryController;
+use App\Http\Controllers\TimelineEventController;
+use App\Http\Controllers\TimelinePreferencesController;
+use App\Http\Controllers\TimelineReportController;
+use App\Http\Controllers\ToolsController;
+use App\Http\Controllers\TreeController;
+use App\Http\Controllers\TutorialController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -53,6 +53,7 @@ Route::get('/dashboard', function () {
     $userTrees = [];
     // $recentIndividuals = \App\Models\Individual::orderByDesc('created_at')->limit(3)->get();
     $recentIndividuals = [];
+
     return view('dashboard', compact('totalMembers', 'generations', 'totalPhotos', 'activities', 'userTrees', 'recentIndividuals'));
 })->middleware(['auth'])->name('dashboard');
 
@@ -128,6 +129,7 @@ Route::post('/logout', function () {
     Auth::logout();
     request()->session()->invalidate();
     request()->session()->regenerateToken();
+
     return redirect('/');
 })->name('logout')->middleware('auth');
 

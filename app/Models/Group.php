@@ -22,4 +22,4 @@ class Group extends Model
     {
         return $this->belongsTo(Tree::class);
     }
-} 
+}

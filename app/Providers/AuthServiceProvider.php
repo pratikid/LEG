@@ -2,12 +2,11 @@
 
 namespace App\Providers;
 
-use App\Models\TimelineEvent;
-use App\Policies\TimelineEventPolicy;
 use App\Models\Individual;
+use App\Models\TimelineEvent;
 use App\Policies\IndividualPolicy;
+use App\Policies\TimelineEventPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -20,4 +19,4 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
     }
-} 
+}

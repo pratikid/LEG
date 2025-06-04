@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Media;
 use App\Models\Tree;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class MediaSeeder extends Seeder
 {
@@ -13,7 +12,9 @@ class MediaSeeder extends Seeder
     {
         $user = User::first();
         $trees = Tree::all();
-        if (!$user || $trees->isEmpty()) return;
+        if (! $user || $trees->isEmpty()) {
+            return;
+        }
         $media = [
             ['file_path' => 'photos/smith_family.jpg', 'description' => 'Smith family photo, 1985'],
             ['file_path' => 'documents/johnson_migration.pdf', 'description' => 'Migration document for Johnson family'],
@@ -27,4 +28,4 @@ class MediaSeeder extends Seeder
             }
         }
     }
-} 
+}

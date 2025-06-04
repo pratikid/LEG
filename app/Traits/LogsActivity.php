@@ -22,9 +22,9 @@ trait LogsActivity
         });
     }
 
-    public function logActivity(string $action, array $oldValues = null, array $newValues = null)
+    public function logActivity(string $action, ?array $oldValues = null, ?array $newValues = null)
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return;
         }
 
@@ -49,4 +49,4 @@ trait LogsActivity
             ->where('model_id', $this->getKey())
             ->orderBy('created_at', 'desc');
     }
-} 
+}

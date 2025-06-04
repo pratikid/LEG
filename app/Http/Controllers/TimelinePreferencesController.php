@@ -25,7 +25,7 @@ class TimelinePreferencesController extends Controller
 
         $user = Auth::user();
         $preferences = $user->preferences ?? [];
-        
+
         // Update preferences
         $preferences = array_merge($preferences, [
             'node_color' => $validated['node_color'],
@@ -41,4 +41,4 @@ class TimelinePreferencesController extends Controller
 
         return redirect()->back()->with('success', 'Timeline preferences updated successfully.');
     }
-} 
+}

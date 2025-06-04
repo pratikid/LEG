@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\TimelineEvent;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class TimelineReportController extends Controller
 {
@@ -20,8 +20,8 @@ class TimelineReportController extends Controller
             $query->where('user_id', Auth::id())
                 ->orWhere('is_public', true);
         })
-        ->orderBy('event_date', 'desc')
-        ->get();
+            ->orderBy('event_date', 'desc')
+            ->get();
 
         $pdf = PDF::loadView('timeline.reports.timeline', [
             'events' => $events,
@@ -34,7 +34,7 @@ class TimelineReportController extends Controller
 
     public function generateEventReport(TimelineEvent $timelineEvent)
     {
-        if (!$timelineEvent->is_public && $timelineEvent->user_id !== Auth::id()) {
+        if (! $timelineEvent->is_public && $timelineEvent->user_id !== Auth::id()) {
             abort(403);
         }
 
@@ -55,9 +55,9 @@ class TimelineReportController extends Controller
             $query->where('user_id', Auth::id())
                 ->orWhere('is_public', true);
         })
-        ->where('event_type', $type)
-        ->orderBy('event_date', 'desc')
-        ->get();
+            ->where('event_type', $type)
+            ->orderBy('event_date', 'desc')
+            ->get();
 
         $pdf = PDF::loadView('timeline.reports.type', [
             'events' => $events,

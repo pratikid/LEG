@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TimelineEventRequest;
 use App\Models\TimelineEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Requests\TimelineEventRequest;
 
 class TimelineEventController extends Controller
 {
@@ -16,7 +16,7 @@ class TimelineEventController extends Controller
         // Only apply authorization to actions that modify data
         $this->middleware('auth')->except(['index', 'show']);
         $this->authorizeResource(TimelineEvent::class, 'timelineEvent', [
-            'except' => ['index', 'show']
+            'except' => ['index', 'show'],
         ]);
     }
 
@@ -28,7 +28,7 @@ class TimelineEventController extends Controller
         $query = TimelineEvent::query();
 
         // For guests and non-admin users, only show public events or their own events
-        if (!$request->user() || !$request->user()->is_admin) {
+        if (! $request->user() || ! $request->user()->is_admin) {
             $query->where(function ($q) use ($request) {
                 $q->where('is_public', true);
                 if ($request->user()) {
@@ -107,7 +107,6 @@ class TimelineEventController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     * @param TimelineEventRequest $request
      */
     public function store(TimelineEventRequest $request): \Illuminate\Http\RedirectResponse
     {
@@ -115,6 +114,7 @@ class TimelineEventController extends Controller
         $validated['user_id'] = Auth::id();
         $validated['is_public'] = $request->boolean('is_public');
         TimelineEvent::create($validated);
+
         return redirect()->route('timeline.index')
             ->with('success', 'Timeline event created successfully.');
     }
@@ -125,7 +125,7 @@ class TimelineEventController extends Controller
     public function show(TimelineEvent $timelineEvent): \Illuminate\Contracts\View\View
     {
         // Check if the event is public or belongs to the authenticated user
-        if (!$timelineEvent->is_public && (!$timelineEvent->user_id || $timelineEvent->user_id !== Auth::id())) {
+        if (! $timelineEvent->is_public && (! $timelineEvent->user_id || $timelineEvent->user_id !== Auth::id())) {
             abort(403, 'This event is private.');
         }
 
@@ -142,13 +142,13 @@ class TimelineEventController extends Controller
 
     /**
      * Update the specified resource in storage.
-     * @param TimelineEventRequest $request
      */
     public function update(TimelineEventRequest $request, TimelineEvent $timelineEvent): \Illuminate\Http\RedirectResponse
     {
         $validated = $request->validated();
         $validated['is_public'] = $request->boolean('is_public');
         $timelineEvent->update($validated);
+
         return redirect()->route('timeline.index')
             ->with('success', 'Timeline event updated successfully.');
     }

@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Story;
 use App\Models\Tree;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class StorySeeder extends Seeder
 {
@@ -13,7 +12,9 @@ class StorySeeder extends Seeder
     {
         $user = User::first();
         $trees = Tree::all();
-        if (!$user || $trees->isEmpty()) return;
+        if (! $user || $trees->isEmpty()) {
+            return;
+        }
         $stories = [
             ['title' => 'The Smith Reunion', 'content' => 'A story about the Smith family reunion in 1990.'],
             ['title' => 'Johnson Migration', 'content' => 'How the Johnsons moved from Europe to America.'],
@@ -27,4 +28,4 @@ class StorySeeder extends Seeder
             }
         }
     }
-} 
+}

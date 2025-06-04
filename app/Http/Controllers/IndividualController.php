@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Individual;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
-use App\Models\Individual;
 
 class IndividualController extends Controller
 {
@@ -17,6 +17,7 @@ class IndividualController extends Controller
     public function index(): View
     {
         $individuals = Individual::latest()->paginate(10);
+
         return view('individuals.index', compact('individuals'));
     }
 
@@ -30,6 +31,7 @@ class IndividualController extends Controller
         if ($trees->isEmpty()) {
             $error = 'No trees available. Please create a tree first.';
         }
+
         return view('individuals.create', compact('trees', 'error'));
     }
 
@@ -46,6 +48,7 @@ class IndividualController extends Controller
             'tree_id' => ['required', 'integer', 'exists:trees,id'],
         ]);
         Individual::create($validated);
+
         return redirect()->route('individuals.index')->with('success', 'Individual created successfully.');
     }
 
@@ -60,6 +63,7 @@ class IndividualController extends Controller
         if ($allIndividuals->isEmpty() || ($allIndividuals->count() === 1 && $allIndividuals->first()->id === $individual->id)) {
             $error = 'No other individuals available for relationships.';
         }
+
         return view('individuals.show', compact('individual', 'allIndividuals', 'error'));
     }
 
@@ -69,6 +73,7 @@ class IndividualController extends Controller
     public function edit($id): View
     {
         $individual = Individual::findOrFail((int) $id);
+
         return view('individuals.edit', compact('individual'));
     }
 
@@ -86,6 +91,7 @@ class IndividualController extends Controller
             'tree_id' => ['required', 'integer', 'exists:trees,id'],
         ]);
         $individual->update($validated);
+
         return redirect()->route('individuals.index')->with('success', 'Individual updated successfully.');
     }
 
@@ -96,6 +102,7 @@ class IndividualController extends Controller
     {
         $individual = Individual::findOrFail((int) $id);
         $individual->delete();
+
         return redirect()->route('individuals.index')->with('success', 'Individual deleted successfully.');
     }
 

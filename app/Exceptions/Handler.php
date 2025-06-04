@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace App\Exceptions;
 
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Throwable;
 use Illuminate\Database\QueryException;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Throwable;
 
 class Handler extends ExceptionHandler
 {
@@ -55,6 +53,7 @@ class Handler extends ExceptionHandler
                 ], 500);
             }
         }
+
         return parent::render($request, $exception);
     }
-} 
+}

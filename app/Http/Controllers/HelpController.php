@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class HelpController extends Controller
@@ -13,12 +12,14 @@ class HelpController extends Controller
     {
         return view('help.user-guide');
     }
+
     public function tutorials(): View
     {
         return view('help.tutorials');
     }
+
     public function support(): View
     {
         return view('help.support');
     }
-} 
+}

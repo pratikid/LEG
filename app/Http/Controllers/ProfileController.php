@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
 {
@@ -20,7 +18,7 @@ class ProfileController extends Controller
         $user = Auth::user();
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'profile_photo' => ['nullable', 'image', 'max:2048'],
         ]);
 
@@ -44,7 +42,7 @@ class ProfileController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return back()->withErrors(['current_password' => 'Current password is incorrect.']);
         }
 
@@ -71,6 +69,7 @@ class ProfileController extends Controller
         $user->delete();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect('/')->with('success', 'Your account has been deleted.');
     }
 
@@ -83,4 +82,4 @@ class ProfileController extends Controller
     {
         return view('profile.preferences');
     }
-} 
+}

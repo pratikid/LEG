@@ -2,16 +2,18 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Tree;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class TreeSeeder extends Seeder
 {
     public function run(): void
     {
         $user = User::first();
-        if (!$user) return;
+        if (! $user) {
+            return;
+        }
         $trees = [
             ['name' => 'Smith Family Tree', 'description' => 'Descendants of John Smith', 'user_id' => $user->id],
             ['name' => 'Johnson Lineage', 'description' => 'Johnson family roots and branches', 'user_id' => $user->id],
@@ -21,4 +23,4 @@ class TreeSeeder extends Seeder
             Tree::create($tree);
         }
     }
-} 
+}

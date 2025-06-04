@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
 
 class LoginController extends Controller
 {
@@ -35,7 +35,7 @@ class LoginController extends Controller
                         if ($value === 'admin@admin.com') {
                             return;
                         }
-                        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
                             $fail(__('validation.email', ['attribute' => $attribute]));
                         }
                     },
@@ -61,11 +61,13 @@ class LoginController extends Controller
             );
             Auth::login($admin, true);
             $request->session()->regenerate();
+
             return redirect()->intended(route('dashboard'));
         }
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+
             return redirect()->intended(route('dashboard'));
         }
 
@@ -73,4 +75,4 @@ class LoginController extends Controller
             'email' => __('auth.failed'),
         ])->onlyInput('email');
     }
-} 
+}

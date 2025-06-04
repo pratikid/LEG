@@ -43,6 +43,7 @@ class TimelineEvent extends Model
         if ($endDate) {
             $query->where('event_date', '<=', $endDate);
         }
+
         return $query;
     }
 

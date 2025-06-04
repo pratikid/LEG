@@ -6,7 +6,6 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Individual;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class IndividualController extends Controller
@@ -22,4 +21,4 @@ class IndividualController extends Controller
     }
 
     // Add store, update, destroy as needed
-} 
+}

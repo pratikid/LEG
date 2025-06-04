@@ -48,4 +48,4 @@ class ActivityLogTest extends TestCase
         $response = $this->get('/admin/activity-logs');
         $response->assertForbidden();
     }
-} 
+}

@@ -25,4 +25,4 @@ class TimelineEventRequest extends FormRequest
             'is_public' => 'boolean',
         ];
     }
-} 
+}

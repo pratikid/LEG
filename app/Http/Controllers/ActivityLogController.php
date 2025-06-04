@@ -76,7 +76,7 @@ class ActivityLogController extends Controller
 
         return response()->streamDownload(function () use ($logs) {
             $file = fopen('php://output', 'w');
-            
+
             // Add headers
             fputcsv($file, [
                 'ID',
@@ -88,7 +88,7 @@ class ActivityLogController extends Controller
                 'New Values',
                 'IP Address',
                 'User Agent',
-                'Created At'
+                'Created At',
             ]);
 
             // Add data
@@ -103,11 +103,11 @@ class ActivityLogController extends Controller
                     json_encode($log->new_values),
                     $log->ip_address,
                     $log->user_agent,
-                    $log->created_at
+                    $log->created_at,
                 ]);
             }
 
             fclose($file);
         }, 'activity-logs.csv');
     }
-} 
+}

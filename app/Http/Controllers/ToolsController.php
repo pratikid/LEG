@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ToolsController extends Controller
@@ -13,12 +12,14 @@ class ToolsController extends Controller
     {
         return view('tools.templates');
     }
+
     public function export(): View
     {
         return view('tools.export');
     }
+
     public function reports(): View
     {
         return view('tools.reports');
     }
-} 
+}

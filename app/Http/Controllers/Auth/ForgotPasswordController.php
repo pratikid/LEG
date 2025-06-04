@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class ForgotPasswordController extends Controller
 {
@@ -29,4 +29,4 @@ class ForgotPasswordController extends Controller
             ? back()->with(['status' => __($status)])
             : back()->withErrors(['email' => __($status)]);
     }
-} 
+}

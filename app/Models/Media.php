@@ -17,4 +17,4 @@ class Media extends Model
         'user_id',
         'tree_id',
     ];
-} 
+}

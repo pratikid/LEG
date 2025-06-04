@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Group;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
-use App\Models\Group;
 
 class GroupController extends Controller
 {
     public function index(): View
     {
         $groups = Group::latest()->paginate(10);
+
         return view('groups.index', compact('groups'));
     }
 
@@ -24,6 +25,7 @@ class GroupController extends Controller
         if ($trees->isEmpty()) {
             $error = 'No trees available. Please create a tree first.';
         }
+
         return view('groups.create', compact('trees', 'error'));
     }
 
@@ -35,18 +37,21 @@ class GroupController extends Controller
             'tree_id' => ['required', 'integer', 'exists:trees,id'],
         ]);
         Group::create($validated);
+
         return redirect()->route('groups.index')->with('success', 'Group created successfully.');
     }
 
     public function show(int $id): View
     {
         $group = Group::findOrFail($id);
+
         return view('groups.show', compact('group'));
     }
 
     public function edit(int $id): View
     {
         $group = Group::findOrFail($id);
+
         return view('groups.edit', compact('group'));
     }
 
@@ -59,6 +64,7 @@ class GroupController extends Controller
             'tree_id' => ['required', 'integer', 'exists:trees,id'],
         ]);
         $group->update($validated);
+
         return redirect()->route('groups.index')->with('success', 'Group updated successfully.');
     }
 
@@ -66,6 +72,7 @@ class GroupController extends Controller
     {
         $group = Group::findOrFail($id);
         $group->delete();
+
         return redirect()->route('groups.index')->with('success', 'Group deleted successfully.');
     }
-} 
+}

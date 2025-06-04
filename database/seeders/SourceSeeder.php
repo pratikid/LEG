@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Source;
 use App\Models\Tree;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class SourceSeeder extends Seeder
 {
@@ -13,7 +12,9 @@ class SourceSeeder extends Seeder
     {
         $user = User::first();
         $trees = Tree::all();
-        if (!$user || $trees->isEmpty()) return;
+        if (! $user || $trees->isEmpty()) {
+            return;
+        }
         $sources = [
             ['title' => 'Birth Certificate', 'citation' => 'State of NY, 1950, John Smith'],
             ['title' => 'Marriage License', 'citation' => 'County of LA, 1975, Michael Johnson'],
@@ -27,4 +28,4 @@ class SourceSeeder extends Seeder
             }
         }
     }
-} 
+}

@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
         ]);
         // User::factory(10)->create();
         // Optionally create a test user if not present
-        if (!\App\Models\User::where('email', 'test@example.com')->exists()) {
+        if (! \App\Models\User::where('email', 'test@example.com')->exists()) {
             \App\Models\User::factory()->create([
                 'name' => 'Test User',
                 'email' => 'test@example.com',

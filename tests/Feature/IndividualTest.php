@@ -55,4 +55,4 @@ class IndividualTest extends TestCase
             'id' => $individual->id,
         ]);
     }
-} 
+}

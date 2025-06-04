@@ -16,17 +16,17 @@ class TutorialController extends Controller
     {
         $user = Auth::user();
         $tutorial = $request->input('tutorial');
-        
+
         // Store the completed tutorial in the user's preferences
         $completedTutorials = $user->preferences['completed_tutorials'] ?? [];
         $completedTutorials[] = $tutorial;
-        
+
         $user->preferences = array_merge($user->preferences ?? [], [
-            'completed_tutorials' => array_unique($completedTutorials)
+            'completed_tutorials' => array_unique($completedTutorials),
         ]);
-        
+
         $user->save();
-        
+
         return response()->json(['success' => true]);
     }
 
@@ -34,10 +34,10 @@ class TutorialController extends Controller
     {
         $user = Auth::user();
         $user->preferences = array_merge($user->preferences ?? [], [
-            'completed_tutorials' => []
+            'completed_tutorials' => [],
         ]);
         $user->save();
-        
+
         return response()->json(['success' => true]);
     }
-} 
+}

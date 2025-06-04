@@ -54,4 +54,4 @@ class CacheService
     {
         return $this->cache->has($key);
     }
-} 
+}

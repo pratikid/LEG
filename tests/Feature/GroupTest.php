@@ -55,4 +55,4 @@ class GroupTest extends TestCase
             'id' => $group->id,
         ]);
     }
-} 
+}

@@ -30,10 +30,10 @@ class ActivityLog extends Model
 
     public function getModelAttribute()
     {
-        if (!$this->model_type || !$this->model_id) {
+        if (! $this->model_type || ! $this->model_id) {
             return null;
         }
 
         return $this->model_type::find($this->model_id);
     }
-} 
+}

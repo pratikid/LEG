@@ -75,4 +75,4 @@ class TimelineEventTest extends TestCase
         $response = $this->get('/timeline');
         $response->assertStatus(200);
     }
-} 
+}
