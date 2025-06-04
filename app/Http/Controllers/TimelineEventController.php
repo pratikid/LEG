@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Models\TimelineEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\TimelineEventRequest;
 
 class TimelineEventController extends Controller
 {
@@ -20,7 +23,7 @@ class TimelineEventController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request): \Illuminate\Contracts\View\View
     {
         $query = TimelineEvent::query();
 
@@ -97,30 +100,21 @@ class TimelineEventController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): \Illuminate\Contracts\View\View
     {
         return view('timeline.create');
     }
 
     /**
      * Store a newly created resource in storage.
+     * @param TimelineEventRequest $request
      */
-    public function store(Request $request)
+    public function store(TimelineEventRequest $request): \Illuminate\Http\RedirectResponse
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'event_date' => 'required|date',
-            'event_type' => 'required|in:birth,death,marriage,divorce,immigration,other',
-            'location' => 'nullable|string|max:255',
-            'is_public' => 'boolean',
-        ]);
-
+        $validated = $request->validated();
         $validated['user_id'] = Auth::id();
         $validated['is_public'] = $request->boolean('is_public');
-
         TimelineEvent::create($validated);
-
         return redirect()->route('timeline.index')
             ->with('success', 'Timeline event created successfully.');
     }
@@ -128,7 +122,7 @@ class TimelineEventController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(TimelineEvent $timelineEvent)
+    public function show(TimelineEvent $timelineEvent): \Illuminate\Contracts\View\View
     {
         // Check if the event is public or belongs to the authenticated user
         if (!$timelineEvent->is_public && (!$timelineEvent->user_id || $timelineEvent->user_id !== Auth::id())) {
@@ -141,29 +135,20 @@ class TimelineEventController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(TimelineEvent $timelineEvent)
+    public function edit(TimelineEvent $timelineEvent): \Illuminate\Contracts\View\View
     {
         return view('timeline.edit', compact('timelineEvent'));
     }
 
     /**
      * Update the specified resource in storage.
+     * @param TimelineEventRequest $request
      */
-    public function update(Request $request, TimelineEvent $timelineEvent)
+    public function update(TimelineEventRequest $request, TimelineEvent $timelineEvent): \Illuminate\Http\RedirectResponse
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'event_date' => 'required|date',
-            'event_type' => 'required|in:birth,death,marriage,divorce,immigration,other',
-            'location' => 'nullable|string|max:255',
-            'is_public' => 'boolean',
-        ]);
-
+        $validated = $request->validated();
         $validated['is_public'] = $request->boolean('is_public');
-
         $timelineEvent->update($validated);
-
         return redirect()->route('timeline.index')
             ->with('success', 'Timeline event updated successfully.');
     }
@@ -171,7 +156,7 @@ class TimelineEventController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(TimelineEvent $timelineEvent)
+    public function destroy(TimelineEvent $timelineEvent): \Illuminate\Http\RedirectResponse
     {
         $timelineEvent->delete();
 
