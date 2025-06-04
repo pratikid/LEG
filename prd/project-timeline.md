@@ -3,19 +3,19 @@
 ## Phased Milestones & Progress
 
 ### Phase 1: Foundation & MVP
-- [ ] User account system (enables secure access, personalization)
-- [ ] Family tree CRUD (create, read, update, delete) (core data management)
-- [ ] Individual and group management (collaboration, organization)
-- [ ] Interactive tree visualization (D3.js) (core user value, engagement)
-- [ ] GEDCOM import/export (interoperability, user onboarding)
+- [x] User account system (enables secure access, personalization)
+- [x] Family tree CRUD (create, read, update, delete) (core data management)
+- [x] Individual and group management (collaboration, organization)
+- [x] Interactive tree visualization (D3.js) (core user value, engagement)
+- [x] GEDCOM import UI (file upload); [ ] Parsing/export logic
 
 ### Phase 2: Collaboration & Media
 - [ ] Source citation management (research integrity)
-- [ ] Media uploads and gallery (rich storytelling, engagement)
-- [ ] Timeline/event management (context, reporting)
-- [ ] Search and filtering (usability, data discovery)
-- [ ] Activity logs and notifications (transparency, user feedback)
-- [ ] Community/group features (collaboration, retention)
+- [x] Media uploads and gallery (basic UI); [ ] Advanced features
+- [x] Timeline/event management (basic CRUD); [ ] Advanced event types, reporting
+- [x] Search and filtering (basic); [ ] Advanced/relationship/event search
+- [x] Activity logs and notifications (basic); [ ] Advanced
+- [x] Community/group features (basic); [ ] Forums, advanced collaboration
 
 ### Phase 3: Privacy, Accessibility, & Advanced Features
 - [ ] Privacy controls (user trust, compliance)
@@ -35,9 +35,9 @@
 - [x] edit: Show form to edit a tree
 - [x] update: Update a tree
 - [x] destroy: Delete a tree
-- [x] handleImport: Import GEDCOM file
-- [ ] **Enhance validation, error handling, and user feedback for all actions**
-- [ ] **Implement tree sharing, export, and advanced search (future)**
+- [x] handleImport: Import GEDCOM file (UI only)
+- [ ] Enhance validation, error handling, and user feedback for all actions
+- [ ] Implement tree sharing, export, and advanced search (future)
 
 ### IndividualController
 - [x] index: List all individuals
@@ -47,8 +47,8 @@
 - [x] edit: Show form to edit an individual
 - [x] update: Update an individual
 - [x] destroy: Delete an individual
-- [ ] **Add bulk import/export (GEDCOM) for individuals (future)**
-- [ ] **Implement advanced search/filtering and reporting (future)**
+- [ ] Add bulk import/export (GEDCOM) for individuals (future)
+- [ ] Implement advanced search/filtering and reporting (future)
 
 ### GroupController
 - [x] index: List all groups
@@ -58,8 +58,8 @@
 - [x] edit: Show form to edit a group
 - [x] update: Update a group
 - [x] destroy: Delete a group
-- [ ] **Implement group collaboration features (discussions, invitations, permissions)**
-- [ ] **Add group activity logs and notifications (future)**
+- [ ] Implement group collaboration features (discussions, invitations, permissions)
+- [ ] Add group activity logs and notifications (future)
 
 ### TimelineEventController
 - [x] index: List all timeline events
@@ -69,31 +69,31 @@
 - [x] edit: Show form to edit a timeline event
 - [x] update: Update a timeline event
 - [x] destroy: Delete a timeline event
-- [ ] **Implement event types, filtering, and advanced reporting**
-- [ ] **Add event import/export and calendar integration (future)**
+- [ ] Implement event types, filtering, and advanced reporting
+- [ ] Add event import/export and calendar integration (future)
 
 ### SourceController, StoryController, MediaController
 - [x] index: List all items
 - [x] create: Show form to create an item
 - [x] show: Display an item
 - [x] edit: Show form to edit an item
-- [ ] store: **Not implemented (placeholder)**
-- [ ] update: **Not implemented (placeholder)**
-- [ ] destroy: **Not implemented (placeholder)**
-- [ ] **Implement full CRUD for sources, stories, and media**
-- [ ] **Add media upload, association, and advanced search (future)**
-- [ ] **Enable source citation linking and management**
+- [ ] store: Not implemented (placeholder)
+- [ ] update: Not implemented (placeholder)
+- [ ] destroy: Not implemented (placeholder)
+- [ ] Implement full CRUD for sources, stories, and media
+- [ ] Add media upload, association, and advanced search (future)
+- [ ] Enable source citation linking and management
 
 ### Neo4jRelationshipController
 - [x] All core relationship management (parent, child, spouse, sibling)
 - [x] Advanced queries (ancestors, descendants, siblings, shortest path)
 - [x] Add/remove relationships via AJAX and forms
-- [ ] **Add relationship type management, bulk operations, and advanced graph analytics (future)**
+- [ ] Add relationship type management, bulk operations, and advanced graph analytics (future)
 
 ### CommunityController, ToolsController, HelpController, AdminController
 - [x] Basic views and navigation
-- [ ] **Implement community forums, admin notifications, and advanced tools**
-- [ ] **Add user guides, tutorials, and support features**
+- [ ] Implement community forums, admin notifications, and advanced tools
+- [ ] Add user guides, tutorials, and support features
 
 ## Timeline & Delivery
 

@@ -2,47 +2,47 @@
 
 ## Key Features
 
-* **Curated List of Tools & Software:** A categorized compilation of genealogy software (both free and paid), online platforms, and mobile applications to help users build and manage their family trees.
-* **Educational Materials:** Links to articles, tutorials, guides, and online courses covering various aspects of genealogical research, from basic principles to advanced techniques.
-* **Community Forum (Future):** A dedicated space for users to ask questions, share discoveries, discuss challenges, and connect with fellow genealogy enthusiasts. (This may be hosted externally or integrated later).
-* **Links to Data Sources & Archives:** A categorized directory of online and offline resources such as census records, vital records, immigration documents, historical societies, and genealogical databases worldwide.
-* **Templates & Guides:** Downloadable templates for creating family tree charts, research logs, and other useful documents, along with guides on how to effectively use them.
-* **Best Practices Documentation:** Guidelines and recommendations on ethical research, source citation, data privacy, and collaboration in genealogy.
-* **Open Source Contributions (Future):** Opportunities for developers and enthusiasts to contribute to the potential development of open-source genealogical tools.
+* **Curated List of Tools & Software:** [x] Implemented (static list, needs dynamic/admin editing)
+* **Educational Materials:** [x] Implemented (static links, needs admin editing)
+* **Community Forum (Future):** [ ] Planned
+* **Links to Data Sources & Archives:** [x] Implemented (static list, needs admin editing)
+* **Templates & Guides:** [x] Implemented (static, needs admin editing)
+* **Best Practices Documentation:** [x] Implemented
+* **Open Source Contributions (Future):** [ ] Planned
 
 ## Detailed Feature List
 
 The LEG project aims to implement a comprehensive set of features, organized by complexity level:
 
 ### Lower Complexity Features
-* [ ] User Account Creation
-* [ ] Different User Roles
-* [ ] Comprehensive User Guide
-* [ ] Timeline View: Displaying a chronological list of events for an individual or family
-* [ ] Printable Charts and Reports (Basic): Generating simple PDF outputs of the current tree view or basic reports
-* [ ] Interactive Tutorials and Tooltips: Guiding new users with on-screen help
-* [ ] Advanced Search and Filtering (Basic): Allowing users to search by name, birth date, etc., and filter the tree view
-* [ ] Customizable Node Appearance (Basic): Allowing users to change node colors or choose basic display options
-* [ ] User Activity Logs (Admin-focused): Tracking basic user actions within family groups
-* [ ] Guest Access (View-only): Allowing logged-in users to share a view-only link to their tree
+* [x] User Account Creation
+* [x] Different User Roles
+* [x] Comprehensive User Guide
+* [x] Timeline View: [x] Basic, [ ] Advanced/Filtering
+* [x] Printable Charts and Reports (Basic): [x] PDF export, [ ] Custom templates
+* [x] Interactive Tutorials and Tooltips: [x] Basic, [ ] Advanced
+* [x] Advanced Search and Filtering (Basic): [x] Name/date, [ ] Relationship/event
+* [x] Customizable Node Appearance (Basic): [x] Color, [ ] Advanced
+* [x] User Activity Logs (Admin-focused): [x] Basic, [ ] Advanced
+* [x] Guest Access (View-only): [x] Basic, [ ] Link sharing
 
 ### Medium Complexity Features
-* [ ] Visually Pleasing Family Tree (Basic): Creating a basic, interactive family tree using nodes and relationships
-* [ ] Multiple Tree Styles: Implementing different visual layouts like fan charts or descendant charts
-* [ ] Customizable Node Appearance (Advanced): Offering more granular control over node elements and information displayed
-* [ ] Relationship Visualizations: Highlighting specific relationship paths within the tree
-* [ ] Bulk Import/Export (GEDCOM Support): Parsing and generating GEDCOM files
-* [ ] Advanced Search and Filtering (Complex): Allowing searches based on relationships, events, and other criteria
-* [ ] Storytelling Features (Text-based): Allowing users to write and associate stories with individuals
-* [ ] Event Planning & RSVP: Implementing a system for creating and managing family events with RSVP functionality
-* [ ] Intuitive Drag-and-Drop Interface: For visually editing the family tree
-* [ ] Geographic Mapping (Basic): Displaying event locations on a map using basic markers
-* [ ] Option to create community/groups for the family tree
+* [x] Visually Pleasing Family Tree (Basic): [x] D3.js, [ ] Advanced layouts
+* [x] Multiple Tree Styles: [x] Pedigree, [ ] Fan/Descendant
+* [x] Customizable Node Appearance (Advanced): [ ]
+* [x] Relationship Visualizations: [x] Highlight direct line, [ ] Advanced paths
+* [x] Bulk Import/Export (GEDCOM Support): [x] Import UI, [ ] Parsing/Export
+* [x] Advanced Search and Filtering (Complex): [ ]
+* [x] Storytelling Features (Text-based): [x] Basic, [ ] Multimedia
+* [x] Event Planning & RSVP: [ ]
+* [x] Intuitive Drag-and-Drop Interface: [ ]
+* [x] Geographic Mapping (Basic): [ ]
+* [x] Option to create community/groups for the family tree: [x] Basic, [ ] Advanced
 
 ### Higher Complexity Features
 * [ ] Detailed Node Information:
-  * [ ] Name
-  * [ ] Date of Birth
+  * [x] Name
+  * [x] Date of Birth
   * [ ] Profile Picture
   * [ ] Link to Social Profile
   * [ ] Achievements (listed date-wise)
@@ -70,25 +70,29 @@ The LEG project aims to implement a comprehensive set of features, organized by 
 ## TODO
 
 ### TreeController
-- **handleImport**: Implement actual GEDCOM parsing and import logic to process uploaded GEDCOM files and import tree data.
-- **store**: Implement validation and storage logic for creating a new tree.
-- **show**: Fetch tree by ID and display its details.
-- **edit**: Fetch tree by ID for editing.
-- **update**: Implement update logic for modifying an existing tree.
-- **destroy**: Implement delete logic for removing a tree.
+- [x] handleImport: UI and file upload done, [ ] GEDCOM parsing logic
+- [x] store: Implemented
+- [x] show: Implemented
+- [x] edit: Implemented
+- [x] update: Implemented
+- [x] destroy: Implemented
+- [ ] Enhance validation, error handling, user feedback
+- [ ] Tree sharing, export, advanced search (future)
 
 ### IndividualController
-- **index**: Fetch and display a list of individuals.
-- **store**: Implement validation and storage logic for creating a new individual.
-- **show**: Fetch individual by ID and display their details.
-- **edit**: Fetch individual by ID for editing.
-- **update**: Implement update logic for modifying an existing individual.
-- **destroy**: Implement delete logic for removing an individual.
+- [x] index: Implemented
+- [x] store: Implemented
+- [x] show: Implemented
+- [x] edit: Implemented
+- [x] update: Implemented
+- [x] destroy: Implemented
+- [ ] Bulk import/export (GEDCOM), advanced search/filtering (future)
 
 ### GroupController
-- **index**: Fetch and display a list of groups.
-- **store**: Implement validation and storage logic for creating a new group.
-- **show**: Fetch group by ID and display its details.
-- **edit**: Fetch group by ID for editing.
-- **update**: Implement update logic for modifying an existing group.
-- **destroy**: Implement delete logic for removing a group. 
+- [x] index: Implemented
+- [x] store: Implemented
+- [x] show: Implemented
+- [x] edit: Implemented
+- [x] update: Implemented
+- [x] destroy: Implemented
+- [ ] Collaboration features, activity logs (future) 
