@@ -1,5 +1,7 @@
 # Features
 
+> **GEDCOM 5.5.5 Compliance:** See [GEDCOM_COMPLIANCE.md](./GEDCOM_COMPLIANCE.md) for a detailed compliance checklist and status. Sources/notes import/export is planned for future implementation.
+
 ## Key Features
 
 * **Curated List of Tools & Software:** [x] Implemented (static list, needs dynamic/admin editing)

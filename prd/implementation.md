@@ -75,6 +75,7 @@
   - Eloquent model events ensure that changes in Individuals are reflected in Neo4j.
 - **GEDCOM Support:**
   - Import/export of GEDCOM files is supported for interoperability with other genealogy tools.
+  - **Note:** Handling of sources and notes in GEDCOM import/export is planned for a future release. The parser structure supports these records, but import/export logic does not yet process or link them.
 
 ## Testing & Quality
 

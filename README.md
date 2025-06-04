@@ -1,3 +1,20 @@
+[![License](https://img.shields.io/github/license/pratikid/LEG)](LICENSE)
+<!-- [![Build Status](https://img.shields.io/github/actions/workflow/status/pratikid/LEG/ci.yml?branch=main)](link-to-ci) -->
+![PHP](https://img.shields.io/badge/php-%3E%3D8.4-blue)
+![Laravel](https://img.shields.io/badge/Laravel-12.x-red)
+![Docker](https://img.shields.io/badge/Docker-ready-blue)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+![Open Source Love](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)
+[![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
+![Family History Explorer](https://img.shields.io/badge/Family%20History-Explorer-blueviolet)
+[![GEDCOM 5.5.5 | Partial Sources/Notes](https://img.shields.io/badge/GEDCOM-5.5.5%20%7C%20Partial%20Sources%2FNotes-blue)](docs/GEDCOM_COMPLIANCE.md)
+
+<!--
+Dynamic badges (build status, tests, coverage, code quality, contributors, etc.) will be added in the future when CI/CD and integrations are set up.
+-->
+
+LEG supports GEDCOM 5.5.5 (latest), with partial compliance: sources/notes import/export planned for a future release. See compliance report for details.
+
 # LEG - Lineage Exploration and Genealogy
 
 <!-- 

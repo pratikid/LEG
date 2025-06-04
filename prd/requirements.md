@@ -12,6 +12,7 @@
   - Visual, interactive exploration of family relationships increases engagement and insight.
 - **GEDCOM Import/Export:**
   - Ensures interoperability with other genealogy tools and platforms, reducing vendor lock-in.
+  - **Note:** Handling of sources and notes in GEDCOM import/export is planned for a future release. The current implementation parses these records but does not yet import or link them.
 - **Source Citation and Management:**
   - Promotes research integrity and trust by allowing users to document sources for facts and relationships.
 - **Media Uploads and Association:**

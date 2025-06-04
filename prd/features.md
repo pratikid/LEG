@@ -11,6 +11,7 @@ LEG is designed to provide a comprehensive, extensible, and user-friendly geneal
 - [x] Templates & Research Guides: Accelerate research and documentation with ready-to-use templates.
 - [x] Best Practices Documentation: Promote data integrity, privacy, and research rigor.
 - [ ] Open Source Contributions: Encourage innovation and transparency by welcoming community code and feature contributions.
+- [ ] **GEDCOM Source/Note Handling:** Parsing is supported, but import/export and linking of sources/notes is planned for future implementation.
 
 ## Detailed Feature List
 
@@ -29,12 +30,12 @@ LEG is designed to provide a comprehensive, extensible, and user-friendly geneal
 - [ ] Notification Bar (Planned): Keep users informed of updates and alerts.
 
 ### Medium Complexity Features (Growth & Collaboration)
-- [ ] Source Citation & Management: Attach sources to facts for research credibility.
+- [ ] Source Citation & Management: Attach sources to facts for research credibility. **(GEDCOM source/note linking: Future)**
 - [x] Interactive Family Tree (D3.js): [x] Basic, [ ] Advanced layouts
 - [x] Multiple Tree Styles: [x] Pedigree, [ ] Fan/Descendant
 - [x] Advanced Node Customization: [ ]
 - [x] Relationship Visualizations: [x] Highlight direct line, [ ] Advanced paths
-- [x] Bulk Import/Export (GEDCOM): [x] Import UI, [ ] Parsing/Export
+- [x] Bulk Import/Export (GEDCOM): [x] Import UI, [ ] Parsing/Export, [ ] Source/Note linking (Future)
 - [x] Advanced Search/Filtering: [ ]
 - [x] Storytelling Features: [x] Basic, [ ] Multimedia
 - [ ] Event Planning & RSVP: Organize reunions, meetings, or virtual events.
@@ -63,10 +64,11 @@ LEG is designed to provide a comprehensive, extensible, and user-friendly geneal
 - Features are designed to be modular and extensible, allowing for rapid addition of new capabilities as user needs evolve.
 - The codebase supports integration with third-party APIs (DNA, archives, mapping) and open-source contributions.
 - Future features will be prioritized based on user feedback, analytics, and community input.
+- **Note:** Handling of sources and notes in GEDCOM import/export is planned for a future release.
 
 ## TODO
 
 - [x] Complete controller actions for Tree, Individual, and Group management (CRUD)
-- [ ] Finalize GEDCOM import/export (parsing, export logic)
+- [ ] Finalize GEDCOM import/export (parsing, export logic, source/note linking: Future)
 - [ ] Expand media and storytelling features (CRUD, multimedia)
 - [ ] Add advanced search, privacy, and collaboration controls 

@@ -7,10 +7,10 @@
 - [x] Family tree CRUD (create, read, update, delete) (core data management)
 - [x] Individual and group management (collaboration, organization)
 - [x] Interactive tree visualization (D3.js) (core user value, engagement)
-- [x] GEDCOM import UI (file upload); [ ] Parsing/export logic
+- [x] GEDCOM import UI (file upload); [ ] Parsing/export logic; [ ] Source/note linking (Future)
 
 ### Phase 2: Collaboration & Media
-- [ ] Source citation management (research integrity)
+- [ ] Source citation management (research integrity) **(GEDCOM source/note linking: Future)**
 - [x] Media uploads and gallery (basic UI); [ ] Advanced features
 - [x] Timeline/event management (basic CRUD); [ ] Advanced event types, reporting
 - [x] Search and filtering (basic); [ ] Advanced/relationship/event search
@@ -38,6 +38,7 @@
 - [x] handleImport: Import GEDCOM file (UI only)
 - [ ] Enhance validation, error handling, and user feedback for all actions
 - [ ] Implement tree sharing, export, and advanced search (future)
+- [ ] **Handle GEDCOM sources/notes in import/export (Future)**
 
 ### IndividualController
 - [x] index: List all individuals
@@ -83,6 +84,7 @@
 - [ ] Implement full CRUD for sources, stories, and media
 - [ ] Add media upload, association, and advanced search (future)
 - [ ] Enable source citation linking and management
+- [ ] **Handle GEDCOM sources/notes in import/export (Future)**
 
 ### Neo4jRelationshipController
 - [x] All core relationship management (parent, child, spouse, sibling)
@@ -103,4 +105,5 @@
 
 ## Notes
 - Update this file as features are completed or requirements change.
-- Each milestone is designed to deliver incremental value, supporting user growth, engagement, and long-term ROI. 
+- Each milestone is designed to deliver incremental value, supporting user growth, engagement, and long-term ROI.
+- **Note:** Handling of sources and notes in GEDCOM import/export is planned for a future release. 
