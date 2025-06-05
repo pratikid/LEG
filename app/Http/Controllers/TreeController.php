@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\Tree;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use App\Services\GedcomService;
 
 class TreeController extends Controller
 {
@@ -27,10 +28,40 @@ class TreeController extends Controller
         $request->validate([
             'gedcom' => ['required', 'file', 'mimes:ged,gedcom', 'max:10240'],
         ]);
-        // TODO: Implement actual GEDCOM parsing and import logic
         $path = $request->file('gedcom')->store('gedcoms', 'private');
+        $content = file_get_contents(storage_path('app/private/' . $path));
 
-        return redirect()->route('trees.index')->with('success', 'GEDCOM file uploaded successfully.');
+        // Parse and import GEDCOM
+        $gedcomService = new GedcomService();
+        $parsed = $gedcomService->parse($content);
+        // TODO: Choose/create tree for import. For now, create a new tree per import.
+        $tree = \App\Models\Tree::create([
+            'name' => 'Imported Tree ' . now()->format('Y-m-d H:i:s'),
+            'user_id' => $request->user()->id,
+            'description' => 'Imported from GEDCOM',
+        ]);
+        $gedcomService->importToDatabase($parsed, $tree->id);
+
+        return redirect()->route('trees.index')->with('success', 'GEDCOM file imported successfully.');
+    }
+
+    /**
+     * Export a tree as a GEDCOM file.
+     *
+     * @param int $id Tree ID
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
+    public function exportGedcom($id)
+    {
+        $tree = \App\Models\Tree::findOrFail((int) $id);
+        $gedcomService = new GedcomService();
+        $gedcomContent = $gedcomService->exportFromDatabase($tree->id);
+        $filename = 'tree_' . $tree->id . '_' . now()->format('Ymd_His') . '.ged';
+        return response()->streamDownload(function () use ($gedcomContent) {
+            echo $gedcomContent;
+        }, $filename, [
+            'Content-Type' => 'text/plain',
+        ]);
     }
 
     public function create(): View

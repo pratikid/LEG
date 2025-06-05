@@ -135,6 +135,7 @@ Route::post('/logout', function () {
 
 Route::resource('trees', TreeController::class)->middleware(['auth']);
 Route::post('trees/import', [TreeController::class, 'handleImport'])->name('trees.import')->middleware(['auth']);
+Route::get('/trees/{id}/export-gedcom', [\App\Http\Controllers\TreeController::class, 'exportGedcom'])->name('trees.export-gedcom');
 
 Route::resource('groups', GroupController::class)->middleware(['auth']);
 Route::resource('individuals', IndividualController::class)->middleware(['auth']);
