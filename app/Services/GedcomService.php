@@ -23,10 +23,69 @@ class GedcomService
      */
     public function parse(string $gedcomContent): array
     {
-        // TODO: Implement full GEDCOM parsing logic (multi-level, cross-references, events, etc.)
+        $lines = preg_split('/\r?\n/', $gedcomContent);
+        $individuals = [];
+        $families = [];
+        $current = null;
+        $currentXref = null;
+        $currentType = null;
+        foreach ($lines as $line) {
+            if (preg_match('/^(\d+) +(@[^@]+@) +(INDI|FAM)/', $line, $m)) {
+                // New record
+                $level = (int)$m[1];
+                $currentXref = $m[2];
+                $currentType = $m[3];
+                if ($currentType === 'INDI') {
+                    $individuals[$currentXref] = [
+                        'name' => null,
+                        'sex' => null,
+                        'birth' => [],
+                        'death' => [],
+                        'fams' => [],
+                        'famc' => [],
+                    ];
+                } elseif ($currentType === 'FAM') {
+                    $families[$currentXref] = [
+                        'husb' => null,
+                        'wife' => null,
+                        'chil' => [],
+                    ];
+                }
+                continue;
+            }
+            if ($currentXref && $currentType === 'INDI') {
+                if (preg_match('/^1 NAME (.+)$/', $line, $m)) {
+                    $individuals[$currentXref]['name'] = $m[1];
+                } elseif (preg_match('/^1 SEX ([MFU])/', $line, $m)) {
+                    $individuals[$currentXref]['sex'] = $m[1];
+                } elseif (preg_match('/^1 BIRT/', $line)) {
+                    $current = 'birth';
+                } elseif (preg_match('/^1 DEAT/', $line)) {
+                    $current = 'death';
+                } elseif (preg_match('/^2 DATE (.+)$/', $line, $m) && $current) {
+                    $individuals[$currentXref][$current]['date'] = $m[1];
+                } elseif (preg_match('/^1 FAMS (@[^@]+@)/', $line, $m)) {
+                    $individuals[$currentXref]['fams'][] = $m[1];
+                } elseif (preg_match('/^1 FAMC (@[^@]+@)/', $line, $m)) {
+                    $individuals[$currentXref]['famc'][] = $m[1];
+                }
+            } elseif ($currentXref && $currentType === 'FAM') {
+                if (preg_match('/^1 HUSB (@[^@]+@)/', $line, $m)) {
+                    $families[$currentXref]['husb'] = $m[1];
+                } elseif (preg_match('/^1 WIFE (@[^@]+@)/', $line, $m)) {
+                    $families[$currentXref]['wife'] = $m[1];
+                } elseif (preg_match('/^1 CHIL (@[^@]+@)/', $line, $m)) {
+                    $families[$currentXref]['chil'][] = $m[1];
+                }
+            }
+            // Reset current event context if new level 1 line
+            if (preg_match('/^1 /', $line)) {
+                $current = null;
+            }
+        }
         return [
-            'individuals' => [],
-            'families' => [],
+            'individuals' => $individuals,
+            'families' => $families,
             'sources' => [],
             'notes' => [],
         ];
