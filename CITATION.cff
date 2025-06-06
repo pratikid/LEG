@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Khanolkar"
+    given-names: "Pratik"
+    orcid: "https://orcid.org/0009-0008-3196-3797"
+title: "LEG: Lineage Exploration & Genealogy Platform"
+version: 1.0.0
+date-released: 2025-06-06
+url: "https://github.com/pratikid/LEG"
+repository-code: "https://github.com/pratikid/LEG"
+license: MIT
+keywords:
+  - genealogy
+  - family-tree
+  - gedcom
+  - neo4j
+  - laravel
+  - visualization
+abstract: "LEG is a modern, open-source genealogy platform that makes family history accessible to everyone. It provides interactive family tree visualization, collaborative research tools, and comprehensive data management capabilities."

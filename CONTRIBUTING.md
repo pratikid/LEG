@@ -1,66 +1,136 @@
 # Contributing to LEG
 
-Welcome! This guide will help you get started as a contributor to the LEG genealogy platform.
+Thank you for your interest in contributing to LEG! This document provides guidelines and instructions for contributing to the project.
 
-## Prerequisites
-- Docker Desktop (recommended for local development)
-- Git
-- PHP 8.4+
-- Node.js & npm
-- Basic knowledge of Laravel, Docker, and web development
+## Code of Conduct
 
-## Setup
+By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## How Can I Contribute?
+
+### Reporting Bugs
+
+- Check if the bug has already been reported in the issues section
+- Use the bug report template when creating a new issue
+- Include detailed steps to reproduce the bug
+- Provide screenshots or videos if applicable
+- Include your environment details (OS, browser, etc.)
+
+### Suggesting Features
+
+- Check if the feature has already been suggested
+- Use the feature request template
+- Provide a clear description of the feature
+- Explain why this feature would be useful
+- Include any relevant examples or mockups
+
+### Pull Requests
+
+1. Fork the repository
+2. Create a new branch for your feature/fix
+3. Make your changes
+4. Write or update tests as needed
+5. Ensure all tests pass
+6. Update documentation if necessary
+7. Submit a pull request
+
+### Development Setup
+
 1. Clone the repository:
-   ```sh
+   ```bash
    git clone https://github.com/pratikid/LEG.git
    cd LEG
    ```
-2. Follow the [SETUP_GUIDE.md](docs/SETUP_GUIDE.md) for Docker and environment setup.
-3. Copy `.env.example` to `.env` and configure as needed.
-4. Start the containers:
-   ```sh
-   docker compose up -d --build
-   ```
-5. Run migrations:
-   ```sh
-   docker compose exec app php artisan migrate
-   ```
-6. (Optional) Build frontend assets:
-   ```sh
-   docker compose exec node npm run dev
+
+2. Install dependencies:
+   ```bash
+   composer install
+   npm install
    ```
 
-## Running Tests & Linting
-- Run backend tests:
-  ```sh
-  docker compose exec app php artisan test
-  ```
-- Run frontend build/lint:
-  ```sh
-  docker compose exec node npm run lint
-  docker compose exec node npm run dev
-  ```
-- Use [Laravel Pint](https://laravel.com/docs/12.x/pint) for code style:
-  ```sh
-  docker compose exec app ./vendor/bin/pint
+3. Set up environment:
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+4. Start the development server:
+   ```bash
+   ./setup.sh  # For Linux/Mac
+   # or
+   setup.bat   # For Windows
+   ```
+
+## Coding Standards
+
+- Follow PSR-12 coding standards
+- Use meaningful variable and function names
+- Write clear and concise comments
+- Keep functions small and focused
+- Write unit tests for new features
+- Update documentation for API changes
+
+## Git Workflow
+
+1. Create a new branch:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. Make your changes and commit:
+   ```bash
+   git add .
+   git commit -m "feat: add new feature"
+   ```
+
+3. Push to your fork:
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+4. Create a pull request
+
+## Commit Message Format
+
+Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+
+- `feat:` for new features
+- `fix:` for bug fixes
+- `docs:` for documentation changes
+- `style:` for formatting changes
+- `refactor:` for code refactoring
+- `test:` for adding tests
+- `chore:` for maintenance tasks
+
+## Testing
+
+- Write tests for new features
+- Ensure all tests pass before submitting PR
+- Run the full test suite:
+  ```bash
+  php artisan test
   ```
 
-## Commit & PR Guidelines
-- Follow [COMMIT.md](docs/COMMIT.md) for commit message conventions.
-- Use clear, descriptive PR titles and link to relevant issues/features.
-- Make each PR a logical unit; avoid mixing unrelated changes.
-- Reference the feature/requirement you are addressing (see [FEATURES.md](docs/FEATURES.md) and [requirements.md](prd/requirements.md)).
+## Documentation
 
-## Where to Find Things
-- **Features & Roadmap:** [docs/FEATURES.md], [prd/features.md]
-- **Requirements:** [prd/requirements.md]
-- **Architecture:** [prd/implementation.md], [prd/project-structure.md]
-- **UI/UX:** [docs/UI_UX.md], [docs/TREE_VIEW.md]
-- **Setup:** [docs/SETUP_GUIDE.md]
-- **Commit Guidelines:** [docs/COMMIT.md]
+- Update relevant documentation
+- Add comments for complex code
+- Include examples for new features
+- Update API documentation if needed
+
+## Review Process
+
+1. All PRs require at least one review
+2. Address review comments promptly
+3. Keep PRs focused and manageable
+4. Respond to CI/CD feedback
 
 ## Getting Help
-- Check the [USER_GUIDE.md](docs/USER_GUIDE.md) for common issues.
-- For technical questions, open a GitHub issue or contact a maintainer.
 
-Happy contributing! 
+- Check the [documentation](docs/README.md)
+- Join our [Discord community](https://discord.gg/leg)
+- Open an issue for questions
+
+## License
+
+By contributing to LEG, you agree that your contributions will be licensed under the project's [MIT License](LICENSE.md). 
