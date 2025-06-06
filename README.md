@@ -15,6 +15,82 @@ Dynamic badges (build status, tests, coverage, code quality, contributors, etc.)
 
 LEG supports GEDCOM 5.5.5 (latest), with partial compliance: sources/notes import/export planned for a future release. See compliance report for details.
 
+# LEG: Lineage Exploration & Genealogy Platform
+
+**A modern, open-source genealogy platform that makes family history accessible to everyone.**
+
+## ✨ What Makes LEG Special
+
+- **Interactive Family Trees**: Beautiful D3.js visualizations that bring your family history to life
+- **Collaborative Research**: Work together with family members and researchers
+- **Modern Technology**: Built with Laravel, Neo4j, and cutting-edge web technologies
+- **Privacy First**: Granular controls to protect sensitive family information
+
+## 🚀 Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/pratikid/LEG.git
+cd LEG
+
+# Start the application
+./setup.sh  # For Linux/Mac
+# or
+setup.bat   # For Windows
+```
+
+## 📚 Documentation
+
+- [Getting Started Guide](docs/getting-started/installation.md)
+- [User Guide](docs/user-guide/README.md)
+- [Developer Documentation](docs/developer/README.md)
+- [API Reference](docs/developer/api-reference.md)
+
+## 🤝 Contributing
+
+We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## 🛠️ Technology Stack
+
+- **Backend**: Laravel 10+, PHP 8+
+- **Frontend**: Vue.js 3, Tailwind CSS
+- **Database**: PostgreSQL, Neo4j, Redis
+- **Search**: Elasticsearch/Algolia
+- **File Storage**: AWS S3/MinIO
+- **Monitoring**: Sentry, New Relic
+
+## 📋 Features
+
+- Interactive family tree visualization
+- GEDCOM 5.5.5 import/export support
+- Advanced search and filtering
+- Collaborative research tools
+- Privacy controls and sharing options
+- Timeline views and relationship mapping
+- Media library and document management
+- Source citation and validation
+
+## 🔒 Security
+
+- Granular privacy controls
+- Role-based access control
+- Secure data storage
+- Regular security audits
+
+## 📈 Roadmap
+
+See our [Enhancement Plan](docs/leg_enhancement_plan.md) for upcoming features and improvements.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Thanks to all contributors who have helped shape LEG
+- Special thanks to the Laravel and Neo4j communities
+- Inspired by the need for modern genealogy tools
+
 # LEG - Lineage Exploration and Genealogy
 
 <!-- 

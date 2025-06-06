@@ -33,7 +33,7 @@ The LEG project aims to implement a comprehensive set of features, organized by 
 * [x] Multiple Tree Styles: [x] Pedigree, [ ] Fan/Descendant
 * [x] Customizable Node Appearance (Advanced): [ ]
 * [x] Relationship Visualizations: [x] Highlight direct line, [ ] Advanced paths
-* [x] Bulk Import/Export (GEDCOM Support): [x] Import UI, [ ] Parsing/Export
+* [x] Bulk Import/Export (GEDCOM Support): [x] Import UI, [x] Parsing/Export
 * [x] Advanced Search and Filtering (Complex): [ ]
 * [x] Storytelling Features (Text-based): [x] Basic, [ ] Multimedia
 * [x] Event Planning & RSVP: [ ]
@@ -72,7 +72,7 @@ The LEG project aims to implement a comprehensive set of features, organized by 
 ## TODO
 
 ### TreeController
-- [x] handleImport: UI and file upload done, [ ] GEDCOM parsing logic
+- [x] handleImport: UI and file upload done, [x] GEDCOM parsing logic
 - [x] store: Implemented
 - [x] show: Implemented
 - [x] edit: Implemented

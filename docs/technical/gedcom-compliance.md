@@ -58,9 +58,8 @@ LEG aims to provide full compatibility with the [GEDCOM 5.5.5 specification](htt
 
 ## Action Items for Full Compliance
 
-1. Implement import/export and cross-linking for sources and notes.
-2. Validate GEDCOM files with [official tools](https://www.gedcom.org/).
-3. Update documentation to state: LEG supports GEDCOM 5.5.5, the latest official version as per [gedcom.org](https://www.gedcom.org/).
+1. Validate GEDCOM files with [official tools](https://www.gedcom.org/).
+2. Update documentation to state: LEG supports GEDCOM 5.5.5, the latest official version as per [gedcom.org](https://www.gedcom.org/).
 
 ---
 
