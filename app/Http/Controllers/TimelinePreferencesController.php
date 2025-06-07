@@ -14,6 +14,14 @@ class TimelinePreferencesController extends Controller
 
     public function update(Request $request): \Illuminate\Http\RedirectResponse
     {
+        /** @var array{
+            node_color: string,
+            node_shape: string,
+            node_size: string,
+            show_dates?: bool,
+            show_location?: bool,
+            show_description?: bool
+        } $validated */
         $validated = $request->validate([
             'node_color' => 'required|in:amber,blue,green,red,purple',
             'node_shape' => 'required|in:circle,square,diamond',
@@ -28,13 +36,14 @@ class TimelinePreferencesController extends Controller
             return redirect()->route('login');
         }
 
+        /** @var array<string, mixed> $preferences */
         $preferences = is_array($user->preferences) ? $user->preferences : [];
 
         // Update preferences
         $preferences = array_merge($preferences, [
-            'node_color' => (string) $validated['node_color'],
-            'node_shape' => (string) $validated['node_shape'],
-            'node_size' => (string) $validated['node_size'],
+            'node_color' => $validated['node_color'],
+            'node_shape' => $validated['node_shape'],
+            'node_size' => $validated['node_size'],
             'show_dates' => $request->boolean('show_dates'),
             'show_location' => $request->boolean('show_location'),
             'show_description' => $request->boolean('show_description'),

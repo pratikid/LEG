@@ -9,23 +9,29 @@ use App\Models\User;
 
 class IndividualPolicy
 {
-    public function view(User $user, Individual $individual): bool
-    {
-        return true; // Adjust logic as needed
-    }
 
+
+    /**
+     * Determine whether the user can create individuals.
+     */
     public function create(User $user): bool
     {
         return $user->is_active;
     }
 
+    /**
+     * Determine whether the user can update the individual.
+     */
     public function update(User $user, Individual $individual): bool
     {
-        return $user->id === $individual->user_id || $user->isAdmin();
+        return $user->id === $individual->user->id || $user->isAdmin();
     }
 
+    /**
+     * Determine whether the user can delete the individual.
+     */
     public function delete(User $user, Individual $individual): bool
     {
-        return $user->id === $individual->user_id || $user->isAdmin();
+        return $user->id === $individual->user->id || $user->isAdmin();
     }
 }

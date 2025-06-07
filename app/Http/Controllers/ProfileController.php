@@ -20,6 +20,7 @@ class ProfileController extends Controller
             return redirect()->route('login');
         }
 
+        /** @var array{name: string, email: string, profile_photo?: \Illuminate\Http\UploadedFile} $validated */
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
@@ -30,7 +31,9 @@ class ProfileController extends Controller
             $file = $request->file('profile_photo');
             if ($file) {
                 $path = $file->store('profile-photos', 'public');
-                $user->profile_photo_path = $path;
+                if ($path !== false) {
+                    $user->profile_photo_path = $path;
+                }
             }
         }
 
@@ -48,16 +51,17 @@ class ProfileController extends Controller
             return redirect()->route('login');
         }
 
-        $request->validate([
+        /** @var array{current_password: string, password: string} $validated */
+        $validated = $request->validate([
             'current_password' => ['required', 'string'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        if (!Hash::check((string) $request->current_password, (string) $user->password)) {
+        if (!Hash::check($validated['current_password'], $user->password)) {
             return back()->withErrors(['current_password' => 'Current password is incorrect.']);
         }
 
-        $user->password = Hash::make((string) $request->password);
+        $user->password = Hash::make($validated['password']);
         $user->save();
 
         return back()->with('success', 'Password updated successfully.');

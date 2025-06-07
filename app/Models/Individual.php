@@ -11,7 +11,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * @mixin \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\IndividualFactory>
+ * @property int $id
+ * @property string $first_name
+ * @property string $last_name
+ * @property \Illuminate\Support\Carbon|null $birth_date
+ * @property \Illuminate\Support\Carbon|null $death_date
+ * @property int $tree_id
+ * @property int $user_id
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ * @property-read \App\Models\Tree $tree
+ * @property-read \App\Models\User $user
+ * 
+ * @method static \Database\Factories\IndividualFactory factory()
  */
 class Individual extends Model
 {

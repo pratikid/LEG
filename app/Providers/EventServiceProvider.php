@@ -18,6 +18,7 @@ class EventServiceProvider extends ServiceProvider
     /**
      * Register any events for your application.
      */
+    #[\Override]
     public function boot(): void
     {
         //

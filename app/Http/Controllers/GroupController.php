@@ -31,15 +31,14 @@ class GroupController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        /** @var array{name: string, description: string|null, tree_id: int} $validated */
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'tree_id' => ['required', 'integer', 'exists:trees,id'],
         ]);
-        Group::create(array_merge($validated, [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]));
+
+        Group::create($validated);
 
         return redirect()->route('groups.index')->with('success', 'Group created successfully.');
     }
@@ -61,14 +60,14 @@ class GroupController extends Controller
     public function update(Request $request, int $id): RedirectResponse
     {
         $group = Group::findOrFail($id);
+        /** @var array{name: string, description: string|null, tree_id: int} $validated */
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'tree_id' => ['required', 'integer', 'exists:trees,id'],
         ]);
-        $group->update(array_merge($validated, [
-            'updated_at' => now(),
-        ]));
+
+        $group->update($validated);
 
         return redirect()->route('groups.index')->with('success', 'Group updated successfully.');
     }

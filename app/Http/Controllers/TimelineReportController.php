@@ -49,8 +49,9 @@ class TimelineReportController extends Controller
 
     public function generateTypeReport(Request $request): \Illuminate\Http\Response
     {
+        /** @var array{type: string} $validated */
         $validated = $request->validate(['type' => 'required|in:birth,death,marriage,divorce,immigration,other']);
-        $type = (string) $validated['type'];
+        $type = $validated['type'];
 
         $events = TimelineEvent::where(function ($query) {
             $query->where('user_id', Auth::id())

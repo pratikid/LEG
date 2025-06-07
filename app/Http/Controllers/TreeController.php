@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Laudis\Neo4j\Contracts\TransactionInterface;
 
 class TreeController extends Controller
 {
@@ -30,7 +31,7 @@ class TreeController extends Controller
 
         // Search functionality
         if ($request->has('search')) {
-            $search = (string) $request->get('search');
+            $search = $request->input('search', '');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
@@ -41,8 +42,8 @@ class TreeController extends Controller
         $allowedSort = ['created_at', 'name', 'individuals_count'];
         $allowedDir = ['asc', 'desc'];
 
-        $sort = in_array($request->get('sort'), $allowedSort, true) ? $request->get('sort') : 'created_at';
-        $direction = in_array($request->get('direction'), $allowedDir, true) ? $request->get('direction') : 'desc';
+        $sort = in_array($request->input('sort'), $allowedSort, true) ? $request->input('sort') : 'created_at';
+        $direction = in_array($request->input('direction'), $allowedDir, true) ? $request->input('direction') : 'desc';
 
         $query->orderBy($sort, $direction);
 
@@ -120,11 +121,18 @@ class TreeController extends Controller
 
     public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
+        /** @var array{name: string, description: string|null, user_id: int} $validated */
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
         ]);
 
+        $user = $request->user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $validated['user_id'] = $user->id;
         $neo4jTransaction = null;
 
         try {
@@ -138,16 +146,23 @@ class TreeController extends Controller
                 'id' => $tree->id,
                 'name' => $tree->name,
                 'description' => $tree->description,
+                'user_id' => $user->id,
             ], $neo4jTransaction);
 
-            $neo4jTransaction->commit();
+            $neo4jTransaction->run('COMMIT');
             DB::commit();
 
             return redirect()->route('trees.show', $tree)
                 ->with('success', 'Tree created successfully.');
         } catch (\Exception $e) {
             if ($neo4jTransaction) {
-                $neo4jTransaction->rollback();
+                try {
+                    $neo4jTransaction->run('ROLLBACK');
+                } catch (\Exception $neo4jError) {
+                    Log::error('Failed to rollback Neo4j transaction', [
+                        'exception' => $neo4jError,
+                    ]);
+                }
             }
             DB::rollBack();
 
@@ -175,14 +190,15 @@ class TreeController extends Controller
             'children' => [],
         ];
 
+        /** @var array<int, mixed> $treeData */
         foreach ($treeData as $record) {
             $individual = $record->get('i');
             if ($individual) {
                 $treeDataArray['children'][] = [
-                    'id' => (string) $individual->getProperty('id'),
-                    'name' => (string) $individual->getProperty('first_name').' '.(string) $individual->getProperty('last_name'),
-                    'birth_date' => (string) $individual->getProperty('birth_date'),
-                    'death_date' => (string) $individual->getProperty('death_date'),
+                    'id' => $individual->getProperty('id'),
+                    'name' => $individual->getProperty('first_name').' '.$individual->getProperty('last_name'),
+                    'birth_date' => $individual->getProperty('birth_date'),
+                    'death_date' => $individual->getProperty('death_date'),
                 ];
             }
         }
@@ -201,6 +217,7 @@ class TreeController extends Controller
 
     public function update(Request $request, int $id): \Illuminate\Http\RedirectResponse
     {
+        /** @var array{name: string, description: string|null} $validated */
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -220,16 +237,17 @@ class TreeController extends Controller
                 'id' => $tree->id,
                 'name' => $tree->name,
                 'description' => $tree->description,
+                'user_id' => $request->user()->id,
             ], $neo4jTransaction);
 
-            $neo4jTransaction->commit();
+            $neo4jTransaction->run('COMMIT');
             DB::commit();
 
             return redirect()->route('trees.show', $tree)
                 ->with('success', 'Tree updated successfully.');
         } catch (\Exception $e) {
             if ($neo4jTransaction) {
-                $neo4jTransaction->rollback();
+                $neo4jTransaction->run('ROLLBACK');
             }
             DB::rollBack();
 
@@ -261,14 +279,14 @@ class TreeController extends Controller
             // Then delete Neo4j node
             $this->neo4jService->deleteTreeNode($id, $neo4jTransaction);
 
-            $neo4jTransaction->commit();
+            $neo4jTransaction->run('COMMIT');
             DB::commit();
 
             return redirect()->route('trees.index')
                 ->with('success', 'Tree deleted successfully.');
         } catch (\Exception $e) {
             if ($neo4jTransaction) {
-                $neo4jTransaction->rollback();
+                $neo4jTransaction->run('ROLLBACK');
             }
             DB::rollBack();
 

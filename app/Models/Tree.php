@@ -11,7 +11,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @mixin \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\TreeFactory>
+ * @property int $id
+ * @property string $name
+ * @property string|null $description
+ * @property int $user_id
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ * @property-read \App\Models\User $user
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Individual> $individuals
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Group> $groups
+ * 
+ * @method static \Database\Factories\TreeFactory factory()
  */
 class Tree extends Model
 {
@@ -24,9 +34,6 @@ class Tree extends Model
         'user_id',
     ];
 
-    /**
-     * @return BelongsTo<User, Tree>
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

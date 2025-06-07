@@ -12,7 +12,7 @@ class NavigationTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function guest_cannot_see_sidebar_or_access_protected_routes()
     {
         $protectedRoutes = [
@@ -38,7 +38,7 @@ class NavigationTest extends TestCase
         $response->assertDontSee('Dashboard'); // Sidebar not present
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_sees_sidebar_but_not_admin_links()
     {
         $user = User::factory()->create(['role' => 'user']);
@@ -50,7 +50,7 @@ class NavigationTest extends TestCase
         $response->assertSee('Logout');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_sees_admin_links_in_sidebar()
     {
         $admin = User::factory()->create(['role' => 'admin', 'is_admin' => true]);
@@ -62,7 +62,7 @@ class NavigationTest extends TestCase
         $response->assertSee('System Settings');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_cannot_access_admin_routes()
     {
         $user = User::factory()->create(['role' => 'user']);
@@ -78,7 +78,7 @@ class NavigationTest extends TestCase
         }
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_access_admin_routes()
     {
         $admin = User::factory()->create(['role' => 'admin', 'is_admin' => true]);
@@ -94,7 +94,7 @@ class NavigationTest extends TestCase
         }
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function logout_button_is_present_and_works()
     {
         $user = User::factory()->create();

@@ -30,6 +30,7 @@ class ResetPasswordController extends Controller
             'password' => 'required|confirmed|min:8',
         ]);
 
+        /** @var string $status */
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (\App\Models\User $user, string $password): void {

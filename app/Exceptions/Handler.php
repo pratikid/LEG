@@ -32,6 +32,7 @@ class Handler extends ExceptionHandler
     /**
      * Register the exception handling callbacks for the application.
      */
+    #[\Override]
     public function register(): void
     {
         $this->reportable(function (Throwable $e) {
@@ -39,6 +40,7 @@ class Handler extends ExceptionHandler
         });
     }
 
+    #[\Override]
     public function render($request, Throwable $exception): SymfonyResponse
     {
         if ($exception instanceof QueryException) {

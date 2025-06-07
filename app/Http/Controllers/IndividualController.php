@@ -50,6 +50,16 @@ class IndividualController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        /** @var array{
+            first_name: string,
+            last_name: string,
+            birth_date: string|null,
+            death_date: string|null,
+            tree_id: int,
+            parent_ids: array<int>|null,
+            spouse_ids: array<int>|null,
+            sibling_ids: array<int>|null
+        } $validated */
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -74,29 +84,31 @@ class IndividualController extends Controller
             $individual = Individual::create($validated);
 
             // Create Neo4j node
-            $this->neo4jService->createIndividualNode($individual->toArray(), $neo4jTransaction);
+            /** @var array{id: int, first_name: string, last_name: string, birth_date: string|null, death_date: string|null, tree_id: int} $individualData */
+            $individualData = $individual->toArray();
+            $this->neo4jService->createIndividualNode($individualData, $neo4jTransaction);
 
             // Create relationships in Neo4j
-            if (!empty($validated['parent_ids'])) {
-                foreach ((array)$validated['parent_ids'] as $parentId) {
-                    $this->neo4jService->createParentChildRelationship($parentId, $individual->id, $neo4jTransaction);
+            if (isset($validated['parent_ids']) && is_array($validated['parent_ids'])) {
+                foreach ($validated['parent_ids'] as $parentId) {
+                    $this->neo4jService->createParentChildRelationship((int) $parentId, $individual->id, $neo4jTransaction);
                 }
             }
 
-            if (!empty($validated['spouse_ids'])) {
-                foreach ((array)$validated['spouse_ids'] as $spouseId) {
-                    $this->neo4jService->createSpouseRelationship($individual->id, $spouseId, $neo4jTransaction);
+            if (isset($validated['spouse_ids']) && is_array($validated['spouse_ids'])) {
+                foreach ($validated['spouse_ids'] as $spouseId) {
+                    $this->neo4jService->createSpouseRelationship($individual->id, (int) $spouseId, $neo4jTransaction);
                 }
             }
 
-            if (!empty($validated['sibling_ids'])) {
-                foreach ((array)$validated['sibling_ids'] as $siblingId) {
-                    $this->neo4jService->createSiblingRelationship($individual->id, $siblingId, $neo4jTransaction);
+            if (isset($validated['sibling_ids']) && is_array($validated['sibling_ids'])) {
+                foreach ($validated['sibling_ids'] as $siblingId) {
+                    $this->neo4jService->createSiblingRelationship($individual->id, (int) $siblingId, $neo4jTransaction);
                 }
             }
 
             // Commit Neo4j transaction first
-            $neo4jTransaction->commit();
+            $neo4jTransaction->run('COMMIT');
             $neo4jCommitted = true;
 
             // Then commit SQL transaction
@@ -108,7 +120,7 @@ class IndividualController extends Controller
             // Rollback Neo4j transaction if not committed
             if ($neo4jTransaction && !$neo4jCommitted) {
                 try {
-                    $neo4jTransaction->rollback();
+                    $neo4jTransaction->run('ROLLBACK');
                 } catch (\Exception $rollbackError) {
                     Log::error('Failed to rollback Neo4j transaction', [
                         'individual_id' => $individual?->id,
@@ -139,9 +151,9 @@ class IndividualController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($id): View
+    public function show(int $id): View
     {
-        $individual = Individual::findOrFail((int) $id);
+        $individual = Individual::findOrFail($id);
         $allIndividuals = Individual::all();
         $error = null;
         if ($allIndividuals->isEmpty() || ($allIndividuals->count() === 1 && $allIndividuals->first()->id === $individual->id)) {
@@ -154,9 +166,9 @@ class IndividualController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit($id): View
+    public function edit(int $id): View
     {
-        $individual = Individual::findOrFail((int) $id);
+        $individual = Individual::findOrFail($id);
 
         return view('individuals.edit', compact('individual'));
     }
@@ -164,8 +176,18 @@ class IndividualController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Individual $individual)
+    public function update(Request $request, Individual $individual): RedirectResponse
     {
+        /** @var array{
+            first_name: string,
+            last_name: string,
+            birth_date: string|null,
+            death_date: string|null,
+            tree_id: int,
+            parent_ids: array<int>|null,
+            spouse_ids: array<int>|null,
+            sibling_ids: array<int>|null
+        } $validated */
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -183,46 +205,42 @@ class IndividualController extends Controller
         DB::beginTransaction();
         $neo4jTransaction = $this->neo4jService->beginTransaction();
         $neo4jCommitted = false;
-        $originalData = $individual->toArray();
-        $originalRelations = [
-            'parent_ids' => $individual->parents()->pluck('id')->all(),
-            'spouse_ids' => $individual->spouses()->pluck('id')->all(),
-            'sibling_ids' => $individual->siblings()->pluck('id')->all(),
-        ];
 
         try {
             // Update SQL record
             $individual->update($validated);
 
             // Update Neo4j node
-            $this->neo4jService->updateIndividualNode($individual->toArray(), $neo4jTransaction);
+            /** @var array{id: int, first_name: string, last_name: string, birth_date: string|null, death_date: string|null, tree_id: int} $individualData */
+            $individualData = $individual->toArray();
+            $this->neo4jService->updateIndividualNode($individualData, $neo4jTransaction);
 
             // Update relationships in Neo4j
             // First, delete existing relationships
             $this->neo4jService->deleteIndividualNode($individual->id, $neo4jTransaction);
-            $this->neo4jService->createIndividualNode($individual->toArray(), $neo4jTransaction);
+            $this->neo4jService->createIndividualNode($individualData, $neo4jTransaction);
 
             // Then create new relationships
-            if (! empty($validated['parent_ids'])) {
+            if (isset($validated['parent_ids']) && is_array($validated['parent_ids'])) {
                 foreach ($validated['parent_ids'] as $parentId) {
-                    $this->neo4jService->createParentChildRelationship($parentId, $individual->id, $neo4jTransaction);
+                    $this->neo4jService->createParentChildRelationship((int) $parentId, $individual->id, $neo4jTransaction);
                 }
             }
 
-            if (! empty($validated['spouse_ids'])) {
+            if (isset($validated['spouse_ids']) && is_array($validated['spouse_ids'])) {
                 foreach ($validated['spouse_ids'] as $spouseId) {
-                    $this->neo4jService->createSpouseRelationship($individual->id, $spouseId, $neo4jTransaction);
+                    $this->neo4jService->createSpouseRelationship($individual->id, (int) $spouseId, $neo4jTransaction);
                 }
             }
 
-            if (! empty($validated['sibling_ids'])) {
+            if (isset($validated['sibling_ids']) && is_array($validated['sibling_ids'])) {
                 foreach ($validated['sibling_ids'] as $siblingId) {
-                    $this->neo4jService->createSiblingRelationship($individual->id, $siblingId, $neo4jTransaction);
+                    $this->neo4jService->createSiblingRelationship($individual->id, (int) $siblingId, $neo4jTransaction);
                 }
             }
 
             // Commit Neo4j transaction first
-            $neo4jTransaction->commit();
+            $neo4jTransaction->run('COMMIT');
             $neo4jCommitted = true;
 
             // Then commit SQL transaction
@@ -232,9 +250,9 @@ class IndividualController extends Controller
                 ->with('success', 'Individual updated successfully.');
         } catch (\Exception $e) {
             // Rollback Neo4j transaction if not committed
-            if ($neo4jTransaction && ! $neo4jCommitted) {
+            if ($neo4jTransaction && !$neo4jCommitted) {
                 try {
-                    $neo4jTransaction->rollback();
+                    $neo4jTransaction->run('ROLLBACK');
                 } catch (\Exception $rollbackError) {
                     Log::error('Failed to rollback Neo4j transaction', [
                         'individual_id' => $individual->id,
@@ -245,50 +263,6 @@ class IndividualController extends Controller
 
             // Rollback SQL transaction
             DB::rollBack();
-
-            // If Neo4j committed but SQL failed, we need to restore the original state
-            if ($neo4jCommitted) {
-                try {
-                    // Delete the updated node
-                    $this->neo4jService->deleteIndividualNode($individual->id);
-
-                    // Recreate the original node
-                    $restoreTx = $this->neo4jService->beginTransaction();
-                    $this->neo4jService->createIndividualNode($originalData, $restoreTx);
-                    $restoreTx->commit();
-
-                    // Restore original relationships
-                    if (! empty($originalRelations['parent_ids'])) {
-                        foreach ($originalRelations['parent_ids'] as $parentId) {
-                            $this->neo4jService->createParentChildRelationship($parentId, $individual->id);
-                        }
-                    }
-
-                    if (! empty($originalRelations['spouse_ids'])) {
-                        foreach ($originalRelations['spouse_ids'] as $spouseId) {
-                            $this->neo4jService->createSpouseRelationship($individual->id, $spouseId);
-                        }
-                    }
-
-                    if (! empty($originalRelations['sibling_ids'])) {
-                        foreach ($originalRelations['sibling_ids'] as $siblingId) {
-                            $this->neo4jService->createSiblingRelationship($individual->id, $siblingId);
-                        }
-                    }
-
-                    Log::info('Successfully restored Neo4j node to original state', [
-                        'individual_id' => $individual->id,
-                    ]);
-                } catch (\Exception $restoreError) {
-                    Log::error('Failed to restore Neo4j node to original state', [
-                        'individual_id' => $individual->id,
-                        'exception' => $restoreError,
-                    ]);
-
-                    // If restore fails, try to clean up the node
-                    $this->cleanupNeo4jNode($individual->id);
-                }
-            }
 
             Log::error('Failed to update individual', [
                 'individual_id' => $individual->id,
@@ -305,38 +279,38 @@ class IndividualController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id): RedirectResponse
+    public function destroy(int $id): RedirectResponse
     {
+        $individual = Individual::findOrFail($id);
+
         DB::beginTransaction();
         $neo4jTransaction = $this->neo4jService->beginTransaction();
         $neo4jCommitted = false;
 
         try {
-            // Delete SQL record first
-            $individual = Individual::findOrFail($id);
-            $treeId = $individual->tree_id;
+            // Delete SQL record
             $individual->delete();
 
             // Delete Neo4j node
-            $this->neo4jService->deleteIndividualNode($id, $neo4jTransaction);
+            $this->neo4jService->deleteIndividualNode($individual->id, $neo4jTransaction);
 
             // Commit Neo4j transaction first
-            $neo4jTransaction->commit();
+            $neo4jTransaction->run('COMMIT');
             $neo4jCommitted = true;
 
             // Then commit SQL transaction
             DB::commit();
 
-            return redirect()->route('trees.show', $treeId)
+            return redirect()->route('individuals.index')
                 ->with('success', 'Individual deleted successfully.');
         } catch (\Exception $e) {
             // Rollback Neo4j transaction if not committed
-            if ($neo4jTransaction && ! $neo4jCommitted) {
+            if ($neo4jTransaction && !$neo4jCommitted) {
                 try {
-                    $neo4jTransaction->rollback();
+                    $neo4jTransaction->run('ROLLBACK');
                 } catch (\Exception $rollbackError) {
                     Log::error('Failed to rollback Neo4j transaction', [
-                        'individual_id' => $id,
+                        'individual_id' => $individual->id,
                         'exception' => $rollbackError,
                     ]);
                 }
@@ -345,18 +319,12 @@ class IndividualController extends Controller
             // Rollback SQL transaction
             DB::rollBack();
 
-            // If Neo4j committed but SQL failed, we need to clean up the Neo4j node
-            if ($neo4jCommitted) {
-                $this->cleanupNeo4jNode($id);
-            }
-
             Log::error('Failed to delete individual', [
-                'individual_id' => $id,
+                'individual_id' => $individual->id,
                 'exception' => $e,
             ]);
 
-            return back()
-                ->withErrors(['error' => 'An unexpected error occurred. Please try again later.']);
+            return back()->withErrors(['error' => 'An unexpected error occurred. Please try again later.']);
         }
     }
 
@@ -369,33 +337,35 @@ class IndividualController extends Controller
         return view('individuals.timeline');
     }
 
-    private function cleanupNeo4jNode($individualId, $attempt = 1, $maxAttempts = 3)
+    /**
+     * Clean up a Neo4j node that was created but the SQL transaction failed.
+     */
+    private function cleanupNeo4jNode(int $individualId, int $attempt = 1, int $maxAttempts = 3): void
     {
-        try {
-            $this->neo4jService->deleteIndividualNode($individualId);
-            Log::info('Successfully cleaned up Neo4j node', ['individual_id' => $individualId]);
-
-            return true;
-        } catch (\Exception $e) {
-            if ($attempt < $maxAttempts) {
-                Log::warning('Retrying Neo4j node cleanup', [
-                    'individual_id' => $individualId,
-                    'attempt' => $attempt,
-                    'max_attempts' => $maxAttempts,
-                    'exception' => $e,
-                ]);
-                sleep(1); // Wait 1 second before retry
-
-                return $this->cleanupNeo4jNode($individualId, $attempt + 1, $maxAttempts);
-            }
-
-            Log::error('Failed to clean up Neo4j node after all retries', [
+        if ($attempt > $maxAttempts) {
+            Log::error('Failed to clean up Neo4j node after maximum attempts', [
                 'individual_id' => $individualId,
                 'attempts' => $attempt,
+            ]);
+            return;
+        }
+
+        try {
+            $this->neo4jService->deleteIndividualNode($individualId);
+            Log::info('Successfully cleaned up Neo4j node', [
+                'individual_id' => $individualId,
+                'attempt' => $attempt,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to clean up Neo4j node', [
+                'individual_id' => $individualId,
+                'attempt' => $attempt,
                 'exception' => $e,
             ]);
 
-            return false;
+            // Retry after a short delay
+            sleep(1);
+            $this->cleanupNeo4jNode($individualId, $attempt + 1, $maxAttempts);
         }
     }
 }

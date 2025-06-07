@@ -7,12 +7,14 @@ services:
     container_name: leg-nginx
     restart: unless-stopped
     ports:
-      - "8000:80"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./:/var/www/html:delegated
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
       - ./storage:/var/www/html/storage
       - ./bootstrap/cache:/var/www/html/bootstrap/cache
+      - ssl-certs:/etc/nginx/ssl
     networks:
       - leg-network
     depends_on:
@@ -166,6 +168,7 @@ volumes:
   mongodb-data:
   redis-data:
   node_modules:
+  ssl-certs:
 
 # For production, after build, run:
 # docker compose exec app composer install --optimize-autoloader --no-dev

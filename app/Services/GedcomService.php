@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Services\Neo4jRelationshipService;
+
 /**
  * Service for parsing, importing, and exporting GEDCOM files.
  * Handles individuals, families, events, sources, notes, and relationships.

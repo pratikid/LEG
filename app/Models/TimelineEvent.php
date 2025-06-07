@@ -12,7 +12,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * @mixin \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\TimelineEventFactory>
+ * @property int $id
+ * @property string $title
+ * @property string $description
+ * @property \Illuminate\Support\Carbon $event_date
+ * @property string $event_type
+ * @property string|null $location
+ * @property bool $is_public
+ * @property int $user_id
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ * @property-read \App\Models\User $user
+ * 
+ * @method static \Database\Factories\TimelineEventFactory factory()
  */
 class TimelineEvent extends Model
 {

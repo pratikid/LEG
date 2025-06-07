@@ -58,7 +58,9 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
-     * @return BelongsToMany<Role, User>
+     * Get the roles that belong to the user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<\App\Models\Role, self>
      */
     public function roles(): BelongsToMany
     {

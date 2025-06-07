@@ -27,11 +27,10 @@ class TutorialController extends Controller
         }
 
         // Store the completed tutorial in the user's preferences
-        $preferences = $user->preferences ?? [];
-        $completedTutorials = $preferences['completed_tutorials'] ?? [];
-        if (!is_array($completedTutorials)) {
-            $completedTutorials = [];
-        }
+        /** @var array<string, mixed> $preferences */
+        $preferences = is_array($user->preferences) ? $user->preferences : [];
+        /** @var array<int, string> $completedTutorials */
+        $completedTutorials = is_array($preferences['completed_tutorials'] ?? null) ? $preferences['completed_tutorials'] : [];
         $completedTutorials[] = $tutorial;
 
         DB::table('users')
@@ -52,7 +51,8 @@ class TutorialController extends Controller
             return response()->json(['error' => 'User not found'], 404);
         }
 
-        $preferences = $user->preferences ?? [];
+        /** @var array<string, mixed> $preferences */
+        $preferences = is_array($user->preferences) ? $user->preferences : [];
         DB::table('users')
             ->where('id', $user->id)
             ->update([

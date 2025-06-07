@@ -18,11 +18,12 @@ class Neo4jRelationshipController extends Controller
     // Add a parent-child relationship
     public function addParentChild(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $request->validate([
+        /** @var array{parent_id: int, child_id: int} $validated */
+        $validated = $request->validate([
             'parent_id' => 'required|integer|exists:individuals,id',
             'child_id' => 'required|integer|exists:individuals,id',
         ]);
-        $this->neo4j->createParentChildRelationship($request->parent_id, $request->child_id);
+        $this->neo4j->createParentChildRelationship($validated['parent_id'], $validated['child_id']);
 
         return back()->with('success', 'Parent-child relationship added in Neo4j!');
     }
@@ -30,11 +31,12 @@ class Neo4jRelationshipController extends Controller
     // Add a spouse relationship
     public function addSpouse(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $request->validate([
+        /** @var array{spouse_a_id: int, spouse_b_id: int} $validated */
+        $validated = $request->validate([
             'spouse_a_id' => 'required|integer|exists:individuals,id',
             'spouse_b_id' => 'required|integer|exists:individuals,id',
         ]);
-        $this->neo4j->createSpouseRelationship($request->spouse_a_id, $request->spouse_b_id);
+        $this->neo4j->createSpouseRelationship($validated['spouse_a_id'], $validated['spouse_b_id']);
 
         return back()->with('success', 'Spouse relationship added in Neo4j!');
     }
@@ -45,7 +47,8 @@ class Neo4jRelationshipController extends Controller
         $client = $this->neo4j->getClient();
         $query = 'MATCH (p:Individual {id: $parentId})-[:PARENT_OF]->(c:Individual) RETURN c';
         $result = $client->run($query, ['parentId' => $parentId]);
-        $children = collect($result)->map(fn ($r) => $r->get('c'))->toArray();
+        /** @var array<int, array<string, mixed>> $children */
+        $children = collect($result->toArray())->map(fn ($r) => $r->get('c')->toArray())->toArray();
 
         return response()->json($children);
     }
@@ -56,7 +59,8 @@ class Neo4jRelationshipController extends Controller
         $client = $this->neo4j->getClient();
         $query = 'MATCH (p:Individual)-[:PARENT_OF]->(c:Individual {id: $childId}) RETURN p';
         $result = $client->run($query, ['childId' => $childId]);
-        $parents = collect($result)->map(fn ($r) => $r->get('p'))->toArray();
+        /** @var array<int, array<string, mixed>> $parents */
+        $parents = collect($result->toArray())->map(fn ($r) => $r->get('p')->toArray())->toArray();
 
         return response()->json($parents);
     }
@@ -67,7 +71,8 @@ class Neo4jRelationshipController extends Controller
         $client = $this->neo4j->getClient();
         $query = 'MATCH (a:Individual {id: $individualId})-[:SPOUSE_OF]-(b:Individual) RETURN b';
         $result = $client->run($query, ['individualId' => $individualId]);
-        $spouses = collect($result)->map(fn ($r) => $r->get('b'))->toArray();
+        /** @var array<int, array<string, mixed>> $spouses */
+        $spouses = collect($result->toArray())->map(fn ($r) => $r->get('b')->toArray())->toArray();
 
         return response()->json($spouses);
     }
@@ -75,10 +80,11 @@ class Neo4jRelationshipController extends Controller
     // Get all ancestors of an individual
     public function getAncestors(Request $request, int $id): \Illuminate\Http\JsonResponse
     {
-        $maxDepth = (int) $request->query('maxDepth', 5);
-        $limit = (int) $request->query('limit', 20);
+        $maxDepth = (int) $request->query('maxDepth', '5');
+        $limit = (int) $request->query('limit', '20');
         $result = $this->neo4j->getAncestors($id, $maxDepth, $limit);
-        $ancestors = collect($result)->map(fn ($r) => $r->get('ancestor'))->toArray();
+        /** @var array<int, array<string, mixed>> $ancestors */
+        $ancestors = collect($result->toArray())->map(fn ($r) => $r->get('ancestor')->toArray())->toArray();
 
         return response()->json($ancestors);
     }
@@ -86,10 +92,11 @@ class Neo4jRelationshipController extends Controller
     // Get all descendants of an individual
     public function getDescendants(Request $request, int $id): \Illuminate\Http\JsonResponse
     {
-        $maxDepth = (int) $request->query('maxDepth', 5);
-        $limit = (int) $request->query('limit', 20);
+        $maxDepth = (int) $request->query('maxDepth', '5');
+        $limit = (int) $request->query('limit', '20');
         $result = $this->neo4j->getDescendants($id, $maxDepth, $limit);
-        $descendants = collect($result)->map(fn ($r) => $r->get('descendant'))->toArray();
+        /** @var array<int, array<string, mixed>> $descendants */
+        $descendants = collect($result->toArray())->map(fn ($r) => $r->get('descendant')->toArray())->toArray();
 
         return response()->json($descendants);
     }
@@ -97,9 +104,10 @@ class Neo4jRelationshipController extends Controller
     // Get all siblings of an individual
     public function getSiblings(Request $request, int $id): \Illuminate\Http\JsonResponse
     {
-        $limit = (int) $request->query('limit', 20);
+        $limit = (int) $request->query('limit', '20');
         $result = $this->neo4j->getSiblings($id, $limit);
-        $siblings = collect($result)->map(fn ($r) => $r->get('sibling'))->toArray();
+        /** @var array<int, array<string, mixed>> $siblings */
+        $siblings = collect($result->toArray())->map(fn ($r) => $r->get('sibling')->toArray())->toArray();
 
         return response()->json($siblings);
     }
@@ -107,9 +115,10 @@ class Neo4jRelationshipController extends Controller
     // Get shortest path between two individuals
     public function getShortestPath(Request $request, int $fromId, int $toId): \Illuminate\Http\JsonResponse
     {
-        $maxDepth = (int) $request->query('maxDepth', 10);
+        $maxDepth = (int) $request->query('maxDepth', '10');
         $result = $this->neo4j->getShortestPath($fromId, $toId, $maxDepth);
-        $paths = collect($result)->map(fn ($r) => $r->get('path'))->toArray();
+        /** @var array<int, array<string, mixed>> $paths */
+        $paths = collect($result->toArray())->map(fn ($r) => $r->get('path')->toArray())->toArray();
 
         return response()->json($paths);
     }
@@ -117,11 +126,12 @@ class Neo4jRelationshipController extends Controller
     // Add a sibling relationship
     public function addSibling(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $request->validate([
+        /** @var array{sibling_a_id: int, sibling_b_id: int} $validated */
+        $validated = $request->validate([
             'sibling_a_id' => 'required|integer|exists:individuals,id',
             'sibling_b_id' => 'required|integer|exists:individuals,id',
         ]);
-        $this->neo4j->createSiblingRelationship($request->sibling_a_id, $request->sibling_b_id);
+        $this->neo4j->createSiblingRelationship($validated['sibling_a_id'], $validated['sibling_b_id']);
 
         return back()->with('success', 'Sibling relationship added in Neo4j!');
     }
@@ -129,13 +139,14 @@ class Neo4jRelationshipController extends Controller
     // Remove a parent-child relationship
     public function removeParentChild(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $request->validate([
+        /** @var array{parent_id: int, child_id: int} $validated */
+        $validated = $request->validate([
             'parent_id' => 'required|integer|exists:individuals,id',
             'child_id' => 'required|integer|exists:individuals,id',
         ]);
         $client = $this->neo4j->getClient();
         $query = 'MATCH (p:Individual {id: $parentId})-[r:PARENT_OF]->(c:Individual {id: $childId}) DELETE r';
-        $client->run($query, ['parentId' => $request->parent_id, 'childId' => $request->child_id]);
+        $client->run($query, ['parentId' => $validated['parent_id'], 'childId' => $validated['child_id']]);
 
         return back()->with('success', 'Parent-child relationship removed in Neo4j!');
     }
@@ -143,13 +154,14 @@ class Neo4jRelationshipController extends Controller
     // Remove a spouse relationship
     public function removeSpouse(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $request->validate([
+        /** @var array{spouse_a_id: int, spouse_b_id: int} $validated */
+        $validated = $request->validate([
             'spouse_a_id' => 'required|integer|exists:individuals,id',
             'spouse_b_id' => 'required|integer|exists:individuals,id',
         ]);
         $client = $this->neo4j->getClient();
         $query = 'MATCH (a:Individual {id: $spouseAId})-[r:SPOUSE_OF]-(b:Individual {id: $spouseBId}) DELETE r';
-        $client->run($query, ['spouseAId' => $request->spouse_a_id, 'spouseBId' => $request->spouse_b_id]);
+        $client->run($query, ['spouseAId' => $validated['spouse_a_id'], 'spouseBId' => $validated['spouse_b_id']]);
 
         return back()->with('success', 'Spouse relationship removed in Neo4j!');
     }
@@ -157,13 +169,14 @@ class Neo4jRelationshipController extends Controller
     // Remove a sibling relationship
     public function removeSibling(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $request->validate([
+        /** @var array{sibling_a_id: int, sibling_b_id: int} $validated */
+        $validated = $request->validate([
             'sibling_a_id' => 'required|integer|exists:individuals,id',
             'sibling_b_id' => 'required|integer|exists:individuals,id',
         ]);
         $client = $this->neo4j->getClient();
         $query = 'MATCH (a:Individual {id: $siblingAId})-[r:SIBLING_OF]-(b:Individual {id: $siblingBId}) DELETE r';
-        $client->run($query, ['siblingAId' => $request->sibling_a_id, 'siblingBId' => $request->sibling_b_id]);
+        $client->run($query, ['siblingAId' => $validated['sibling_a_id'], 'siblingBId' => $validated['sibling_b_id']]);
 
         return back()->with('success', 'Sibling relationship removed in Neo4j!');
     }

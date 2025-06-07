@@ -24,6 +24,7 @@ class LoginController extends Controller
         // If username is used, treat it as email for validation and authentication
         $request->merge(['email' => $loginValue]);
         try {
+            /** @var array{email: string, password: string} $credentials */
             $credentials = $request->validate([
                 'email' => [
                     'required',

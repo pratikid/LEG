@@ -34,10 +34,10 @@ class ActivityLogController extends Controller
 
         // Filter by date range
         if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', (string) $request->start_date);
+            $query->whereDate('created_at', '>=', $request->start_date);
         }
         if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', (string) $request->end_date);
+            $query->whereDate('created_at', '<=', $request->end_date);
         }
 
         $logs = $query->paginate(20);
@@ -66,10 +66,10 @@ class ActivityLogController extends Controller
             $query->where('model_type', $request->model_type);
         }
         if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', (string) $request->start_date);
+            $query->whereDate('created_at', '>=', $request->start_date);
         }
         if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', (string) $request->end_date);
+            $query->whereDate('created_at', '<=', $request->end_date);
         }
 
         $logs = $query->get();
@@ -97,16 +97,16 @@ class ActivityLogController extends Controller
             // Add data
             foreach ($logs as $log) {
                 fputcsv($file, [
-                    $log->id,
-                    $log->user?->name ?? 'Unknown',
-                    $log->action,
-                    $log->model_type,
-                    $log->model_id,
+                    (string) $log->id,
+                    $log->user->name ?? 'Unknown',
+                    (string) $log->action,
+                    (string) $log->model_type,
+                    (string) $log->model_id,
                     json_encode($log->old_values),
                     json_encode($log->new_values),
-                    $log->ip_address,
-                    $log->user_agent,
-                    $log->created_at,
+                    (string) $log->ip_address,
+                    (string) $log->user_agent,
+                    (string) $log->created_at,
                 ]);
             }
 

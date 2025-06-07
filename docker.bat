@@ -19,11 +19,12 @@ docker-compose exec app php artisan migrate:fresh
 docker-compose exec app php artisan db:seed
 
 REM Set proper permissions
-docker-compose exec app chown -R www-data:www-data /var/www/html/storage
+docker-compose exec app chown -R www-data:www-data /var/www/html
 docker-compose exec app chmod -R 775 /var/www/html/storage
+docker-compose exec app chmod 777 /var/www/html/vendor/bin/pint
 
 REM Run code style check (Laravel Pint)
-docker-compose exec app vendor\bin\pint
+docker-compose exec app vendor/bin/pint
 
 REM Run Enlightn security/code analysis
 REM docker-compose exec app php artisan enlightn

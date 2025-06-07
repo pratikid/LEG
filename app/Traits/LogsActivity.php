@@ -3,11 +3,12 @@
 namespace App\Traits;
 
 use App\Models\ActivityLog;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 
 trait LogsActivity
 {
-    protected static function bootLogsActivity()
+    protected static function bootLogsActivity(): void
     {
         static::created(function ($model) {
             $model->logActivity('create');
@@ -22,7 +23,14 @@ trait LogsActivity
         });
     }
 
-    public function logActivity(string $action, ?array $oldValues = null, ?array $newValues = null)
+    /**
+     * Log an activity for the model.
+     *
+     * @param string $action
+     * @param array<string, mixed>|null $oldValues
+     * @param array<string, mixed>|null $newValues
+     */
+    public function logActivity(string $action, ?array $oldValues = null, ?array $newValues = null): void
     {
         if (! Auth::check()) {
             return;
@@ -43,10 +51,15 @@ trait LogsActivity
         ]);
     }
 
-    public function activities()
+    /**
+     * Get all activity logs for this model.
+     *
+     * @return HasMany
+     */
+    public function activities(): HasMany
     {
-        return ActivityLog::where('model_type', get_class($this))
-            ->where('model_id', $this->getKey())
+        return $this->hasMany(ActivityLog::class, 'model_id')
+            ->where('model_type', get_class($this))
             ->orderBy('created_at', 'desc');
     }
 }

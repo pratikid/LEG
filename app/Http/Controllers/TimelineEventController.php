@@ -39,7 +39,8 @@ class TimelineEventController extends Controller
 
         // Search term
         if ($request->filled('search')) {
-            $searchTerm = (string) $request->search;
+            /** @var string $searchTerm */
+            $searchTerm = $request->input('search');
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('title', 'like', "%{$searchTerm}%")
                     ->orWhere('description', 'like', "%{$searchTerm}%");
@@ -48,12 +49,16 @@ class TimelineEventController extends Controller
 
         // Event type filter
         if ($request->filled('event_type')) {
-            $query->where('event_type', $request->event_type);
+            /** @var string $eventType */
+            $eventType = $request->input('event_type');
+            $query->where('event_type', $eventType);
         }
 
         // Date range filter
         if ($request->filled('date_range')) {
-            switch ($request->date_range) {
+            /** @var string $dateRange */
+            $dateRange = $request->input('date_range');
+            switch ($dateRange) {
                 case 'last_week':
                     $query->where('event_date', '>=', now()->subWeek());
                     break;
@@ -65,10 +70,14 @@ class TimelineEventController extends Controller
                     break;
                 case 'custom':
                     if ($request->filled('start_date')) {
-                        $query->where('event_date', '>=', $request->start_date);
+                        /** @var string $startDate */
+                        $startDate = $request->input('start_date');
+                        $query->where('event_date', '>=', $startDate);
                     }
                     if ($request->filled('end_date')) {
-                        $query->where('event_date', '<=', $request->end_date);
+                        /** @var string $endDate */
+                        $endDate = $request->input('end_date');
+                        $query->where('event_date', '<=', $endDate);
                     }
                     break;
             }
@@ -76,18 +85,22 @@ class TimelineEventController extends Controller
 
         // Location filter
         if ($request->filled('location')) {
-            $location = (string) $request->location;
+            /** @var string $location */
+            $location = $request->input('location');
             $query->where('location', 'like', "%{$location}%");
         }
 
         // Visibility filter (only for authenticated users)
         if ($request->user() && $request->filled('visibility')) {
-            $query->where('is_public', $request->visibility === 'public');
+            /** @var string $visibility */
+            $visibility = $request->input('visibility');
+            $query->where('is_public', $visibility === 'public');
         }
 
         // Sorting
         if ($request->filled('sort')) {
-            $sortString = (string) $request->sort;
+            /** @var string $sortString */
+            $sortString = $request->input('sort');
             [$column, $direction] = explode('_', $sortString);
             $query->orderBy($column === 'date' ? 'event_date' : $column, $direction);
         } else {

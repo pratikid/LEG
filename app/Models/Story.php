@@ -8,7 +8,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @mixin \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\StoryFactory>
+ * @property int $id
+ * @property string $title
+ * @property string $content
+ * @property int $user_id
+ * @property int $tree_id
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ * @property-read \App\Models\User $user
+ * @property-read \App\Models\Tree $tree
+ * 
+ * @method static \Database\Factories\StoryFactory factory()
  */
 class Story extends Model
 {
