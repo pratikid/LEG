@@ -118,7 +118,7 @@ class IndividualController extends Controller
                 ->with('success', 'Individual created successfully.');
         } catch (\Exception $e) {
             // Rollback Neo4j transaction if not committed
-            if ($neo4jTransaction && !$neo4jCommitted) {
+            if ($neo4jTransaction && ! $neo4jCommitted) {
                 try {
                     $neo4jTransaction->run('ROLLBACK');
                 } catch (\Exception $rollbackError) {
@@ -250,7 +250,7 @@ class IndividualController extends Controller
                 ->with('success', 'Individual updated successfully.');
         } catch (\Exception $e) {
             // Rollback Neo4j transaction if not committed
-            if ($neo4jTransaction && !$neo4jCommitted) {
+            if ($neo4jTransaction && ! $neo4jCommitted) {
                 try {
                     $neo4jTransaction->run('ROLLBACK');
                 } catch (\Exception $rollbackError) {
@@ -305,7 +305,7 @@ class IndividualController extends Controller
                 ->with('success', 'Individual deleted successfully.');
         } catch (\Exception $e) {
             // Rollback Neo4j transaction if not committed
-            if ($neo4jTransaction && !$neo4jCommitted) {
+            if ($neo4jTransaction && ! $neo4jCommitted) {
                 try {
                     $neo4jTransaction->run('ROLLBACK');
                 } catch (\Exception $rollbackError) {
@@ -347,6 +347,7 @@ class IndividualController extends Controller
                 'individual_id' => $individualId,
                 'attempts' => $attempt,
             ]);
+
             return;
         }
 

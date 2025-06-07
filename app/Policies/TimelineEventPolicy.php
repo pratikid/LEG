@@ -7,8 +7,6 @@ use App\Models\User;
 
 class TimelineEventPolicy
 {
-
-
     /**
      * Determine whether the user can create models.
      */

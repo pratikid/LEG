@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Livewire;
 
 use Illuminate\Support\Facades\Auth;
-use Livewire\Component;
-use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
+use Livewire\Component;
 
 class UserSettings extends Component
 {
@@ -18,7 +18,7 @@ class UserSettings extends Component
     public function mount(): void
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return;
         }
         $this->name = $user->name;
@@ -28,7 +28,7 @@ class UserSettings extends Component
     public function save(): void
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return;
         }
         DB::table('users')

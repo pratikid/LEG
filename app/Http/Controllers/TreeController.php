@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
-use Laudis\Neo4j\Contracts\TransactionInterface;
 
 class TreeController extends Controller
 {
@@ -64,7 +63,7 @@ class TreeController extends Controller
         ]);
 
         $file = $request->file('gedcom');
-        if (!$file) {
+        if (! $file) {
             return redirect()->back()->withErrors(['gedcom' => 'No file was uploaded.']);
         }
 
@@ -77,9 +76,9 @@ class TreeController extends Controller
         // Parse and import GEDCOM
         $gedcomService = new GedcomService;
         $parsed = $gedcomService->parse($content);
-        
+
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -98,7 +97,6 @@ class TreeController extends Controller
      * Export a tree as a GEDCOM file.
      *
      * @param  int  $id  Tree ID
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse
      */
     public function exportGedcom(int $id): \Symfony\Component\HttpFoundation\StreamedResponse
     {
@@ -128,7 +126,7 @@ class TreeController extends Controller
         ]);
 
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -212,6 +210,7 @@ class TreeController extends Controller
     public function edit(int $id): View
     {
         $tree = Tree::findOrFail($id);
+
         return view('trees.edit', compact('tree'));
     }
 

@@ -26,9 +26,8 @@ trait LogsActivity
     /**
      * Log an activity for the model.
      *
-     * @param string $action
-     * @param array<string, mixed>|null $oldValues
-     * @param array<string, mixed>|null $newValues
+     * @param  array<string, mixed>|null  $oldValues
+     * @param  array<string, mixed>|null  $newValues
      */
     public function logActivity(string $action, ?array $oldValues = null, ?array $newValues = null): void
     {
@@ -53,8 +52,6 @@ trait LogsActivity
 
     /**
      * Get all activity logs for this model.
-     *
-     * @return HasMany
      */
     public function activities(): HasMany
     {

@@ -25,7 +25,8 @@ class CacheService
      * Get a value from the cache.
      *
      * @template TDefault
-     * @param TDefault $default
+     *
+     * @param  TDefault  $default
      * @return TCacheValue|TDefault
      */
     public function get(string $key, mixed $default = null): mixed
@@ -45,8 +46,9 @@ class CacheService
      * Get an item or store the default value.
      *
      * @template TValue
-     * @param TValue $ttl
-     * @param Closure(): TValue $callback
+     *
+     * @param  TValue  $ttl
+     * @param  Closure(): TValue  $callback
      * @return TValue
      */
     public function remember(string $key, DateInterval|DateTimeInterface|int|null $ttl, Closure $callback): mixed

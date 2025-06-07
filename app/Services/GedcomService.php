@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Services\Neo4jRelationshipService;
-
 /**
  * Service for parsing, importing, and exporting GEDCOM files.
  * Handles individuals, families, events, sources, notes, and relationships.
@@ -136,7 +134,7 @@ class GedcomService
      *     sources: array<string, mixed>,
      *     notes: array<string, mixed>
      * } $parsed Parsed GEDCOM data (from parse())
-     * @param int $treeId Target tree ID
+     * @param  int  $treeId  Target tree ID
      */
     public function importToDatabase(array $parsed, int $treeId): void
     {
@@ -171,7 +169,7 @@ class GedcomService
 
             // 4. Create Neo4j relationships for family members
             // Spouse relationship
-            if (!empty($fam['husb']) && !empty($fam['wife'])) {
+            if (! empty($fam['husb']) && ! empty($fam['wife'])) {
                 $this->addSpouseRelationshipNeo4j(
                     $xrefToIndividualId[$fam['husb']] ?? null,
                     $xrefToIndividualId[$fam['wife']] ?? null

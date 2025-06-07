@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read \App\Models\User $user
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Individual> $individuals
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Group> $groups
- * 
+ *
  * @method static \Database\Factories\TreeFactory factory()
  */
 class Tree extends Model

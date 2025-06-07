@@ -10,10 +10,6 @@ class ContentSecurityPolicy
 {
     /**
      * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -47,8 +43,6 @@ class ContentSecurityPolicy
 
     /**
      * Generate a random nonce for CSP.
-     *
-     * @return string
      */
     private function generateNonce(): string
     {

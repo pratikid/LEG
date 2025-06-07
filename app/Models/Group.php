@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
  * @property-read \App\Models\Tree $tree
- * 
+ *
  * @method static \Database\Factories\GroupFactory factory()
  */
 class Group extends Model

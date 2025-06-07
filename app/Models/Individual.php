@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Illuminate\Support\Carbon $updated_at
  * @property-read \App\Models\Tree $tree
  * @property-read \App\Models\User $user
- * 
+ *
  * @method static \Database\Factories\IndividualFactory factory()
  */
 class Individual extends Model

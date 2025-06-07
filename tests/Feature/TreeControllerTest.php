@@ -19,7 +19,7 @@ class TreeControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Mock Neo4j service
         $this->neo4jService = Mockery::mock(Neo4jIndividualService::class);
         $this->app->instance(Neo4jIndividualService::class, $this->neo4jService);
@@ -33,11 +33,11 @@ class TreeControllerTest extends TestCase
         // Mock Neo4j transaction
         $transaction = Mockery::mock('transaction');
         $transaction->shouldReceive('run')->with('COMMIT')->once();
-        
+
         $this->neo4jService->shouldReceive('beginTransaction')
             ->once()
             ->andReturn($transaction);
-            
+
         $this->neo4jService->shouldReceive('createTreeNode')
             ->once()
             ->andReturn(true);
@@ -93,11 +93,11 @@ class TreeControllerTest extends TestCase
         // Mock Neo4j transaction to throw an exception
         $transaction = Mockery::mock('transaction');
         $transaction->shouldReceive('run')->with('ROLLBACK')->once();
-        
+
         $this->neo4jService->shouldReceive('beginTransaction')
             ->once()
             ->andReturn($transaction);
-            
+
         $this->neo4jService->shouldReceive('createTreeNode')
             ->once()
             ->andThrow(new \Exception('Neo4j error'));
@@ -124,4 +124,4 @@ class TreeControllerTest extends TestCase
         Mockery::close();
         parent::tearDown();
     }
-} 
+}

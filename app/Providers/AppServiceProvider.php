@@ -2,12 +2,11 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Contracts\Cache\Repository;
 use Illuminate\View\View as ViewContract;
-use Illuminate\Support\Facades\Cache;
 
 class AppServiceProvider extends ServiceProvider
 {

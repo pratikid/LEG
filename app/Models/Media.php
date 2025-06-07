@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property \Illuminate\Support\Carbon $updated_at
  * @property-read \App\Models\User $user
  * @property-read \App\Models\Tree $tree
- * 
+ *
  * @method static \Database\Factories\MediaFactory factory()
  */
 class Media extends Model

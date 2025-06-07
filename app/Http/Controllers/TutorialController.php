@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -17,12 +17,12 @@ class TutorialController extends Controller
     public function markAsCompleted(Request $request): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'User not found'], 404);
         }
 
         $tutorial = $request->input('tutorial');
-        if (!is_string($tutorial)) {
+        if (! is_string($tutorial)) {
             return response()->json(['error' => 'Invalid tutorial identifier'], 400);
         }
 
@@ -38,7 +38,7 @@ class TutorialController extends Controller
             ->update([
                 'preferences' => json_encode(array_merge($preferences, [
                     'completed_tutorials' => array_unique($completedTutorials),
-                ]))
+                ])),
             ]);
 
         return response()->json(['success' => true]);
@@ -47,7 +47,7 @@ class TutorialController extends Controller
     public function resetTutorials(Request $request): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'User not found'], 404);
         }
 
@@ -58,7 +58,7 @@ class TutorialController extends Controller
             ->update([
                 'preferences' => json_encode(array_merge($preferences, [
                     'completed_tutorials' => [],
-                ]))
+                ])),
             ]);
 
         return response()->json(['success' => true]);

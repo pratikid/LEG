@@ -16,7 +16,7 @@ class ProfileController extends Controller
     public function update(Request $request): \Illuminate\Http\RedirectResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -47,7 +47,7 @@ class ProfileController extends Controller
     public function updatePassword(Request $request): \Illuminate\Http\RedirectResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -57,7 +57,7 @@ class ProfileController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        if (!Hash::check($validated['current_password'], $user->password)) {
+        if (! Hash::check($validated['current_password'], $user->password)) {
             return back()->withErrors(['current_password' => 'Current password is incorrect.']);
         }
 
@@ -70,7 +70,7 @@ class ProfileController extends Controller
     public function updateNotifications(Request $request): \Illuminate\Http\RedirectResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -84,7 +84,7 @@ class ProfileController extends Controller
     public function destroy(Request $request): \Illuminate\Http\RedirectResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
