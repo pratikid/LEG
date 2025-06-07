@@ -1,0 +1,32 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+
+parameters:
+    # Analyze all PHP files in the project
+    paths:
+        - app/
+        - config/
+        - database/
+        - routes/
+        - tests/
+
+    # Level 10 is the highest level
+    level: 10
+
+    # Ignore specific errors
+    ignoreErrors:
+        - '#PHPDoc tag @var#'
+        - '#Call to an undefined method [a-zA-Z0-9\\_]+::shouldReceive\(\)#'
+        - '#Call to an undefined method [a-zA-Z0-9\\_]+::with\(\)#'
+        - '#Call to an undefined method [a-zA-Z0-9\\_]+::andReturn\(\)#'
+        - '#Call to an undefined method [a-zA-Z0-9\\_]+::mock\(\)#'
+
+    # Exclude paths that don't need analysis
+    excludePaths:
+        - vendor/*
+        - storage/*
+        - bootstrap/cache/*
+        - public/*
+        - resources/*
+        - node_modules/*
