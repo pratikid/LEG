@@ -5,7 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * @mixin \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\TimelineEventFactory>
+ */
 class TimelineEvent extends Model
 {
     use HasFactory;
@@ -25,17 +29,20 @@ class TimelineEvent extends Model
         'is_public' => 'boolean',
     ];
 
+    /**
+     * @return BelongsTo<User, TimelineEvent>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function scopePublic($query)
+    public function scopePublic(Builder $query): Builder
     {
         return $query->where('is_public', true);
     }
 
-    public function scopeByDate($query, $startDate = null, $endDate = null)
+    public function scopeByDate(Builder $query, ?string $startDate = null, ?string $endDate = null): Builder
     {
         if ($startDate) {
             $query->where('event_date', '>=', $startDate);
@@ -47,7 +54,7 @@ class TimelineEvent extends Model
         return $query;
     }
 
-    public function scopeByType($query, $type)
+    public function scopeByType(Builder $query, string $type): Builder
     {
         return $query->where('event_type', $type);
     }

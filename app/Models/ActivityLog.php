@@ -28,7 +28,7 @@ class ActivityLog extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function getModelAttribute()
+    public function getModelAttribute(): ?Model
     {
         if (! $this->model_type || ! $this->model_id) {
             return null;

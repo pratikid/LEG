@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @mixin \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\IndividualFactory>
+ */
 class Individual extends Model
 {
     use HasFactory;
@@ -21,19 +24,25 @@ class Individual extends Model
         'tree_id',
     ];
 
-    protected $dates = [
+    /**
+     * @var array<int, string>
+     */
+    protected array $dates = [
         'birth_date',
         'death_date',
     ];
 
+    /**
+     * @return BelongsTo<Tree, Individual>
+     */
     public function tree(): BelongsTo
     {
         return $this->belongsTo(Tree::class);
     }
 
-    protected static function booted()
+    protected static function booted(): void
     {
-        static::created(function ($individual) {
+        static::created(function (Individual $individual) {
             app(Neo4jIndividualService::class)->createIndividualNode([
                 'id' => $individual->id,
                 'first_name' => $individual->first_name,
@@ -43,7 +52,7 @@ class Individual extends Model
                 'tree_id' => $individual->tree_id,
             ]);
         });
-        static::updated(function ($individual) {
+        static::updated(function (Individual $individual) {
             app(Neo4jIndividualService::class)->updateIndividualNode([
                 'id' => $individual->id,
                 'first_name' => $individual->first_name,
@@ -53,7 +62,7 @@ class Individual extends Model
                 'tree_id' => $individual->tree_id,
             ]);
         });
-        static::deleted(function ($individual) {
+        static::deleted(function (Individual $individual) {
             app(Neo4jIndividualService::class)->deleteIndividualNode($individual->id);
         });
     }

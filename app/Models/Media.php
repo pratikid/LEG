@@ -7,6 +7,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @mixin \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\MediaFactory>
+ */
 class Media extends Model
 {
     use HasFactory;
