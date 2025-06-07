@@ -4,8 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use Closure;
+use DateInterval;
+use DateTimeInterface;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 
+/**
+ * @template TCacheValue
+ */
 class CacheService
 {
     protected CacheRepository $cache;
@@ -17,8 +23,12 @@ class CacheService
 
     /**
      * Get a value from the cache.
+     *
+     * @template TDefault
+     * @param TDefault $default
+     * @return TCacheValue|TDefault
      */
-    public function get(string $key, $default = null)
+    public function get(string $key, mixed $default = null): mixed
     {
         return $this->cache->get($key, $default);
     }
@@ -26,15 +36,20 @@ class CacheService
     /**
      * Put a value in the cache.
      */
-    public function put(string $key, $value, $ttl = null): void
+    public function put(string $key, mixed $value, DateInterval|DateTimeInterface|int|null $ttl = null): void
     {
         $this->cache->put($key, $value, $ttl);
     }
 
     /**
      * Get an item or store the default value.
+     *
+     * @template TValue
+     * @param TValue $ttl
+     * @param Closure(): TValue $callback
+     * @return TValue
      */
-    public function remember(string $key, $ttl, \Closure $callback)
+    public function remember(string $key, DateInterval|DateTimeInterface|int|null $ttl, Closure $callback): mixed
     {
         return $this->cache->remember($key, $ttl, $callback);
     }

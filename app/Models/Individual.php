@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Services\Neo4jIndividualService;
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Individual extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     protected $fillable = [
         'first_name',
@@ -22,6 +24,7 @@ class Individual extends Model
         'birth_date',
         'death_date',
         'tree_id',
+        'user_id',
     ];
 
     /**
@@ -38,6 +41,14 @@ class Individual extends Model
     public function tree(): BelongsTo
     {
         return $this->belongsTo(Tree::class);
+    }
+
+    /**
+     * @return BelongsTo<User, Individual>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     protected static function booted(): void

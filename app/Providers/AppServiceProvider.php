@@ -5,6 +5,9 @@ namespace App\Providers;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Contracts\Cache\Repository;
+use Illuminate\View\View as ViewContract;
+use Illuminate\Support\Facades\Cache;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -14,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(\App\Services\CacheService::class, function ($app) {
-            return new \App\Services\CacheService($app['cache']->store());
+            return new \App\Services\CacheService(Cache::store());
         });
     }
 
@@ -23,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        View::composer('*', function ($view) {
+        View::composer('*', function (ViewContract $view) {
             $route = Route::currentRouteName();
             $tabMap = [
                 // Dashboard

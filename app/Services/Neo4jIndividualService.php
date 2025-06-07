@@ -1,40 +1,54 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use Laudis\Neo4j\Client;
 use Laudis\Neo4j\ClientBuilder;
+use Laudis\Neo4j\Contracts\TransactionInterface;
 
 class Neo4jIndividualService
 {
-    protected $client;
+    protected Client $client;
 
     public function __construct()
     {
-        $host = env('NEO4J_HOST', 'neo4j');
-        $port = env('NEO4J_PORT', 7687);
-        $user = env('NEO4J_USERNAME', 'neo4j');
-        $pass = env('NEO4J_PASSWORD', 'password123');
-        $scheme = env('NEO4J_SCHEME', 'bolt');
-        $uri = env('NEO4J_URI', "$scheme://$user:$pass@$host:$port");
+        $host = config('database.neo4j.host', 'neo4j');
+        $port = config('database.neo4j.port', 7687);
+        $user = config('database.neo4j.username', 'neo4j');
+        $pass = config('database.neo4j.password', 'password123');
+        $scheme = config('database.neo4j.scheme', 'bolt');
+        $uri = config('database.neo4j.uri', "$scheme://$user:$pass@$host:$port");
 
         $this->client = ClientBuilder::create()
             ->withDriver('default', $uri)
             ->build();
     }
 
-    public function beginTransaction()
+    public function beginTransaction(): TransactionInterface
     {
         return $this->client->beginTransaction();
     }
 
-    public function createIndividualNode(array $data, $transaction = null)
+    /**
+     * @param array{
+     *     id: int,
+     *     first_name: string,
+     *     last_name: string,
+     *     birth_date: string|null,
+     *     death_date: string|null,
+     *     tree_id: int
+     * } $data
+     */
+    public function createIndividualNode(array $data, ?TransactionInterface $transaction = null): mixed
     {
         $query = 'CREATE (i:Individual {id: $id, first_name: $first_name, last_name: $last_name, birth_date: $birth_date, death_date: $death_date, tree_id: $tree_id, created_at: datetime(), updated_at: datetime()}) RETURN i';
 
         return $transaction ? $transaction->run($query, $data) : $this->client->run($query, $data);
     }
 
-    public function createParentChildRelationship($parentId, $childId, $transaction = null)
+    public function createParentChildRelationship(int $parentId, int $childId, ?TransactionInterface $transaction = null): mixed
     {
         $query = '
             MATCH (parent:Individual {id: $parentId}), (child:Individual {id: $childId})
@@ -47,7 +61,7 @@ class Neo4jIndividualService
                            : $this->client->run($query, ['parentId' => $parentId, 'childId' => $childId]);
     }
 
-    public function createSpouseRelationship($spouseAId, $spouseBId, $transaction = null)
+    public function createSpouseRelationship(int $spouseAId, int $spouseBId, ?TransactionInterface $transaction = null): mixed
     {
         $query = '
             MATCH (a:Individual {id: $spouseAId}), (b:Individual {id: $spouseBId})
@@ -60,7 +74,7 @@ class Neo4jIndividualService
                            : $this->client->run($query, ['spouseAId' => $spouseAId, 'spouseBId' => $spouseBId]);
     }
 
-    public function createSiblingRelationship($siblingAId, $siblingBId, $transaction = null)
+    public function createSiblingRelationship(int $siblingAId, int $siblingBId, ?TransactionInterface $transaction = null): mixed
     {
         $query = '
             MATCH (a:Individual {id: $siblingAId}), (b:Individual {id: $siblingBId})
@@ -73,7 +87,17 @@ class Neo4jIndividualService
                            : $this->client->run($query, ['siblingAId' => $siblingAId, 'siblingBId' => $siblingBId]);
     }
 
-    public function updateIndividualNode(array $data, $transaction = null)
+    /**
+     * @param array{
+     *     id: int,
+     *     first_name: string,
+     *     last_name: string,
+     *     birth_date: string|null,
+     *     death_date: string|null,
+     *     tree_id: int
+     * } $data
+     */
+    public function updateIndividualNode(array $data, ?TransactionInterface $transaction = null): mixed
     {
         $query = 'MATCH (i:Individual {id: $id}) 
                  SET i.first_name = $first_name, 
@@ -87,19 +111,19 @@ class Neo4jIndividualService
         return $transaction ? $transaction->run($query, $data) : $this->client->run($query, $data);
     }
 
-    public function deleteIndividualNode($id, $transaction = null)
+    public function deleteIndividualNode(int $id, ?TransactionInterface $transaction = null): mixed
     {
         $query = 'MATCH (i:Individual {id: $id}) DETACH DELETE i';
 
         return $transaction ? $transaction->run($query, ['id' => $id]) : $this->client->run($query, ['id' => $id]);
     }
 
-    public function getClient()
+    public function getClient(): Client
     {
         return $this->client;
     }
 
-    public function getAncestors($individualId, $maxDepth = 5, $limit = 20, $transaction = null)
+    public function getAncestors(int $individualId, int $maxDepth = 5, int $limit = 20, ?TransactionInterface $transaction = null): mixed
     {
         $query = '
             MATCH (descendant:Individual {id: $individualId})<-[:PARENT_OF*1..$maxDepth]-(ancestor:Individual)
@@ -119,7 +143,7 @@ class Neo4jIndividualService
             ]);
     }
 
-    public function getDescendants($individualId, $maxDepth = 5, $limit = 20, $transaction = null)
+    public function getDescendants(int $individualId, int $maxDepth = 5, int $limit = 20, ?TransactionInterface $transaction = null): mixed
     {
         $query = '
             MATCH (ancestor:Individual {id: $individualId})-[:PARENT_OF*1..$maxDepth]->(descendant:Individual)
@@ -139,7 +163,7 @@ class Neo4jIndividualService
             ]);
     }
 
-    public function getSiblings($individualId, $limit = 20, $transaction = null)
+    public function getSiblings(int $individualId, int $limit = 20, ?TransactionInterface $transaction = null): mixed
     {
         $query = '
             MATCH (p:Individual)-[:PARENT_OF]->(i:Individual {id: $individualId})<-[:PARENT_OF]-(p)-[:PARENT_OF]->(sibling:Individual)
@@ -152,7 +176,7 @@ class Neo4jIndividualService
                            : $this->client->run($query, ['individualId' => $individualId, 'limit' => $limit]);
     }
 
-    public function getShortestPath($fromId, $toId, $maxDepth = 10, $transaction = null)
+    public function getShortestPath(int $fromId, int $toId, int $maxDepth = 10, ?TransactionInterface $transaction = null): mixed
     {
         $query = '
             MATCH (from:Individual {id: $fromId}), (to:Individual {id: $toId})
@@ -172,7 +196,7 @@ class Neo4jIndividualService
             ]);
     }
 
-    public function getTreeData($treeId, $transaction = null)
+    public function getTreeData(int $treeId, ?TransactionInterface $transaction = null): mixed
     {
         $query = '
             MATCH (i:Individual {tree_id: $treeId})
@@ -184,7 +208,7 @@ class Neo4jIndividualService
                            : $this->client->run($query, ['treeId' => $treeId]);
     }
 
-    public function updateNodeTimestamp(string $label, int $id, $transaction = null): void
+    public function updateNodeTimestamp(string $label, int $id, ?TransactionInterface $transaction = null): void
     {
         $query = sprintf('
             MATCH (n:%s {id: $id})
@@ -195,7 +219,7 @@ class Neo4jIndividualService
                     : $this->client->run($query, ['id' => $id, 'label' => $label]);
     }
 
-    public function createGroupMemberRelationship(int $groupId, int $individualId, $transaction = null): void
+    public function createGroupMemberRelationship(int $groupId, int $individualId, ?TransactionInterface $transaction = null): void
     {
         $query = '
             MATCH (group:Group {id: $groupId})
@@ -214,7 +238,7 @@ class Neo4jIndividualService
             ]);
     }
 
-    public function createSourceCitationRelationship(int $sourceId, int $individualId, $transaction = null): void
+    public function createSourceCitationRelationship(int $sourceId, int $individualId, ?TransactionInterface $transaction = null): void
     {
         $query = '
             MATCH (source:Source {id: $sourceId})
@@ -233,7 +257,7 @@ class Neo4jIndividualService
             ]);
     }
 
-    public function createNoteRelationship(int $noteId, int $individualId, $transaction = null): void
+    public function createNoteRelationship(int $noteId, int $individualId, ?TransactionInterface $transaction = null): void
     {
         $query = '
             MATCH (note:Note {id: $noteId})
@@ -252,7 +276,7 @@ class Neo4jIndividualService
             ]);
     }
 
-    public function createMediaRelationship(int $mediaId, int $individualId, $transaction = null): void
+    public function createMediaRelationship(int $mediaId, int $individualId, ?TransactionInterface $transaction = null): void
     {
         $query = '
             MATCH (media:Media {id: $mediaId})
@@ -271,58 +295,74 @@ class Neo4jIndividualService
             ]);
     }
 
-    public function createTreeNode(array $data, $transaction = null)
+    /**
+     * @param array{
+     *     id: int,
+     *     name: string,
+     *     description: string|null,
+     *     user_id: int
+     * } $data
+     */
+    public function createTreeNode(array $data, ?TransactionInterface $transaction = null): mixed
     {
-        $query = '
-            CREATE (t:Tree {id: $id, name: $name, description: $description, created_at: datetime(), updated_at: datetime()})
-            RETURN t
-        ';
+        $query = 'CREATE (t:Tree {id: $id, name: $name, description: $description, user_id: $user_id, created_at: datetime(), updated_at: datetime()}) RETURN t';
 
         return $transaction ? $transaction->run($query, $data) : $this->client->run($query, $data);
     }
 
-    public function linkIndividualToTree($individualId, $treeId, $transaction = null)
+    public function linkIndividualToTree(int $individualId, int $treeId, ?TransactionInterface $transaction = null): mixed
     {
         $query = '
             MATCH (i:Individual {id: $individualId})
             MATCH (t:Tree {id: $treeId})
-            CREATE (t)-[r:CONTAINS {created_at: datetime()}]->(i)
-            RETURN t, i
+            MERGE (i)-[r:BELONGS_TO]->(t)
+            ON CREATE SET r.created_at = datetime()
+            RETURN i, t
         ';
 
-        return $transaction ? $transaction->run($query, ['individualId' => $individualId, 'treeId' => $treeId])
-                           : $this->client->run($query, ['individualId' => $individualId, 'treeId' => $treeId]);
+        return $transaction ? $transaction->run($query, [
+            'individualId' => $individualId,
+            'treeId' => $treeId,
+        ])
+            : $this->client->run($query, [
+                'individualId' => $individualId,
+                'treeId' => $treeId,
+            ]);
     }
 
-    public function getTreeIndividuals($treeId)
+    public function getTreeIndividuals(int $treeId): mixed
     {
         $query = '
-            MATCH (t:Tree {id: $treeId})-[:CONTAINS]->(i:Individual)
+            MATCH (i:Individual)-[:BELONGS_TO]->(t:Tree {id: $treeId})
             RETURN i
         ';
 
         return $this->client->run($query, ['treeId' => $treeId]);
     }
 
-    public function updateTreeNode(array $data, $transaction = null)
+    /**
+     * @param array{
+     *     id: int,
+     *     name: string,
+     *     description: string|null,
+     *     user_id: int
+     * } $data
+     */
+    public function updateTreeNode(array $data, ?TransactionInterface $transaction = null): mixed
     {
-        $query = '
-            MATCH (t:Tree {id: $id})
-            SET t.name = $name,
-                t.description = $description,
-                t.updated_at = datetime()
-            RETURN t
-        ';
+        $query = 'MATCH (t:Tree {id: $id}) 
+                 SET t.name = $name, 
+                     t.description = $description, 
+                     t.user_id = $user_id,
+                     t.updated_at = datetime() 
+                 RETURN t';
 
         return $transaction ? $transaction->run($query, $data) : $this->client->run($query, $data);
     }
 
-    public function deleteTreeNode($id, $transaction = null)
+    public function deleteTreeNode(int $id, ?TransactionInterface $transaction = null): mixed
     {
-        $query = '
-            MATCH (t:Tree {id: $id})
-            DETACH DELETE t
-        ';
+        $query = 'MATCH (t:Tree {id: $id}) DETACH DELETE t';
 
         return $transaction ? $transaction->run($query, ['id' => $id]) : $this->client->run($query, ['id' => $id]);
     }

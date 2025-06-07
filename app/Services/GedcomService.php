@@ -14,21 +14,42 @@ class GedcomService
      * Parse GEDCOM content into structured arrays for individuals, families, sources, and notes.
      *
      * @param  string  $gedcomContent  Raw GEDCOM file content
-     * @return array [
-     *               'individuals' => [...],
-     *               'families' => [...],
-     *               'sources' => [...],
-     *               'notes' => [...],
-     *               ]
+     * @return array{
+     *     individuals: array<string, array{
+     *         name: string|null,
+     *         sex: string|null,
+     *         birth: array{date: string|null},
+     *         death: array{date: string|null},
+     *         fams: array<string>,
+     *         famc: array<string>
+     *     }>,
+     *     families: array<string, array{
+     *         husb: string|null,
+     *         wife: string|null,
+     *         chil: array<string>
+     *     }>,
+     *     sources: array<string, mixed>,
+     *     notes: array<string, mixed>
+     * }
      */
     public function parse(string $gedcomContent): array
     {
         $lines = preg_split('/\r?\n/', $gedcomContent);
+        if ($lines === false) {
+            return [
+                'individuals' => [],
+                'families' => [],
+                'sources' => [],
+                'notes' => [],
+            ];
+        }
+
         $individuals = [];
         $families = [];
         $current = null;
         $currentXref = null;
         $currentType = null;
+
         foreach ($lines as $line) {
             if (preg_match('/^(\d+) +(@[^@]+@) +(INDI|FAM)/', $line, $m)) {
                 // New record
@@ -39,8 +60,8 @@ class GedcomService
                     $individuals[$currentXref] = [
                         'name' => null,
                         'sex' => null,
-                        'birth' => [],
-                        'death' => [],
+                        'birth' => ['date' => null],
+                        'death' => ['date' => null],
                         'fams' => [],
                         'famc' => [],
                     ];
@@ -96,8 +117,24 @@ class GedcomService
     /**
      * Import parsed GEDCOM data into the database (PostgreSQL, Neo4j) for a given tree.
      *
-     * @param  array  $parsed  Parsed GEDCOM data (from parse())
-     * @param  int  $treeId  Target tree ID
+     * @param array{
+     *     individuals: array<string, array{
+     *         name: string|null,
+     *         sex: string|null,
+     *         birth: array{date: string|null},
+     *         death: array{date: string|null},
+     *         fams: array<string>,
+     *         famc: array<string>
+     *     }>,
+     *     families: array<string, array{
+     *         husb: string|null,
+     *         wife: string|null,
+     *         chil: array<string>
+     *     }>,
+     *     sources: array<string, mixed>,
+     *     notes: array<string, mixed>
+     * } $parsed Parsed GEDCOM data (from parse())
+     * @param int $treeId Target tree ID
      */
     public function importToDatabase(array $parsed, int $treeId): void
     {
@@ -132,7 +169,7 @@ class GedcomService
 
             // 4. Create Neo4j relationships for family members
             // Spouse relationship
-            if (! empty($fam['husb']) && ! empty($fam['wife'])) {
+            if (!empty($fam['husb']) && !empty($fam['wife'])) {
                 $this->addSpouseRelationshipNeo4j(
                     $xrefToIndividualId[$fam['husb']] ?? null,
                     $xrefToIndividualId[$fam['wife']] ?? null
