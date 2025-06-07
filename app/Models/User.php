@@ -29,6 +29,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'profile_photo_path',
         'email_notifications',
         'sms_notifications',
+        'preferences',
     ];
 
     /**
@@ -53,6 +54,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_admin' => 'boolean',
         'email_notifications' => 'boolean',
         'sms_notifications' => 'boolean',
+        'preferences' => 'array',
     ];
 
     public function roles(): BelongsToMany

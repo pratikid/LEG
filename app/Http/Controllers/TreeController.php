@@ -14,7 +14,7 @@ use Illuminate\View\View;
 
 class TreeController extends Controller
 {
-    protected $neo4jService;
+    protected Neo4jIndividualService $neo4jService;
 
     public function __construct(Neo4jIndividualService $neo4jService)
     {
@@ -30,7 +30,7 @@ class TreeController extends Controller
 
         // Search functionality
         if ($request->has('search')) {
-            $search = $request->get('search');
+            $search = (string) $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
@@ -51,26 +51,41 @@ class TreeController extends Controller
         return view('trees.index', compact('trees'));
     }
 
-    public function import(): \Illuminate\View\View
+    public function import(): View
     {
         return view('trees.import');
     }
 
-    public function handleImport(\Illuminate\Http\Request $request): \Illuminate\Http\RedirectResponse
+    public function handleImport(Request $request): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'gedcom' => ['required', 'file', 'mimes:ged,gedcom', 'max:10240'],
         ]);
-        $path = $request->file('gedcom')->store('gedcoms', 'private');
+
+        $file = $request->file('gedcom');
+        if (!$file) {
+            return redirect()->back()->withErrors(['gedcom' => 'No file was uploaded.']);
+        }
+
+        $path = $file->store('gedcoms', 'private');
         $content = file_get_contents(storage_path('app/private/'.$path));
+        if ($content === false) {
+            return redirect()->back()->withErrors(['gedcom' => 'Failed to read the uploaded file.']);
+        }
 
         // Parse and import GEDCOM
         $gedcomService = new GedcomService;
         $parsed = $gedcomService->parse($content);
+        
+        $user = $request->user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
         // TODO: Choose/create tree for import. For now, create a new tree per import.
-        $tree = \App\Models\Tree::create([
+        $tree = Tree::create([
             'name' => 'Imported Tree '.now()->format('Y-m-d H:i:s'),
-            'user_id' => $request->user()->id,
+            'user_id' => $user->id,
             'description' => 'Imported from GEDCOM',
         ]);
         $gedcomService->importToDatabase($parsed, $tree->id);
@@ -84,9 +99,9 @@ class TreeController extends Controller
      * @param  int  $id  Tree ID
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      */
-    public function exportGedcom($id)
+    public function exportGedcom(int $id): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $tree = \App\Models\Tree::findOrFail((int) $id);
+        $tree = Tree::findOrFail($id);
         $gedcomService = new GedcomService;
         $gedcomContent = $gedcomService->exportFromDatabase($tree->id);
         $filename = 'tree_'.$tree->id.'_'.now()->format('Ymd_His').'.ged';
@@ -103,7 +118,7 @@ class TreeController extends Controller
         return view('trees.create');
     }
 
-    public function store(Request $request)
+    public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -147,7 +162,7 @@ class TreeController extends Controller
         }
     }
 
-    public function show($id)
+    public function show(int $id): View
     {
         $tree = Tree::findOrFail($id);
 
@@ -162,12 +177,14 @@ class TreeController extends Controller
 
         foreach ($treeData as $record) {
             $individual = $record->get('i');
-            $treeDataArray['children'][] = [
-                'id' => $individual->getProperty('id'),
-                'name' => $individual->getProperty('first_name').' '.$individual->getProperty('last_name'),
-                'birth_date' => $individual->getProperty('birth_date'),
-                'death_date' => $individual->getProperty('death_date'),
-            ];
+            if ($individual) {
+                $treeDataArray['children'][] = [
+                    'id' => (string) $individual->getProperty('id'),
+                    'name' => (string) $individual->getProperty('first_name').' '.(string) $individual->getProperty('last_name'),
+                    'birth_date' => (string) $individual->getProperty('birth_date'),
+                    'death_date' => (string) $individual->getProperty('death_date'),
+                ];
+            }
         }
 
         return view('trees.show', [
@@ -176,14 +193,13 @@ class TreeController extends Controller
         ]);
     }
 
-    public function edit($id): View
+    public function edit(int $id): View
     {
-        $tree = Tree::findOrFail((int) $id);
-
+        $tree = Tree::findOrFail($id);
         return view('trees.edit', compact('tree'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id): \Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -229,7 +245,7 @@ class TreeController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy(int $id): \Illuminate\Http\RedirectResponse
     {
         $neo4jTransaction = null;
 

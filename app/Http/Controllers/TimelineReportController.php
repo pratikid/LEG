@@ -14,7 +14,7 @@ class TimelineReportController extends Controller
         $this->middleware('auth');
     }
 
-    public function generateTimelineReport(Request $request)
+    public function generateTimelineReport(Request $request): \Illuminate\Http\Response
     {
         $events = TimelineEvent::where(function ($query) {
             $query->where('user_id', Auth::id())
@@ -32,7 +32,7 @@ class TimelineReportController extends Controller
         return $pdf->download('timeline-report.pdf');
     }
 
-    public function generateEventReport(TimelineEvent $timelineEvent)
+    public function generateEventReport(TimelineEvent $timelineEvent): \Illuminate\Http\Response
     {
         if (! $timelineEvent->is_public && $timelineEvent->user_id !== Auth::id()) {
             abort(403);
@@ -47,9 +47,10 @@ class TimelineReportController extends Controller
         return $pdf->download('event-report.pdf');
     }
 
-    public function generateTypeReport(Request $request)
+    public function generateTypeReport(Request $request): \Illuminate\Http\Response
     {
-        $type = $request->validate(['type' => 'required|in:birth,death,marriage,divorce,immigration,other'])['type'];
+        $validated = $request->validate(['type' => 'required|in:birth,death,marriage,divorce,immigration,other']);
+        $type = (string) $validated['type'];
 
         $events = TimelineEvent::where(function ($query) {
             $query->where('user_id', Auth::id())

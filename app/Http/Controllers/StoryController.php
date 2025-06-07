@@ -19,27 +19,27 @@ class StoryController extends Controller
         return view('stories.create');
     }
 
-    public function show($id): View
+    public function show(int $id): View
     {
         return view('stories.show');
     }
 
-    public function edit($id): View
+    public function edit(int $id): View
     {
         return view('stories.edit');
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id): \Illuminate\Http\RedirectResponse
     {
         return redirect()->route('stories.index')->with('info', 'Update coming soon.');
     }
 
-    public function destroy($id)
+    public function destroy(int $id): \Illuminate\Http\RedirectResponse
     {
         return redirect()->route('stories.index')->with('info', 'Delete coming soon.');
     }
 
-    public function store(Request $request)
+    public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
         return redirect()->route('stories.index')->with('info', 'Store coming soon.');
     }

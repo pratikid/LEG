@@ -39,7 +39,7 @@ class TimelineEventController extends Controller
 
         // Search term
         if ($request->filled('search')) {
-            $searchTerm = $request->search;
+            $searchTerm = (string) $request->search;
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('title', 'like', "%{$searchTerm}%")
                     ->orWhere('description', 'like', "%{$searchTerm}%");
@@ -76,7 +76,8 @@ class TimelineEventController extends Controller
 
         // Location filter
         if ($request->filled('location')) {
-            $query->where('location', 'like', "%{$request->location}%");
+            $location = (string) $request->location;
+            $query->where('location', 'like', "%{$location}%");
         }
 
         // Visibility filter (only for authenticated users)
@@ -86,7 +87,8 @@ class TimelineEventController extends Controller
 
         // Sorting
         if ($request->filled('sort')) {
-            [$column, $direction] = explode('_', $request->sort);
+            $sortString = (string) $request->sort;
+            [$column, $direction] = explode('_', $sortString);
             $query->orderBy($column === 'date' ? 'event_date' : $column, $direction);
         } else {
             $query->orderBy('event_date', 'desc');
