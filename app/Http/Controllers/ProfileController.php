@@ -8,14 +8,18 @@ use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
-    public function show()
+    public function show(): \Illuminate\View\View
     {
         return view('profile');
     }
 
-    public function update(Request $request)
+    public function update(Request $request): \Illuminate\Http\RedirectResponse
     {
         $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
@@ -23,8 +27,11 @@ class ProfileController extends Controller
         ]);
 
         if ($request->hasFile('profile_photo')) {
-            $path = $request->file('profile_photo')->store('profile-photos', 'public');
-            $user->profile_photo_path = $path;
+            $file = $request->file('profile_photo');
+            if ($file) {
+                $path = $file->store('profile-photos', 'public');
+                $user->profile_photo_path = $path;
+            }
         }
 
         $user->name = $validated['name'];
@@ -34,37 +41,49 @@ class ProfileController extends Controller
         return back()->with('success', 'Profile updated successfully.');
     }
 
-    public function updatePassword(Request $request)
+    public function updatePassword(Request $request): \Illuminate\Http\RedirectResponse
     {
         $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
         $request->validate([
-            'current_password' => ['required'],
+            'current_password' => ['required', 'string'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        if (! Hash::check($request->current_password, $user->password)) {
+        if (!Hash::check((string) $request->current_password, (string) $user->password)) {
             return back()->withErrors(['current_password' => 'Current password is incorrect.']);
         }
 
-        $user->password = Hash::make($request->password);
+        $user->password = Hash::make((string) $request->password);
         $user->save();
 
         return back()->with('success', 'Password updated successfully.');
     }
 
-    public function updateNotifications(Request $request)
+    public function updateNotifications(Request $request): \Illuminate\Http\RedirectResponse
     {
         $user = Auth::user();
-        $user->email_notifications = $request->has('email_notifications');
-        $user->sms_notifications = $request->has('sms_notifications');
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $user->email_notifications = $request->boolean('email_notifications');
+        $user->sms_notifications = $request->boolean('sms_notifications');
         $user->save();
 
         return back()->with('success', 'Notification preferences updated.');
     }
 
-    public function destroy(Request $request)
+    public function destroy(Request $request): \Illuminate\Http\RedirectResponse
     {
         $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
         Auth::logout();
         $user->delete();
         $request->session()->invalidate();

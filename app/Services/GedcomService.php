@@ -13,13 +13,13 @@ class GedcomService
     /**
      * Parse GEDCOM content into structured arrays for individuals, families, sources, and notes.
      *
-     * @param string $gedcomContent Raw GEDCOM file content
+     * @param  string  $gedcomContent  Raw GEDCOM file content
      * @return array [
-     *   'individuals' => [...],
-     *   'families' => [...],
-     *   'sources' => [...],
-     *   'notes' => [...],
-     * ]
+     *               'individuals' => [...],
+     *               'families' => [...],
+     *               'sources' => [...],
+     *               'notes' => [...],
+     *               ]
      */
     public function parse(string $gedcomContent): array
     {
@@ -32,7 +32,7 @@ class GedcomService
         foreach ($lines as $line) {
             if (preg_match('/^(\d+) +(@[^@]+@) +(INDI|FAM)/', $line, $m)) {
                 // New record
-                $level = (int)$m[1];
+                $level = (int) $m[1];
                 $currentXref = $m[2];
                 $currentType = $m[3];
                 if ($currentType === 'INDI') {
@@ -51,6 +51,7 @@ class GedcomService
                         'chil' => [],
                     ];
                 }
+
                 continue;
             }
             if ($currentXref && $currentType === 'INDI') {
@@ -83,6 +84,7 @@ class GedcomService
                 $current = null;
             }
         }
+
         return [
             'individuals' => $individuals,
             'families' => $families,
@@ -94,9 +96,8 @@ class GedcomService
     /**
      * Import parsed GEDCOM data into the database (PostgreSQL, Neo4j) for a given tree.
      *
-     * @param array $parsed Parsed GEDCOM data (from parse())
-     * @param int $treeId Target tree ID
-     * @return void
+     * @param  array  $parsed  Parsed GEDCOM data (from parse())
+     * @param  int  $treeId  Target tree ID
      */
     public function importToDatabase(array $parsed, int $treeId): void
     {
@@ -131,7 +132,7 @@ class GedcomService
 
             // 4. Create Neo4j relationships for family members
             // Spouse relationship
-            if (!empty($fam['husb']) && !empty($fam['wife'])) {
+            if (! empty($fam['husb']) && ! empty($fam['wife'])) {
                 $this->addSpouseRelationshipNeo4j(
                     $xrefToIndividualId[$fam['husb']] ?? null,
                     $xrefToIndividualId[$fam['wife']] ?? null
@@ -157,7 +158,7 @@ class GedcomService
     /**
      * Export a tree (individuals, families, events, relationships) to a GEDCOM string.
      *
-     * @param int $treeId Tree ID to export
+     * @param  int  $treeId  Tree ID to export
      * @return string GEDCOM file content
      */
     public function exportFromDatabase(int $treeId): string
@@ -170,20 +171,26 @@ class GedcomService
 
     private function gedcomGivenName(?string $name): ?string
     {
-        if (!$name) return null;
+        if (! $name) {
+            return null;
+        }
         // GEDCOM: Given /Surname/
         if (preg_match('/^([^\\/]+)\\s*\\//', $name, $m)) {
             return trim($m[1]);
         }
+
         return $name;
     }
 
     private function gedcomSurname(?string $name): ?string
     {
-        if (!$name) return null;
+        if (! $name) {
+            return null;
+        }
         if (preg_match('/\\/([^\\/]+)\\//', $name, $m)) {
             return trim($m[1]);
         }
+
         return null;
     }
 
@@ -191,7 +198,9 @@ class GedcomService
 
     private function addSpouseRelationshipNeo4j(?int $husbandId, ?int $wifeId): void
     {
-        if (!$husbandId || !$wifeId) return;
+        if (! $husbandId || ! $wifeId) {
+            return;
+        }
         // Use your Neo4j service/client here
         // Example:
         // app(Neo4jRelationshipService::class)->addSpouse($husbandId, $wifeId);
@@ -199,9 +208,11 @@ class GedcomService
 
     private function addParentChildRelationshipNeo4j(?int $parentId, ?int $childId): void
     {
-        if (!$parentId || !$childId) return;
+        if (! $parentId || ! $childId) {
+            return;
+        }
         // Use your Neo4j service/client here
         // Example:
         // app(Neo4jRelationshipService::class)->addParentChild($parentId, $childId);
     }
-} 
+}

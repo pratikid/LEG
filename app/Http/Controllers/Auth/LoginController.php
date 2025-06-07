@@ -28,10 +28,10 @@ class LoginController extends Controller
                 'email' => [
                     'required',
                     function (
-                        $attribute,
-                        $value,
-                        $fail
-                    ) {
+                        string $attribute,
+                        mixed $value,
+                        \Closure $fail
+                    ): void {
                         if ($value === 'admin@admin.com') {
                             return;
                         }

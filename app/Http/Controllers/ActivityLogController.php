@@ -12,7 +12,7 @@ class ActivityLogController extends Controller
         $this->middleware(['auth', 'admin']);
     }
 
-    public function index(Request $request)
+    public function index(Request $request): \Illuminate\View\View
     {
         $query = ActivityLog::with('user')
             ->orderBy('created_at', 'desc');
@@ -34,10 +34,10 @@ class ActivityLogController extends Controller
 
         // Filter by date range
         if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
+            $query->whereDate('created_at', '>=', (string) $request->start_date);
         }
         if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
+            $query->whereDate('created_at', '<=', (string) $request->end_date);
         }
 
         $logs = $query->paginate(20);
@@ -45,12 +45,12 @@ class ActivityLogController extends Controller
         return view('admin.activity-logs.index', compact('logs'));
     }
 
-    public function show(ActivityLog $activityLog)
+    public function show(ActivityLog $activityLog): \Illuminate\View\View
     {
         return view('admin.activity-logs.show', compact('activityLog'));
     }
 
-    public function export(Request $request)
+    public function export(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
     {
         $query = ActivityLog::with('user')
             ->orderBy('created_at', 'desc');
@@ -66,16 +66,19 @@ class ActivityLogController extends Controller
             $query->where('model_type', $request->model_type);
         }
         if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
+            $query->whereDate('created_at', '>=', (string) $request->start_date);
         }
         if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
+            $query->whereDate('created_at', '<=', (string) $request->end_date);
         }
 
         $logs = $query->get();
 
         return response()->streamDownload(function () use ($logs) {
             $file = fopen('php://output', 'w');
+            if ($file === false) {
+                throw new \RuntimeException('Failed to open output stream');
+            }
 
             // Add headers
             fputcsv($file, [
@@ -95,7 +98,7 @@ class ActivityLogController extends Controller
             foreach ($logs as $log) {
                 fputcsv($file, [
                     $log->id,
-                    $log->user->name,
+                    $log->user?->name ?? 'Unknown',
                     $log->action,
                     $log->model_type,
                     $log->model_id,

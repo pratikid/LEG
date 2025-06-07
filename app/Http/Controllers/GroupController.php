@@ -36,7 +36,10 @@ class GroupController extends Controller
             'description' => ['nullable', 'string'],
             'tree_id' => ['required', 'integer', 'exists:trees,id'],
         ]);
-        Group::create($validated);
+        Group::create(array_merge($validated, [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]));
 
         return redirect()->route('groups.index')->with('success', 'Group created successfully.');
     }
@@ -63,7 +66,9 @@ class GroupController extends Controller
             'description' => ['nullable', 'string'],
             'tree_id' => ['required', 'integer', 'exists:trees,id'],
         ]);
-        $group->update($validated);
+        $group->update(array_merge($validated, [
+            'updated_at' => now(),
+        ]));
 
         return redirect()->route('groups.index')->with('success', 'Group updated successfully.');
     }

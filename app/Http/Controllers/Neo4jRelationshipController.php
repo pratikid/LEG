@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class Neo4jRelationshipController extends Controller
 {
-    protected $neo4j;
+    protected Neo4jIndividualService $neo4j;
 
     public function __construct(Neo4jIndividualService $neo4j)
     {
@@ -16,7 +16,7 @@ class Neo4jRelationshipController extends Controller
     }
 
     // Add a parent-child relationship
-    public function addParentChild(Request $request)
+    public function addParentChild(Request $request): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'parent_id' => 'required|integer|exists:individuals,id',
@@ -28,7 +28,7 @@ class Neo4jRelationshipController extends Controller
     }
 
     // Add a spouse relationship
-    public function addSpouse(Request $request)
+    public function addSpouse(Request $request): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'spouse_a_id' => 'required|integer|exists:individuals,id',
@@ -40,9 +40,8 @@ class Neo4jRelationshipController extends Controller
     }
 
     // Get all children of a parent
-    public function getChildren($parentId)
+    public function getChildren(int $parentId): \Illuminate\Http\JsonResponse
     {
-        $parentId = (int) $parentId;
         $client = $this->neo4j->getClient();
         $query = 'MATCH (p:Individual {id: $parentId})-[:PARENT_OF]->(c:Individual) RETURN c';
         $result = $client->run($query, ['parentId' => $parentId]);
@@ -52,7 +51,7 @@ class Neo4jRelationshipController extends Controller
     }
 
     // Get all parents of a child
-    public function getParents($childId)
+    public function getParents(int $childId): \Illuminate\Http\JsonResponse
     {
         $client = $this->neo4j->getClient();
         $query = 'MATCH (p:Individual)-[:PARENT_OF]->(c:Individual {id: $childId}) RETURN p';
@@ -63,7 +62,7 @@ class Neo4jRelationshipController extends Controller
     }
 
     // Get all spouses of an individual
-    public function getSpouses($individualId)
+    public function getSpouses(int $individualId): \Illuminate\Http\JsonResponse
     {
         $client = $this->neo4j->getClient();
         $query = 'MATCH (a:Individual {id: $individualId})-[:SPOUSE_OF]-(b:Individual) RETURN b';
@@ -74,10 +73,10 @@ class Neo4jRelationshipController extends Controller
     }
 
     // Get all ancestors of an individual
-    public function getAncestors(Request $request, $id)
+    public function getAncestors(Request $request, int $id): \Illuminate\Http\JsonResponse
     {
-        $maxDepth = $request->query('maxDepth', 5);
-        $limit = $request->query('limit', 20);
+        $maxDepth = (int) $request->query('maxDepth', 5);
+        $limit = (int) $request->query('limit', 20);
         $result = $this->neo4j->getAncestors($id, $maxDepth, $limit);
         $ancestors = collect($result)->map(fn ($r) => $r->get('ancestor'))->toArray();
 
@@ -85,10 +84,10 @@ class Neo4jRelationshipController extends Controller
     }
 
     // Get all descendants of an individual
-    public function getDescendants(Request $request, $id)
+    public function getDescendants(Request $request, int $id): \Illuminate\Http\JsonResponse
     {
-        $maxDepth = $request->query('maxDepth', 5);
-        $limit = $request->query('limit', 20);
+        $maxDepth = (int) $request->query('maxDepth', 5);
+        $limit = (int) $request->query('limit', 20);
         $result = $this->neo4j->getDescendants($id, $maxDepth, $limit);
         $descendants = collect($result)->map(fn ($r) => $r->get('descendant'))->toArray();
 
@@ -96,9 +95,9 @@ class Neo4jRelationshipController extends Controller
     }
 
     // Get all siblings of an individual
-    public function getSiblings(Request $request, $id)
+    public function getSiblings(Request $request, int $id): \Illuminate\Http\JsonResponse
     {
-        $limit = $request->query('limit', 20);
+        $limit = (int) $request->query('limit', 20);
         $result = $this->neo4j->getSiblings($id, $limit);
         $siblings = collect($result)->map(fn ($r) => $r->get('sibling'))->toArray();
 
@@ -106,9 +105,9 @@ class Neo4jRelationshipController extends Controller
     }
 
     // Get shortest path between two individuals
-    public function getShortestPath(Request $request, $fromId, $toId)
+    public function getShortestPath(Request $request, int $fromId, int $toId): \Illuminate\Http\JsonResponse
     {
-        $maxDepth = $request->query('maxDepth', 10);
+        $maxDepth = (int) $request->query('maxDepth', 10);
         $result = $this->neo4j->getShortestPath($fromId, $toId, $maxDepth);
         $paths = collect($result)->map(fn ($r) => $r->get('path'))->toArray();
 
@@ -116,7 +115,7 @@ class Neo4jRelationshipController extends Controller
     }
 
     // Add a sibling relationship
-    public function addSibling(Request $request)
+    public function addSibling(Request $request): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'sibling_a_id' => 'required|integer|exists:individuals,id',
@@ -128,7 +127,7 @@ class Neo4jRelationshipController extends Controller
     }
 
     // Remove a parent-child relationship
-    public function removeParentChild(Request $request)
+    public function removeParentChild(Request $request): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'parent_id' => 'required|integer|exists:individuals,id',
@@ -142,7 +141,7 @@ class Neo4jRelationshipController extends Controller
     }
 
     // Remove a spouse relationship
-    public function removeSpouse(Request $request)
+    public function removeSpouse(Request $request): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'spouse_a_id' => 'required|integer|exists:individuals,id',
@@ -156,7 +155,7 @@ class Neo4jRelationshipController extends Controller
     }
 
     // Remove a sibling relationship
-    public function removeSibling(Request $request)
+    public function removeSibling(Request $request): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'sibling_a_id' => 'required|integer|exists:individuals,id',

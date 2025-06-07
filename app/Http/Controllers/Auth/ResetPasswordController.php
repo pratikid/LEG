@@ -32,7 +32,7 @@ class ResetPasswordController extends Controller
 
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, $password) {
+            function (\App\Models\User $user, string $password): void {
                 $user->password = Hash::make($password);
                 $user->save();
                 Auth::login($user);
