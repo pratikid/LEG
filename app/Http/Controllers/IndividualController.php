@@ -108,7 +108,8 @@ class IndividualController extends Controller
             }
 
             // Commit Neo4j transaction first
-            $neo4jTransaction->run('COMMIT');
+            // Neo4j transaction is automatically committed when the transaction object is destroyed
+            unset($neo4jTransaction);
             $neo4jCommitted = true;
 
             // Then commit SQL transaction
@@ -120,9 +121,10 @@ class IndividualController extends Controller
             // Rollback Neo4j transaction if not committed
             if ($neo4jTransaction && ! $neo4jCommitted) {
                 try {
-                    $neo4jTransaction->run('ROLLBACK');
+                    // Neo4j transaction is automatically rolled back when the transaction object is destroyed
+                    unset($neo4jTransaction);
                 } catch (\Exception $rollbackError) {
-                    Log::error('Failed to rollback Neo4j transaction', [
+                    Log::error('Failed to handle Neo4j transaction', [
                         'individual_id' => $individual?->id,
                         'exception' => $rollbackError,
                     ]);
@@ -215,32 +217,73 @@ class IndividualController extends Controller
             $individualData = $individual->toArray();
             $this->neo4jService->updateIndividualNode($individualData, $neo4jTransaction);
 
-            // Update relationships in Neo4j
-            // First, delete existing relationships
-            $this->neo4jService->deleteIndividualNode($individual->id, $neo4jTransaction);
-            $this->neo4jService->createIndividualNode($individualData, $neo4jTransaction);
+            // Get existing relationships
+            $existingRelationships = $this->neo4jService->getExistingRelationships($individual->id, $neo4jTransaction);
+            $existingParents = [];
+            $existingSpouses = [];
+            $existingSiblings = [];
 
-            // Then create new relationships
-            if (isset($validated['parent_ids']) && is_array($validated['parent_ids'])) {
-                foreach ($validated['parent_ids'] as $parentId) {
-                    $this->neo4jService->createParentChildRelationship((int) $parentId, $individual->id, $neo4jTransaction);
+            foreach ($existingRelationships as $record) {
+                $type = $record->get('type');
+                $relatedId = $record->get('related_id');
+                switch ($type) {
+                    case 'PARENT_OF':
+                        $existingParents[] = $relatedId;
+                        break;
+                    case 'SPOUSE_OF':
+                        $existingSpouses[] = $relatedId;
+                        break;
+                    case 'SIBLING_OF':
+                        $existingSiblings[] = $relatedId;
+                        break;
                 }
             }
 
-            if (isset($validated['spouse_ids']) && is_array($validated['spouse_ids'])) {
-                foreach ($validated['spouse_ids'] as $spouseId) {
-                    $this->neo4jService->createSpouseRelationship($individual->id, (int) $spouseId, $neo4jTransaction);
+            // Update parent relationships
+            if (isset($validated['parent_ids'])) {
+                $newParents = array_map('intval', $validated['parent_ids']);
+                $parentsToAdd = array_diff($newParents, $existingParents);
+                $parentsToRemove = array_diff($existingParents, $newParents);
+
+                foreach ($parentsToAdd as $parentId) {
+                    $this->neo4jService->createParentChildRelationship($parentId, $individual->id, $neo4jTransaction);
+                }
+                foreach ($parentsToRemove as $parentId) {
+                    $this->neo4jService->deleteParentChildRelationship($parentId, $individual->id, $neo4jTransaction);
                 }
             }
 
-            if (isset($validated['sibling_ids']) && is_array($validated['sibling_ids'])) {
-                foreach ($validated['sibling_ids'] as $siblingId) {
-                    $this->neo4jService->createSiblingRelationship($individual->id, (int) $siblingId, $neo4jTransaction);
+            // Update spouse relationships
+            if (isset($validated['spouse_ids'])) {
+                $newSpouses = array_map('intval', $validated['spouse_ids']);
+                $spousesToAdd = array_diff($newSpouses, $existingSpouses);
+                $spousesToRemove = array_diff($existingSpouses, $newSpouses);
+
+                foreach ($spousesToAdd as $spouseId) {
+                    $this->neo4jService->createSpouseRelationship($individual->id, $spouseId, $neo4jTransaction);
+                }
+                foreach ($spousesToRemove as $spouseId) {
+                    $this->neo4jService->deleteSpouseRelationship($individual->id, $spouseId, $neo4jTransaction);
+                }
+            }
+
+            // Update sibling relationships
+            if (isset($validated['sibling_ids'])) {
+                $newSiblings = array_map('intval', $validated['sibling_ids']);
+                $siblingsToAdd = array_diff($newSiblings, $existingSiblings);
+                $siblingsToRemove = array_diff($existingSiblings, $newSiblings);
+
+                foreach ($siblingsToAdd as $siblingId) {
+                    $this->neo4jService->createSiblingRelationship($individual->id, $siblingId, $neo4jTransaction);
+                }
+                foreach ($siblingsToRemove as $siblingId) {
+                    $this->neo4jService->deleteSiblingRelationship($individual->id, $siblingId, $neo4jTransaction);
                 }
             }
 
             // Commit Neo4j transaction first
-            $neo4jTransaction->run('COMMIT');
+            // Neo4j transaction is automatically committed when the transaction object is destroyed
+            unset($neo4jTransaction);
             $neo4jCommitted = true;
 
             // Then commit SQL transaction
@@ -252,9 +295,10 @@ class IndividualController extends Controller
             // Rollback Neo4j transaction if not committed
             if ($neo4jTransaction && ! $neo4jCommitted) {
                 try {
-                    $neo4jTransaction->run('ROLLBACK');
+                    // Neo4j transaction is automatically rolled back when the transaction object is destroyed
+                    unset($neo4jTransaction);
                 } catch (\Exception $rollbackError) {
-                    Log::error('Failed to rollback Neo4j transaction', [
+                    Log::error('Failed to handle Neo4j transaction', [
                         'individual_id' => $individual->id,
                         'exception' => $rollbackError,
                     ]);
@@ -265,7 +309,7 @@ class IndividualController extends Controller
             DB::rollBack();
 
             Log::error('Failed to update individual', [
-                'individual_id' => $individual->id,
+                'id' => $individual->id,
                 'input' => $validated,
                 'exception' => $e,
             ]);
@@ -281,21 +325,22 @@ class IndividualController extends Controller
      */
     public function destroy(int $id): RedirectResponse
     {
-        $individual = Individual::findOrFail($id);
-
         DB::beginTransaction();
         $neo4jTransaction = $this->neo4jService->beginTransaction();
         $neo4jCommitted = false;
 
         try {
-            // Delete SQL record
+            $individual = Individual::findOrFail($id);
+
+            // Delete SQL record first
             $individual->delete();
 
-            // Delete Neo4j node
-            $this->neo4jService->deleteIndividualNode($individual->id, $neo4jTransaction);
+            // Then delete Neo4j node
+            $this->neo4jService->deleteIndividualNode($id, $neo4jTransaction);
 
             // Commit Neo4j transaction first
-            $neo4jTransaction->run('COMMIT');
+            // Neo4j transaction is automatically committed when the transaction object is destroyed
+            unset($neo4jTransaction);
             $neo4jCommitted = true;
 
             // Then commit SQL transaction
@@ -307,10 +352,11 @@ class IndividualController extends Controller
             // Rollback Neo4j transaction if not committed
             if ($neo4jTransaction && ! $neo4jCommitted) {
                 try {
-                    $neo4jTransaction->run('ROLLBACK');
+                    // Neo4j transaction is automatically rolled back when the transaction object is destroyed
+                    unset($neo4jTransaction);
                 } catch (\Exception $rollbackError) {
-                    Log::error('Failed to rollback Neo4j transaction', [
-                        'individual_id' => $individual->id,
+                    Log::error('Failed to handle Neo4j transaction', [
+                        'individual_id' => $id,
                         'exception' => $rollbackError,
                     ]);
                 }
@@ -320,11 +366,12 @@ class IndividualController extends Controller
             DB::rollBack();
 
             Log::error('Failed to delete individual', [
-                'individual_id' => $individual->id,
+                'id' => $id,
                 'exception' => $e,
             ]);
 
-            return back()->withErrors(['error' => 'An unexpected error occurred. Please try again later.']);
+            return back()
+                ->withErrors(['error' => 'An unexpected error occurred. Please try again later.']);
         }
     }
 

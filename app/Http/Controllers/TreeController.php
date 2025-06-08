@@ -147,7 +147,13 @@ class TreeController extends Controller
                 'user_id' => $user->id,
             ], $neo4jTransaction);
 
-            $neo4jTransaction->run('COMMIT');
+            // Verify tree was created in Neo4j
+            if (! $this->neo4jService->validateTreeExists($tree->id, $neo4jTransaction)) {
+                throw new \Exception('Failed to create tree in Neo4j');
+            }
+
+            // Neo4j transaction is automatically committed when the transaction object is destroyed
+            unset($neo4jTransaction);
             DB::commit();
 
             return redirect()->route('trees.show', $tree)
@@ -155,9 +161,10 @@ class TreeController extends Controller
         } catch (\Exception $e) {
             if ($neo4jTransaction) {
                 try {
-                    $neo4jTransaction->run('ROLLBACK');
+                    // Neo4j transaction is automatically rolled back when the transaction object is destroyed
+                    unset($neo4jTransaction);
                 } catch (\Exception $neo4jError) {
-                    Log::error('Failed to rollback Neo4j transaction', [
+                    Log::error('Failed to handle Neo4j transaction', [
                         'exception' => $neo4jError,
                     ]);
                 }
@@ -181,6 +188,7 @@ class TreeController extends Controller
 
         // Get tree data from Neo4j
         $treeData = $this->neo4jService->getTreeIndividuals($id);
+        $treeStats = $this->neo4jService->getTreeStats($id);
 
         // Convert Neo4j results to array format for D3.js
         $treeDataArray = [
@@ -201,9 +209,21 @@ class TreeController extends Controller
             }
         }
 
+        // Convert stats to array
+        $stats = [];
+        if ($treeStats->first()) {
+            $stats = [
+                'total_individuals' => $treeStats->first()->get('total_individuals'),
+                'parent_relationships' => $treeStats->first()->get('parent_relationships'),
+                'spouse_relationships' => $treeStats->first()->get('spouse_relationships'),
+                'sibling_relationships' => $treeStats->first()->get('sibling_relationships'),
+            ];
+        }
+
         return view('trees.show', [
             'tree' => $tree,
             'treeDataJson' => json_encode($treeDataArray),
+            'stats' => $stats,
         ]);
     }
 
@@ -239,14 +259,22 @@ class TreeController extends Controller
                 'user_id' => $request->user()->id,
             ], $neo4jTransaction);
 
-            $neo4jTransaction->run('COMMIT');
+            // Neo4j transaction is automatically committed when the transaction object is destroyed
+            unset($neo4jTransaction);
             DB::commit();
 
             return redirect()->route('trees.show', $tree)
                 ->with('success', 'Tree updated successfully.');
         } catch (\Exception $e) {
             if ($neo4jTransaction) {
-                $neo4jTransaction->run('ROLLBACK');
+                try {
+                    // Neo4j transaction is automatically rolled back when the transaction object is destroyed
+                    unset($neo4jTransaction);
+                } catch (\Exception $neo4jError) {
+                    Log::error('Failed to handle Neo4j transaction', [
+                        'exception' => $neo4jError,
+                    ]);
+                }
             }
             DB::rollBack();
 
@@ -272,20 +300,36 @@ class TreeController extends Controller
 
             $tree = Tree::findOrFail($id);
 
-            // Delete SQL record first
+            // Delete all relationships in Neo4j first
+            $this->neo4jService->deleteTreeRelationships($id, $neo4jTransaction);
+
+            // Delete SQL record
             $tree->delete();
 
             // Then delete Neo4j node
             $this->neo4jService->deleteTreeNode($id, $neo4jTransaction);
 
-            $neo4jTransaction->run('COMMIT');
+            // Verify tree was deleted from Neo4j
+            if ($this->neo4jService->validateTreeExists($id, $neo4jTransaction)) {
+                throw new \Exception('Failed to delete tree from Neo4j');
+            }
+
+            // Neo4j transaction is automatically committed when the transaction object is destroyed
+            unset($neo4jTransaction);
             DB::commit();
 
             return redirect()->route('trees.index')
                 ->with('success', 'Tree deleted successfully.');
         } catch (\Exception $e) {
             if ($neo4jTransaction) {
-                $neo4jTransaction->run('ROLLBACK');
+                try {
+                    // Neo4j transaction is automatically rolled back when the transaction object is destroyed
+                    unset($neo4jTransaction);
+                } catch (\Exception $neo4jError) {
+                    Log::error('Failed to handle Neo4j transaction', [
+                        'exception' => $neo4jError,
+                    ]);
+                }
             }
             DB::rollBack();
 

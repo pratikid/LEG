@@ -366,4 +366,152 @@ class Neo4jIndividualService
 
         return $transaction ? $transaction->run($query, ['id' => $id]) : $this->client->run($query, ['id' => $id]);
     }
+
+    public function deleteParentChildRelationship(int $parentId, int $childId, ?TransactionInterface $transaction = null): mixed
+    {
+        $query = 'MATCH (p:Individual {id: $parentId})-[r:PARENT_OF]->(c:Individual {id: $childId}) DELETE r';
+
+        return $transaction ? $transaction->run($query, ['parentId' => $parentId, 'childId' => $childId])
+                           : $this->client->run($query, ['parentId' => $parentId, 'childId' => $childId]);
+    }
+
+    public function deleteSpouseRelationship(int $spouseAId, int $spouseBId, ?TransactionInterface $transaction = null): mixed
+    {
+        $query = 'MATCH (a:Individual {id: $spouseAId})-[r:SPOUSE_OF]-(b:Individual {id: $spouseBId}) DELETE r';
+
+        return $transaction ? $transaction->run($query, ['spouseAId' => $spouseAId, 'spouseBId' => $spouseBId])
+                           : $this->client->run($query, ['spouseAId' => $spouseAId, 'spouseBId' => $spouseBId]);
+    }
+
+    public function deleteSiblingRelationship(int $siblingAId, int $siblingBId, ?TransactionInterface $transaction = null): mixed
+    {
+        $query = 'MATCH (a:Individual {id: $siblingAId})-[r:SIBLING_OF]-(b:Individual {id: $siblingBId}) DELETE r';
+
+        return $transaction ? $transaction->run($query, ['siblingAId' => $siblingAId, 'siblingBId' => $siblingBId])
+                           : $this->client->run($query, ['siblingAId' => $siblingAId, 'siblingBId' => $siblingBId]);
+    }
+
+    public function deleteAllRelationships(int $individualId, ?TransactionInterface $transaction = null): mixed
+    {
+        $query = 'MATCH (i:Individual {id: $id})-[r]-(n) DELETE r';
+
+        return $transaction ? $transaction->run($query, ['id' => $individualId])
+                           : $this->client->run($query, ['id' => $individualId]);
+    }
+
+    public function getExistingRelationships(int $individualId, ?TransactionInterface $transaction = null): mixed
+    {
+        $query = '
+            MATCH (i:Individual {id: $id})-[r]-(n)
+            RETURN type(r) as type, n.id as related_id
+        ';
+
+        return $transaction ? $transaction->run($query, ['id' => $individualId])
+                           : $this->client->run($query, ['id' => $individualId]);
+    }
+
+    public function validateTreeExists(int $treeId, ?TransactionInterface $transaction = null): bool
+    {
+        $query = 'MATCH (t:Tree {id: $id}) RETURN count(t) as count';
+
+        $result = $transaction ? $transaction->run($query, ['id' => $treeId])
+                              : $this->client->run($query, ['id' => $treeId]);
+
+        return $result->first()->get('count') > 0;
+    }
+
+    public function getTreeStats(int $treeId, ?TransactionInterface $transaction = null): mixed
+    {
+        $query = '
+            MATCH (t:Tree {id: $id})
+            OPTIONAL MATCH (t)<-[:BELONGS_TO]-(i:Individual)
+            OPTIONAL MATCH (i)-[r]-(n)
+            RETURN 
+                count(DISTINCT i) as total_individuals,
+                count(DISTINCT CASE WHEN type(r) = "PARENT_OF" THEN r END) as parent_relationships,
+                count(DISTINCT CASE WHEN type(r) = "SPOUSE_OF" THEN r END) as spouse_relationships,
+                count(DISTINCT CASE WHEN type(r) = "SIBLING_OF" THEN r END) as sibling_relationships
+        ';
+
+        return $transaction ? $transaction->run($query, ['id' => $treeId])
+                           : $this->client->run($query, ['id' => $treeId]);
+    }
+
+    public function deleteTreeRelationships(int $treeId, ?TransactionInterface $transaction = null): mixed
+    {
+        $query = '
+            MATCH (t:Tree {id: $id})<-[:BELONGS_TO]-(i:Individual)-[r]-(n)
+            DELETE r
+        ';
+
+        return $transaction ? $transaction->run($query, ['id' => $treeId])
+                           : $this->client->run($query, ['id' => $treeId]);
+    }
+
+    public function validateRelationship(int $fromId, int $toId, string $type, ?TransactionInterface $transaction = null): bool
+    {
+        $query = '
+            MATCH (a:Individual {id: $fromId}), (b:Individual {id: $toId})
+            WHERE NOT (a)-[:PARENT_OF|SPOUSE_OF|SIBLING_OF]-(b)
+            RETURN count(*) as count
+        ';
+
+        $result = $transaction ? $transaction->run($query, ['fromId' => $fromId, 'toId' => $toId])
+                              : $this->client->run($query, ['fromId' => $fromId, 'toId' => $toId]);
+
+        return $result->first()->get('count') > 0;
+    }
+
+    public function validateNoCycles(int $fromId, int $toId, string $type, ?TransactionInterface $transaction = null): bool
+    {
+        $query = '
+            MATCH path = (a:Individual {id: $fromId})-[:PARENT_OF*1..10]->(b:Individual {id: $toId})
+            RETURN count(path) as count
+        ';
+
+        $result = $transaction ? $transaction->run($query, ['fromId' => $fromId, 'toId' => $toId])
+                              : $this->client->run($query, ['fromId' => $fromId, 'toId' => $toId]);
+
+        return $result->first()->get('count') === 0;
+    }
+
+    public function getRelationshipStats(int $individualId, ?TransactionInterface $transaction = null): mixed
+    {
+        $query = '
+            MATCH (i:Individual {id: $id})
+            OPTIONAL MATCH (i)-[r]-(n)
+            RETURN 
+                count(DISTINCT CASE WHEN type(r) = "PARENT_OF" AND i.id = startNode(r).id THEN endNode(r) END) as children_count,
+                count(DISTINCT CASE WHEN type(r) = "PARENT_OF" AND i.id = endNode(r).id THEN startNode(r) END) as parents_count,
+                count(DISTINCT CASE WHEN type(r) = "SPOUSE_OF" THEN n END) as spouses_count,
+                count(DISTINCT CASE WHEN type(r) = "SIBLING_OF" THEN n END) as siblings_count
+        ';
+
+        return $transaction ? $transaction->run($query, ['id' => $individualId])
+                           : $this->client->run($query, ['id' => $individualId]);
+    }
+
+    public function getChildren(int $parentId, ?TransactionInterface $transaction = null): mixed
+    {
+        $query = 'MATCH (p:Individual {id: $parentId})-[:PARENT_OF]->(c:Individual) RETURN c';
+
+        return $transaction ? $transaction->run($query, ['parentId' => $parentId])
+                           : $this->client->run($query, ['parentId' => $parentId]);
+    }
+
+    public function getParents(int $childId, ?TransactionInterface $transaction = null): mixed
+    {
+        $query = 'MATCH (p:Individual)-[:PARENT_OF]->(c:Individual {id: $childId}) RETURN p';
+
+        return $transaction ? $transaction->run($query, ['childId' => $childId])
+                           : $this->client->run($query, ['childId' => $childId]);
+    }
+
+    public function getSpouses(int $individualId, ?TransactionInterface $transaction = null): mixed
+    {
+        $query = 'MATCH (a:Individual {id: $individualId})-[:SPOUSE_OF]-(b:Individual) RETURN b';
+
+        return $transaction ? $transaction->run($query, ['individualId' => $individualId])
+                           : $this->client->run($query, ['individualId' => $individualId]);
+    }
 }
