@@ -35,6 +35,7 @@ class AppServiceProvider extends ServiceProvider
                 'trees.index' => 'trees',
                 'trees.create' => 'create-tree',
                 'trees.import' => 'import-gedcom',
+                'trees.visualization' => 'tree-visualization',
                 // Individuals
                 'individuals.index' => 'individuals',
                 'individuals.create' => 'add-individual',

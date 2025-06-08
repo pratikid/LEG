@@ -227,6 +227,36 @@ class TreeController extends Controller
         ]);
     }
 
+    public function visualization(int $id): View
+    {
+        $tree = Tree::findOrFail($id);
+        $treeData = $this->neo4jService->getTreeIndividuals($id);
+
+        // Convert Neo4j results to array format for D3.js
+        $treeDataArray = [
+            'name' => $tree->name,
+            'children' => [],
+        ];
+
+        /** @var array<int, mixed> $treeData */
+        foreach ($treeData as $record) {
+            $individual = $record->get('i');
+            if ($individual) {
+                $treeDataArray['children'][] = [
+                    'id' => $individual->getProperty('id'),
+                    'name' => $individual->getProperty('first_name').' '.$individual->getProperty('last_name'),
+                    'birth_date' => $individual->getProperty('birth_date'),
+                    'death_date' => $individual->getProperty('death_date'),
+                ];
+            }
+        }
+
+        return view('trees.visualization', [
+            'tree' => $tree,
+            'treeDataJson' => json_encode($treeDataArray),
+        ]);
+    }
+
     public function edit(int $id): View
     {
         $tree = Tree::findOrFail($id);
