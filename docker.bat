@@ -10,12 +10,16 @@ REM Wait for PostgreSQL to be ready
 echo Waiting for PostgreSQL to be ready...
 timeout /t 2
 
+REM Install and publish Telescope
+docker-compose exec app php artisan telescope:install
+
 REM Generate application key
 docker-compose exec app php artisan key:generate
 
 REM Run migrations
 docker-compose exec app php artisan migrate:fresh
 
+REM Seed the database
 docker-compose exec app php artisan db:seed
 
 REM Set proper permissions

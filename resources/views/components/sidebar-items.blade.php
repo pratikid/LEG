@@ -15,12 +15,11 @@
 @include('components.sidebar-group', [
     'label' => 'My Trees',
     'icon' => 'tree',
-    'active' => in_array($tab, ['trees', 'create-tree', 'import-gedcom', 'tree-visualization']),
+    'active' => in_array($tab, ['trees', 'create-tree', 'import-gedcom']),
     'children' => [
         ['route' => 'trees.index', 'label' => 'All Trees', 'active' => $tab === 'trees'],
         ['route' => 'trees.create', 'label' => 'Create New Tree', 'active' => $tab === 'create-tree'],
         ['route' => 'trees.import', 'label' => 'Import GEDCOM', 'active' => $tab === 'import-gedcom'],
-        ['route' => 'trees.visualization', 'label' => 'Tree Visualization', 'active' => $tab === 'tree-visualization'],
     ],
 ])
 

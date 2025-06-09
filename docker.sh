@@ -10,12 +10,16 @@ docker-compose up -d --build
 echo "Waiting for PostgreSQL to be ready..."
 sleep 2
 
+# Install Telescope 
+docker-compose exec app php artisan telescope:install
+
 # Generate application key
 docker-compose exec app php artisan key:generate
 
 # Run migrations
 docker-compose exec app php artisan migrate:fresh
 
+# Seed the database
 docker-compose exec app php artisan db:seed
 
 # Set proper permissions

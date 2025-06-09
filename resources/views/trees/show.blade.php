@@ -11,6 +11,9 @@
             <h1 class="text-2xl font-bold">{{ $tree->name }}</h1>
         </div>
         <div class="flex space-x-4">
+            <a href="{{ route('trees.visualization', $tree->id) }}" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg">
+                View Tree Visualization
+            </a>
             <a href="{{ route('trees.edit', $tree->id) }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
                 Edit Tree
             </a>

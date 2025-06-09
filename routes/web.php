@@ -134,8 +134,7 @@ Route::post('/logout', function () {
 })->name('logout')->middleware('auth');
 
 Route::resource('trees', TreeController::class)
-    ->middleware(['auth'])
-    ->except(['show']);
+    ->middleware(['auth']);
 
 Route::get('/trees/{tree}/visualization', [TreeController::class, 'visualization'])
     ->middleware(['auth'])

@@ -119,23 +119,22 @@ class TreeController extends Controller
 
     public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
-        /** @var array{name: string, description: string|null, user_id: int} $validated */
+        /** @var array{name: string, description: string|null} $validated */
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
         ]);
 
-        $user = $request->user();
-        if (! $user) {
-            return redirect()->route('login');
-        }
-
-        $validated['user_id'] = $user->id;
-        $neo4jTransaction = null;
-
         try {
             DB::beginTransaction();
             $neo4jTransaction = $this->neo4jService->beginTransaction();
+
+            $user = $request->user();
+            if (! $user) {
+                throw new \Exception('User not authenticated');
+            }
+
+            $validated['user_id'] = $user->id;
 
             $tree = Tree::create($validated);
 
@@ -159,7 +158,7 @@ class TreeController extends Controller
             return redirect()->route('trees.show', $tree)
                 ->with('success', 'Tree created successfully.');
         } catch (\Exception $e) {
-            if ($neo4jTransaction) {
+            if (isset($neo4jTransaction)) {
                 try {
                     // Neo4j transaction is automatically rolled back when the transaction object is destroyed
                     unset($neo4jTransaction);
@@ -227,34 +226,61 @@ class TreeController extends Controller
         ]);
     }
 
-    public function visualization(int $id): View
+    public function visualization(int $id): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
         $tree = Tree::findOrFail($id);
-        $treeData = $this->neo4jService->getTreeIndividuals($id);
+        $neo4jTransaction = null;
 
-        // Convert Neo4j results to array format for D3.js
-        $treeDataArray = [
-            'name' => $tree->name,
-            'children' => [],
-        ];
+        try {
+            $neo4jTransaction = $this->neo4jService->beginTransaction();
+            $treeData = $this->neo4jService->getTreeIndividuals($id);
 
-        /** @var array<int, mixed> $treeData */
-        foreach ($treeData as $record) {
-            $individual = $record->get('i');
-            if ($individual) {
-                $treeDataArray['children'][] = [
-                    'id' => $individual->getProperty('id'),
-                    'name' => $individual->getProperty('first_name').' '.$individual->getProperty('last_name'),
-                    'birth_date' => $individual->getProperty('birth_date'),
-                    'death_date' => $individual->getProperty('death_date'),
-                ];
+            // Convert Neo4j results to array format for D3.js
+            $treeDataArray = [
+                'name' => $tree->name,
+                'children' => [],
+            ];
+
+            /** @var array<int, mixed> $treeData */
+            foreach ($treeData as $record) {
+                $individual = $record->get('i');
+                if ($individual) {
+                    $treeDataArray['children'][] = [
+                        'id' => $individual->getProperty('id'),
+                        'name' => $individual->getProperty('first_name').' '.$individual->getProperty('last_name'),
+                        'birth_date' => $individual->getProperty('birth_date'),
+                        'death_date' => $individual->getProperty('death_date'),
+                    ];
+                }
             }
-        }
 
-        return view('trees.visualization', [
-            'tree' => $tree,
-            'treeDataJson' => json_encode($treeDataArray),
-        ]);
+            // Neo4j transaction is automatically committed when the transaction object is destroyed
+            unset($neo4jTransaction);
+
+            return view('trees.visualization', [
+                'tree' => $tree,
+                'treeDataJson' => json_encode($treeDataArray),
+            ]);
+        } catch (\Exception $e) {
+            if ($neo4jTransaction) {
+                try {
+                    // Neo4j transaction is automatically rolled back when the transaction object is destroyed
+                    unset($neo4jTransaction);
+                } catch (\Exception $neo4jError) {
+                    Log::error('Failed to handle Neo4j transaction', [
+                        'exception' => $neo4jError,
+                    ]);
+                }
+            }
+
+            Log::error('Failed to load tree visualization', [
+                'tree_id' => $id,
+                'exception' => $e,
+            ]);
+
+            return redirect()->route('trees.show', $id)
+                ->withErrors(['error' => 'Failed to load tree visualization. Please try again later.']);
+        }
     }
 
     public function edit(int $id): View
