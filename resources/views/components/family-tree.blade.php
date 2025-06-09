@@ -46,7 +46,7 @@
             </button>
         </div>
         <!-- Tree Visualization Container -->
-        <div id="tree-container" class="w-full h-[600px] border border-gray-200 rounded-lg"></div>
+        <div id="tree-container" class="w-full h-[600px] border border-gray-200 rounded-lg" data-tree='{!! json_encode($treeData) !!}'></div>
         <!-- Node Details Modal/Sidebar (hidden by default) -->
         <div id="node-details" class="fixed top-0 right-0 w-96 h-full bg-white shadow-lg border-l border-gray-200 p-6 z-50 hidden overflow-y-auto">
             <button id="close-node-details" class="mb-4 text-gray-500 hover:text-gray-700">Close</button>
@@ -62,11 +62,33 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const initialTreeData = @json($treeData);
+    const treeData = JSON.parse(document.getElementById('tree-container').dataset.tree);
+    
+    // Log tree data to Laravel log
+    fetch('/log-tree-data', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ treeData })
+    });
+
     const container = document.getElementById('tree-container');
     const width = container.clientWidth;
     const height = container.clientHeight;
     const margin = {top: 20, right: 90, bottom: 30, left: 90};
+
+    // Color scheme
+    const colors = {
+        nodeFill: '#ffffff',
+        nodeStroke: '#4f46e5', // Indigo
+        linkStroke: '#10b981', // Emerald
+        textFill: '#1f2937', // Gray-800
+        textStroke: '#ffffff',
+        nodeHover: '#818cf8', // Indigo-400
+        linkHover: '#34d399' // Emerald-400
+    };
 
     // Create SVG
     const svg = d3.select('#tree-container')
@@ -90,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .size([height - margin.top - margin.bottom, width - margin.left - margin.right]);
 
     // Create hierarchy
-    const root = d3.hierarchy(initialTreeData);
+    const root = d3.hierarchy(treeData);
     const treeNodes = treeLayout(root);
 
     // Create links
@@ -100,11 +122,22 @@ document.addEventListener('DOMContentLoaded', function() {
         .append('path')
         .attr('class', 'link')
         .attr('fill', 'none')
-        .attr('stroke', '#ccc')
-        .attr('stroke-width', 1.5)
+        .attr('stroke', colors.linkStroke)
+        .attr('stroke-width', 2)
         .attr('d', d3.linkHorizontal()
             .x(d => d.y)
-            .y(d => d.x));
+            .y(d => d.x))
+        .style('transition', 'stroke 0.3s')
+        .on('mouseover', function() {
+            d3.select(this)
+                .attr('stroke', colors.linkHover)
+                .attr('stroke-width', 3);
+        })
+        .on('mouseout', function() {
+            d3.select(this)
+                .attr('stroke', colors.linkStroke)
+                .attr('stroke-width', 2);
+        });
 
     // Create nodes
     const node = svg.selectAll('.node')
@@ -116,19 +149,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add circles to nodes
     node.append('circle')
-        .attr('r', 10)
-        .attr('fill', '#fff')
-        .attr('stroke', '#amber-500')
-        .attr('stroke-width', 2);
+        .attr('r', 12)
+        .attr('fill', colors.nodeFill)
+        .attr('stroke', colors.nodeStroke)
+        .attr('stroke-width', 2)
+        .style('transition', 'all 0.3s')
+        .on('mouseover', function() {
+            d3.select(this)
+                .attr('stroke', colors.nodeHover)
+                .attr('stroke-width', 3);
+        })
+        .on('mouseout', function() {
+            d3.select(this)
+                .attr('stroke', colors.nodeStroke)
+                .attr('stroke-width', 2);
+        });
 
     // Add labels to nodes
     node.append('text')
         .attr('dy', '.31em')
-        .attr('x', d => d.children ? -13 : 13)
+        .attr('x', d => d.children ? -15 : 15)
         .attr('text-anchor', d => d.children ? 'end' : 'start')
+        .attr('fill', colors.textFill)
+        .style('font-size', '14px')
+        .style('font-weight', '500')
         .text(d => d.data.name)
         .clone(true).lower()
-        .attr('stroke', 'white')
+        .attr('stroke', colors.textStroke)
         .attr('stroke-width', 3);
 
     // Zoom controls

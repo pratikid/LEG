@@ -24,6 +24,8 @@ use App\Http\Controllers\TreeController;
 use App\Http\Controllers\TutorialController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -189,3 +191,10 @@ Route::get('/admin/notifications', [AdminController::class, 'notifications'])->n
 Route::get('/search', function () {
     return view('search.index');
 })->name('search')->middleware(['auth']);
+
+Route::post('/log-tree-data', function (Request $request) {
+    Log::info('Tree Data:', [
+        'data' => $request->treeData
+    ]);
+    return response()->json(['message' => 'Tree data logged successfully']);
+})->name('log.tree.data');

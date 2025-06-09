@@ -43,7 +43,18 @@ class Neo4jIndividualService
      */
     public function createIndividualNode(array $data, ?TransactionInterface $transaction = null): mixed
     {
-        $query = 'CREATE (i:Individual {id: $id, first_name: $first_name, last_name: $last_name, birth_date: $birth_date, death_date: $death_date, tree_id: $tree_id, created_at: datetime(), updated_at: datetime()}) RETURN i';
+        $query = '
+            MERGE (i:Individual {id: $id})
+            ON CREATE SET
+                i.first_name = $first_name,
+                i.last_name  = $last_name,
+                i.birth_date = $birth_date,
+                i.death_date = $death_date,
+                i.tree_id    = $tree_id,
+                i.created_at = datetime(),
+                i.updated_at = datetime()
+            RETURN i
+        ';
 
         return $transaction ? $transaction->run($query, $data) : $this->client->run($query, $data);
     }

@@ -32,8 +32,8 @@
 
     <div class="grid grid-cols-4 gap-6 mb-6">
         <div class="col-span-3">
-<div id="tree-container" class="border p-4 bg-white shadow-lg rounded-lg" 
-     data-tree='@json($treeDataJson ?? [])'>
+<div id="tree-container" class="border p-4 bg-white shadow-lg rounded-lg"
+     data-tree='{!! json_encode($treeDataJson) !!}'>
     @if(empty($treeDataNeo4j))
         <p class="text-gray-600">No family tree data available to display.</p>
     @else
