@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Data validation bugs
 - UI responsiveness problems
 
-## [0.9.0] - 2024-03-15
+## [0.9.0] - 2025-03-15
 
 ### Added
 - Beta release
@@ -58,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test coverage
 - Code quality
 
-## [0.8.0] - 2024-02-15
+## [0.8.0] - 2025-02-15
 
 ### Added
 - Alpha release

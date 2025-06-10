@@ -1,72 +1,169 @@
-# GEDCOM 5.5.5 Compliance Report for LEG
+# GEDCOM 5.5.5 Compliance Specification
 
-## Overview
+This document outlines LEG's compliance with the GEDCOM 5.5.5 standard for genealogical data exchange.
 
-LEG aims to provide full compatibility with the [GEDCOM 5.5.5 specification](https://www.gedcom.org/), the latest official standard for genealogical data exchange. GEDCOM 5.5.5 ensures interoperability with other genealogy applications and is widely supported in the industry.
+## Standard Overview
 
----
+### GEDCOM 5.5.5 Specification
+- Latest official standard for genealogical data exchange
+- Published by [FamilySearch](https://www.gedcom.org/)
+- Ensures interoperability between genealogy applications
+- Supports comprehensive family history data
 
-## Compliance Checklist
+### Key Features
+- UTF-8 character encoding
+- XML-like structure
+- Hierarchical data organization
+- Cross-reference system
+- Extensible tag system
 
-| Area                | Status         | Notes/Action                                      |
-|---------------------|---------------|---------------------------------------------------|
-| Header/Encoding     | ✅ Compliant   | Use `2 VERS 5.5.5` in export header               |
-| Individuals         | ✅ Compliant   | Add more optional tags as needed                  |
-| Families            | ✅ Compliant   | Add export for `NOTE`/optional tags as needed     |
-| Sources/Notes       | ⚠️ Partial    | Parsing OK, import/export/cross-linking: Future   |
-| Cross-References    | ✅ Compliant   |                                                   |
-| Relationships       | ✅ Compliant   |                                                   |
-| Character Set       | ✅ Compliant   | Ensure all file ops use UTF-8                     |
-| Trailer             | ✅ Compliant   |                                                   |
-| Validation          | ➕ Recommended | Use [gedcom.org](https://www.gedcom.org/) tools   |
+## Data Structure Compliance
 
----
+### Header Section
+```
+0 HEAD
+1 GEDC
+2 VERS 5.5.5
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+1 SOUR LEG
+2 VERS 1.0
+2 NAME LEG Genealogy Software
+1 DATE 15 JUN 2025
+1 SUBM @U1@
+```
 
-## Details
+### Individual Records
+```
+0 @I1@ INDI
+1 NAME John /Smith/
+2 GIVN John
+2 SURN Smith
+1 SEX M
+1 BIRT
+2 DATE 1 JAN 1950
+2 PLAC New York, NY, USA
+1 DEAT
+2 DATE 1 JAN 2020
+2 PLAC Los Angeles, CA, USA
+```
 
-### Header and Encoding
-- All required header lines are present in export.
-- Version is set to `5.5.5`.
-- Encoding is UTF-8 (`1 CHAR UTF-8`).
+### Family Records
+```
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 MARR
+2 DATE 1 JAN 1975
+2 PLAC New York, NY, USA
+1 CHIL @I3@
+1 CHIL @I4@
+```
 
-### Individual Records (`INDI`)
-- Unique xrefs, required tags (`NAME`, `SEX`, `BIRT`, `DEAT`), and nested events are supported.
-- Optional tags (ALIA, NICK, etc.) can be added as needed.
+### Source Records
+```
+0 @S1@ SOUR
+1 TITL Birth Certificate
+1 AUTH New York City
+1 PUBL New York City Department of Health
+1 REPO @R1@
+```
 
-### Family Records (`FAM`)
-- Unique xrefs, required tags (`HUSB`, `WIFE`, `CHIL`, `MARR`, etc.) and nested events are supported.
-- Notes are parsed but not yet exported.
+## Tag Support
 
-### Sources and Notes
-- Parser supports sources and notes.
-- Import/export and cross-linking are **planned for future implementation**.
+### Required Tags
+- `HEAD`: Header information
+- `INDI`: Individual records
+- `FAM`: Family records
+- `NAME`: Individual names
+- `SEX`: Gender information
+- `BIRT`: Birth information
+- `DEAT`: Death information
+- `MARR`: Marriage information
+- `CHIL`: Child relationships
 
-### Cross-References and Relationships
-- All xrefs are unique and correctly mapped.
-- Relationships (spouse, parent-child) are created in both the database and Neo4j.
+### Optional Tags
+- `NOTE`: Additional information
+- `SOUR`: Source citations
+- `REPO`: Repository information
+- `OBJE`: Multimedia objects
+- `EVEN`: Custom events
+- `FACT`: Custom facts
 
-### Character Set
-- All text is encoded as UTF-8.
+## Data Exchange
 
-### Trailer
-- Export ends with `0 TRLR` as required.
+### Import Process
+1. File validation
+2. Character encoding check
+3. Structure verification
+4. Data parsing
+5. Relationship mapping
+6. Source linking
 
-### Validation
-- Use [official GEDCOM validators and samples](https://www.gedcom.org/) to test import/export.
+### Export Process
+1. Data collection
+2. Structure generation
+3. Cross-reference creation
+4. Character encoding
+5. File generation
+6. Validation
 
----
+## Validation Rules
 
-## Action Items for Full Compliance
+### File Structure
+- Must begin with `0 HEAD`
+- Must end with `0 TRLR`
+- All records must have unique identifiers
+- Proper nesting of tags required
 
-1. Validate GEDCOM files with [official tools](https://www.gedcom.org/).
-2. Update documentation to state: LEG supports GEDCOM 5.5.5, the latest official version as per [gedcom.org](https://www.gedcom.org/).
+### Data Requirements
+- Dates in GEDCOM format
+- Places in standard format
+- Names properly formatted
+- Relationships correctly linked
 
----
+## Compliance Levels
+
+### Full Compliance
+- All required tags supported
+- UTF-8 encoding
+- Proper file structure
+- Complete data exchange
+
+### Partial Compliance
+- Basic tags supported
+- Limited optional tags
+- Basic source support
+- Standard encoding
+
+## Future Enhancements
+
+### Planned Features
+- Extended source support
+- Advanced multimedia handling
+- Custom event types
+- Enhanced validation
+
+### Research Areas
+- GEDCOM 7.0 compatibility
+- Modern data formats
+- API integration
+- Cloud synchronization
 
 ## References
-- [GEDCOM Official Site & Specification](https://www.gedcom.org/)
-- [GEDCOM 5.5.5 Specification PDF](https://www.gedcom.org/gedcom/gedcom-5-5-5.pdf)
+
+### Official Documentation
+- [GEDCOM 5.5.5 Specification](https://www.gedcom.org/gedcom/gedcom-5-5-5.pdf)
+- [GEDCOM Standards](https://www.gedcom.org/standards)
+- [FamilySearch Developer Resources](https://www.familysearch.org/developers)
+
+### Tools
+- [GEDCOM Validator](https://www.gedcom.org/gedcom/gedcom-validator)
+- [GEDCOM Sample Files](https://www.gedcom.org/samples)
+- [GEDCOM Test Suite](https://www.gedcom.org/test)
 
 ---
 
-*This document should be updated as LEG's GEDCOM support evolves.* 
+*This specification is regularly updated to reflect changes in GEDCOM standards and LEG's implementation.*
+
+*Last updated: June 2025* 

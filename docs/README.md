@@ -52,4 +52,4 @@ Explore:
 
 ---
 
-*This documentation is regularly updated. Last updated: May 2024* 
+*This documentation is regularly updated. Last updated: May 2025* 

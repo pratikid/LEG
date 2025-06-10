@@ -5,7 +5,8 @@
 2. [User Account Management](#user-account-management)
 3. [User Roles and Permissions](#user-roles-and-permissions)
 4. [Dashboard Overview](#dashboard-overview)
-5. [Troubleshooting](#troubleshooting)
+5. [Family Tree Features](#family-tree-features)
+6. [Data Management](#data-management)
 
 ## Getting Started
 
@@ -108,29 +109,59 @@ The system includes three user roles:
    - Assign roles
    - Manage permissions
 
-## Troubleshooting
+## Family Tree Features
 
-### Common Issues
+### Creating a Tree
+1. Click "New Tree" in the dashboard
+2. Enter tree name and description
+3. Choose privacy settings
+4. Click "Create Tree"
 
-1. **Login Problems**
-   - Ensure you're using the correct email and password
-   - Check if Caps Lock is enabled
-   - Try resetting your password if needed
+### Adding Individuals
+1. Select a tree
+2. Click "Add Individual"
+3. Fill in individual details:
+   - Name
+   - Birth date
+   - Death date (if applicable)
+   - Gender
+   - Additional information
+4. Click "Save"
 
-2. **Access Denied**
-   - Verify you have the correct role for the action
-   - Contact your administrator for role changes
-   - Check if your session has expired
+### Managing Relationships
+1. Select an individual
+2. Click "Add Relationship"
+3. Choose relationship type
+4. Select related individual
+5. Save relationship
 
-3. **System Errors**
-   - Clear your browser cache
-   - Try using a different browser
-   - Contact support if the issue persists
+### Tree Visualization
+- Zoom in/out using mouse wheel
+- Pan by dragging
+- Click nodes to view details
+- Use search to find individuals
 
-### Getting Help
-- Use the "Help" button in the top navigation
-- Contact your system administrator
-- Email support at [support@example.com]
+## Data Management
+
+### Importing Data
+1. Go to tree settings
+2. Click "Import Data"
+3. Choose file format (GEDCOM)
+4. Upload file
+5. Review and confirm import
+
+### Exporting Data
+1. Go to tree settings
+2. Click "Export Data"
+3. Choose export format
+4. Select data to export
+5. Download file
+
+### Data Backup
+- Regular automatic backups
+- Manual backup option
+- Backup history
+- Restore from backup
 
 ## Best Practices
 
@@ -144,12 +175,14 @@ The system includes three user roles:
 - Regularly update your profile information
 - Keep your email address current
 - Review and update your preferences as needed
+- Back up important data regularly
 
 ### Communication
 - Check system announcements regularly
 - Read notifications promptly
 - Report issues through proper channels
+- Keep contact information updated
 
 ---
 
-*This guide is regularly updated. Last updated: May 2025* 
+*This guide is regularly updated. Last updated: June 2025* 
