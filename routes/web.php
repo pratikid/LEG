@@ -22,10 +22,10 @@ use App\Http\Controllers\TimelineReportController;
 use App\Http\Controllers\ToolsController;
 use App\Http\Controllers\TreeController;
 use App\Http\Controllers\TutorialController;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -194,7 +194,8 @@ Route::get('/search', function () {
 
 Route::post('/log-tree-data', function (Request $request) {
     Log::info('Tree Data:', [
-        'data' => $request->treeData
+        'data' => $request->treeData,
     ]);
+
     return response()->json(['message' => 'Tree data logged successfully']);
 })->name('log.tree.data');

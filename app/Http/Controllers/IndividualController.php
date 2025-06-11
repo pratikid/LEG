@@ -81,12 +81,13 @@ class IndividualController extends Controller
 
         try {
             // Create SQL record
-            /** 
-            * use Illuminate\Support\Arr;
-            * @var array{first_name: string, last_name: string, birth_date: string|null, death_date: string|null, tree_id: int} $individualData
-            * $individualData = Arr::except($validated, ['parent_ids', 'spouse_ids', 'sibling_ids']);
-            * $individual = Individual::create($individualData);
-            */
+            /**
+             * use Illuminate\Support\Arr;
+             *
+             * @var array{first_name: string, last_name: string, birth_date: string|null, death_date: string|null, tree_id: int} $individualData
+             *                                                                                                                   $individualData = Arr::except($validated, ['parent_ids', 'spouse_ids', 'sibling_ids']);
+             *                                                                                                                   $individual = Individual::create($individualData);
+             */
             $individual = Individual::create($validated);
 
             // Create Neo4j node
