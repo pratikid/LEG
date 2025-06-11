@@ -14,6 +14,7 @@
         <input type="hidden" name="child_id" value="{{ $individual->id }}">
         <label for="parent_id" class="block mb-2">Add Parent:</label>
         <select name="parent_id" id="parent_id" class="bg-gray-800 text-white rounded p-2 w-full mb-2">
+            <option value="">Select a parent</option>
             @foreach($allIndividuals as $person)
                 @if($person->id !== $individual->id)
                     <option value="{{ $person->id }}">{{ $person->first_name }} {{ $person->last_name }}</option>
@@ -29,6 +30,7 @@
         <input type="hidden" name="parent_id" value="{{ $individual->id }}">
         <label for="child_id" class="block mb-2">Add Child:</label>
         <select name="child_id" id="child_id" class="bg-gray-800 text-white rounded p-2 w-full mb-2">
+            <option value="">Select a child</option>
             @foreach($allIndividuals as $person)
                 @if($person->id !== $individual->id)
                     <option value="{{ $person->id }}">{{ $person->first_name }} {{ $person->last_name }}</option>
@@ -44,6 +46,7 @@
         <input type="hidden" name="spouse_a_id" value="{{ $individual->id }}">
         <label for="spouse_b_id" class="block mb-2">Add Spouse:</label>
         <select name="spouse_b_id" id="spouse_b_id" class="bg-gray-800 text-white rounded p-2 w-full mb-2">
+            <option value="">Select a spouse</option>
             @foreach($allIndividuals as $person)
                 @if($person->id !== $individual->id)
                     <option value="{{ $person->id }}">{{ $person->first_name }} {{ $person->last_name }}</option>
@@ -59,6 +62,7 @@
         <input type="hidden" name="sibling_a_id" value="{{ $individual->id }}">
         <label for="sibling_b_id" class="block mb-2">Add Sibling:</label>
         <select name="sibling_b_id" id="sibling_b_id" class="bg-gray-800 text-white rounded p-2 w-full mb-2">
+            <option value="">Select a sibling</option>
             @foreach($allIndividuals as $person)
                 @if($person->id !== $individual->id)
                     <option value="{{ $person->id }}">{{ $person->first_name }} {{ $person->last_name }}</option>
@@ -74,6 +78,7 @@
             <div>
                 <label for="target_individual_id" class="block mb-1">Find shortest path to:</label>
                 <select id="target_individual_id" class="bg-gray-800 text-white rounded p-2 w-full">
+                    <option value="">Select an individual</option>
                     @foreach($allIndividuals as $person)
                         @if($person->id !== $individual->id)
                             <option value="{{ $person->id }}">{{ $person->first_name }} {{ $person->last_name }}</option>

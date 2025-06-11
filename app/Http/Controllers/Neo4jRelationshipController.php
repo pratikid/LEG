@@ -21,8 +21,8 @@ class Neo4jRelationshipController extends Controller
     {
         /** @var array{parent_id: int, child_id: int} $validated */
         $validated = $request->validate([
-            'parent_id' => 'required|integer|exists:individuals,id',
-            'child_id' => 'required|integer|exists:individuals,id',
+            'parent_id' => 'required|integer|exists:individuals,id|not_in:0',
+            'child_id' => 'required|integer|exists:individuals,id|not_in:0',
         ]);
 
         try {
@@ -34,7 +34,7 @@ class Neo4jRelationshipController extends Controller
             }
 
             // Validate relationship doesn't already exist
-            if (! $this->neo4j->validateRelationship($validated['parent_id'], $validated['child_id'], 'PARENT_OF', $transaction)) {
+            if ($this->neo4j->validateRelationship($validated['parent_id'], $validated['child_id'], 'PARENT_OF', $transaction)) {
                 throw new \Exception('Parent-child relationship already exists');
             }
 
@@ -58,22 +58,38 @@ class Neo4jRelationshipController extends Controller
     {
         /** @var array{spouse_a_id: int, spouse_b_id: int} $validated */
         $validated = $request->validate([
-            'spouse_a_id' => 'required|integer|exists:individuals,id',
-            'spouse_b_id' => 'required|integer|exists:individuals,id',
+            'spouse_a_id' => 'required|integer|exists:individuals,id|not_in:0',
+            'spouse_b_id' => 'required|integer|exists:individuals,id|not_in:0',
         ]);
 
         try {
             $transaction = $this->neo4j->beginTransaction();
 
+            // Get individual names for better error messages
+            $spouseA = Individual::findOrFail($validated['spouse_a_id']);
+            $spouseB = Individual::findOrFail($validated['spouse_b_id']);
+
             // Validate relationship doesn't already exist
-            if (! $this->neo4j->validateRelationship($validated['spouse_a_id'], $validated['spouse_b_id'], 'SPOUSE_OF', $transaction)) {
-                throw new \Exception('Spouse relationship already exists');
+            if ($this->neo4j->validateRelationship($validated['spouse_a_id'], $validated['spouse_b_id'], 'SPOUSE_OF', $transaction)) {
+                throw new \Exception(sprintf(
+                    'A spouse relationship already exists between %s %s and %s %s',
+                    $spouseA->first_name,
+                    $spouseA->last_name,
+                    $spouseB->first_name,
+                    $spouseB->last_name
+                ));
             }
 
             $this->neo4j->createSpouseRelationship($validated['spouse_a_id'], $validated['spouse_b_id'], $transaction);
             unset($transaction);
 
-            return back()->with('success', 'Spouse relationship added successfully!');
+            return back()->with('success', sprintf(
+                'Spouse relationship added successfully between %s %s and %s %s!',
+                $spouseA->first_name,
+                $spouseA->last_name,
+                $spouseB->first_name,
+                $spouseB->last_name
+            ));
         } catch (\Exception $e) {
             Log::error('Failed to add spouse relationship', [
                 'spouse_a_id' => $validated['spouse_a_id'],
@@ -193,12 +209,18 @@ class Neo4jRelationshipController extends Controller
     {
         /** @var array{sibling_a_id: int, sibling_b_id: int} $validated */
         $validated = $request->validate([
-            'sibling_a_id' => 'required|integer|exists:individuals,id',
-            'sibling_b_id' => 'required|integer|exists:individuals,id',
+            'sibling_a_id' => 'required|integer|exists:individuals,id|not_in:0',
+            'sibling_b_id' => 'required|integer|exists:individuals,id|not_in:0',
         ]);
 
         try {
             $transaction = $this->neo4j->beginTransaction();
+
+            // Validate relationship doesn't already exist
+            if ($this->neo4j->validateRelationship($validated['sibling_a_id'], $validated['sibling_b_id'], 'SIBLING_OF', $transaction)) {
+                throw new \Exception('Sibling relationship already exists');
+            }
+
             $this->neo4j->createSiblingRelationship($validated['sibling_a_id'], $validated['sibling_b_id'], $transaction);
             unset($transaction);
 
@@ -210,7 +232,7 @@ class Neo4jRelationshipController extends Controller
                 'exception' => $e,
             ]);
 
-            return back()->withErrors(['error' => 'Failed to add sibling relationship. Please try again.']);
+            return back()->withErrors(['error' => $e->getMessage() ?: 'Failed to add sibling relationship. Please try again.']);
         }
     }
 
