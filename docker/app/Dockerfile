@@ -51,6 +51,9 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
  && chown -R www-data:www-data /var/www/html \
  && chmod -R 755 /var/www/html/
 
+# Copy custom PHP-FPM configuration
+COPY ./docker/app/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
+
 COPY ./docker/app/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 COPY docker/fix-permissions.sh /usr/local/bin/fix-permissions.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh \

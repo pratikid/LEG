@@ -1,4 +1,4 @@
-FROM nginx:mainline-alpine
+FROM nginx:1.27.5-alpine
 
 # Install build dependencies
 RUN apk add --no-cache \
