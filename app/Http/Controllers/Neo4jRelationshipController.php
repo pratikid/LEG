@@ -33,10 +33,10 @@ class Neo4jRelationshipController extends Controller
                 throw new \Exception('Cannot create parent-child relationship: would create a cycle in the family tree');
             }
 
-            // Validate relationship doesn't already exist
-            if ($this->neo4j->validateRelationship($validated['parent_id'], $validated['child_id'], 'PARENT_OF', $transaction)) {
-                throw new \Exception('Parent-child relationship already exists');
-            }
+            // // Validate relationship doesn't already exist
+            // if ($this->neo4j->validateRelationship($validated['parent_id'], $validated['child_id'], 'PARENT_OF', $transaction)) {
+            //     throw new \Exception('Parent-child relationship already exists');
+            // }
 
             $this->neo4j->createParentChildRelationship($validated['parent_id'], $validated['child_id'], $transaction);
             unset($transaction);
@@ -69,16 +69,16 @@ class Neo4jRelationshipController extends Controller
             $spouseA = Individual::findOrFail($validated['spouse_a_id']);
             $spouseB = Individual::findOrFail($validated['spouse_b_id']);
 
-            // Validate relationship doesn't already exist
-            if ($this->neo4j->validateRelationship($validated['spouse_a_id'], $validated['spouse_b_id'], 'SPOUSE_OF', $transaction)) {
-                throw new \Exception(sprintf(
-                    'A spouse relationship already exists between %s %s and %s %s',
-                    $spouseA->first_name,
-                    $spouseA->last_name,
-                    $spouseB->first_name,
-                    $spouseB->last_name
-                ));
-            }
+            // // Validate relationship doesn't already exist
+            // if ($this->neo4j->validateRelationship($validated['spouse_a_id'], $validated['spouse_b_id'], 'SPOUSE_OF', $transaction)) {
+            //     throw new \Exception(sprintf(
+            //         'A spouse relationship already exists between %s %s and %s %s',
+            //         $spouseA->first_name,
+            //         $spouseA->last_name,
+            //         $spouseB->first_name,
+            //         $spouseB->last_name
+            //     ));
+            // }
 
             $this->neo4j->createSpouseRelationship($validated['spouse_a_id'], $validated['spouse_b_id'], $transaction);
             unset($transaction);
@@ -216,10 +216,10 @@ class Neo4jRelationshipController extends Controller
         try {
             $transaction = $this->neo4j->beginTransaction();
 
-            // Validate relationship doesn't already exist
-            if ($this->neo4j->validateRelationship($validated['sibling_a_id'], $validated['sibling_b_id'], 'SIBLING_OF', $transaction)) {
-                throw new \Exception('Sibling relationship already exists');
-            }
+            // // Validate relationship doesn't already exist
+            // if ($this->neo4j->validateRelationship($validated['sibling_a_id'], $validated['sibling_b_id'], 'SIBLING_OF', $transaction)) {
+            //     throw new \Exception('Sibling relationship already exists');
+            // }
 
             $this->neo4j->createSiblingRelationship($validated['sibling_a_id'], $validated['sibling_b_id'], $transaction);
             unset($transaction);

@@ -13,7 +13,7 @@
             <ul class="divide-y divide-gray-200">
                 @foreach($individuals as $individual)
                     <li class="hover:bg-gray-50 transition-colors duration-150">
-                        <a href="{{ route('individuals.edit', $individual->id) }}" class="block px-6 py-4">
+                        <a href="{{ route('individuals.show', $individual->id) }}" class="block px-6 py-4">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-3">
                                     <div class="flex-shrink-0">
