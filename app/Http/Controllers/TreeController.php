@@ -236,7 +236,7 @@ class TreeController extends Controller
             
             // Get all individuals and their relationships in the tree
             $query = '
-                MATCH (i:Individual)-[:BELONGS_TO]->(t:Tree {id: $treeId})
+                MATCH (i:Individual {tree_id: $treeId})
                 WITH i
                 OPTIONAL MATCH (i)-[r:PARENT_OF]->(child:Individual)
                 OPTIONAL MATCH (i)-[s:SPOUSE_OF]-(spouse:Individual)
