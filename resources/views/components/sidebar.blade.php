@@ -8,7 +8,7 @@
     <!-- Collapse/Expand Button -->
     <div class="flex items-center justify-between h-16 px-4 border-b border-gray-800">
         <span class="font-bold text-lg" x-show="open">LEG</span>
-        <button @click="$dispatch('update:model', !open); open = !open" class="p-2 rounded hover:bg-gray-800">
+        <button @click="window.location.href = '{{ config('app.url') }}'; $dispatch('update:model', !open); open = !open" class="p-2 rounded hover:bg-gray-800">
             <svg x-show="open" class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             <svg x-show="!open" class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
