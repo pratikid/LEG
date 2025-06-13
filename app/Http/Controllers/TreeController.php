@@ -226,233 +226,96 @@ class TreeController extends Controller
         ]);
     }
 
-    public function visualization(int $id): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+    public function visualization(Tree $tree)
     {
-        $tree = Tree::findOrFail($id);
-        $neo4jTransaction = null;
-
         try {
             $neo4jTransaction = $this->neo4jService->beginTransaction();
             
-            // Get all individuals and their relationships in the tree
-            $query = '
-                MATCH (i:Individual {tree_id: $treeId})
-                WITH i
-                OPTIONAL MATCH (i)-[r:PARENT_OF]->(child:Individual)
-                OPTIONAL MATCH (i)-[s:SPOUSE_OF]-(spouse:Individual)
-                OPTIONAL MATCH (i)-[sib:SIBLING_OF]-(sibling:Individual)
-                RETURN i,
-                    collect(DISTINCT {type: "PARENT_OF", related: child}) as children,
-                    collect(DISTINCT {type: "SPOUSE_OF", related: spouse}) as spouses,
-                    collect(DISTINCT {type: "SIBLING_OF", related: sibling}) as siblings
-            ';
+            // Query to get all individuals and their relationships
+            $query = 'MATCH (i:Individual {tree_id: "'.$tree->id.'"})
+                     OPTIONAL MATCH (i)-[r]-(j:Individual {tree_id: "'.$tree->id.'"})
+                     RETURN i, r, j';
             
-            try {
-                // Log the query and parameters
-                Log::info('Executing Neo4j Query:', [
-                    'query' => $query,
-                    'parameters' => ['treeId' => $id]
-                ]);
-
-                $result = $neo4jTransaction->run($query, ['treeId' => $id]);
-                
-                // Log the query result count
-                Log::info('Neo4j Query Result:', [
-                    'result_count' => $result->count(),
-                    'has_results' => $result->count() > 0
-                ]);
-
-                // Debug log the raw Neo4j results
-                Log::info('Raw Neo4j Results:', [
-                    'count' => $result->count(),
-                    'first_record' => $result->first() ? [
-                        'individual' => $result->first()->get('i')->toArray(),
-                        'children' => $result->first()->get('children'),
-                        'spouses' => $result->first()->get('spouses'),
-                        'siblings' => $result->first()->get('siblings')
-                    ] : null
-                ]);
-                
-                // Convert Neo4j results to array format for D3.js
-                $treeDataArray = [
-                    'name' => $tree->name,
-                    'children' => [],
-                ];
-                
-                $individuals = [];
-                $relationships = [];
-                
-                // First pass: collect all individuals
-                foreach ($result as $record) {
-                    $individual = $record->get('i');
-                    if ($individual) {
-                        $individualId = $individual->getProperty('id');
-                        $individuals[$individualId] = [
-                            'id' => $individualId,
-                            'name' => $individual->getProperty('first_name').' '.$individual->getProperty('last_name'),
-                            'birth_date' => $individual->getProperty('birth_date'),
-                            'death_date' => $individual->getProperty('death_date'),
-                            'children' => [],
-                            'spouses' => [],
-                            'siblings' => []
-                        ];
-                        
-                        // Process children
-                        $children = $record->get('children');
-                        Log::info('Processing Children:', [
-                            'individual_id' => $individualId,
-                            'children_count' => count($children),
-                            'children_data' => $children
-                        ]);
-                        
-                        foreach ($children as $child) {
-                            if ($child['related']) {
-                                $childId = $child['related']->getProperty('id');
-                                $relationships[] = [
-                                    'type' => 'PARENT_OF',
-                                    'from' => $individualId,
-                                    'to' => $childId
-                                ];
-                            }
-                        }
-                        
-                        // Process spouses
-                        $spouses = $record->get('spouses');
-                        Log::info('Processing Spouses:', [
-                            'individual_id' => $individualId,
-                            'spouses_count' => count($spouses),
-                            'spouses_data' => $spouses
-                        ]);
-                        
-                        foreach ($spouses as $spouse) {
-                            if ($spouse['related']) {
-                                $spouseId = $spouse['related']->getProperty('id');
-                                $relationships[] = [
-                                    'type' => 'SPOUSE_OF',
-                                    'from' => $individualId,
-                                    'to' => $spouseId
-                                ];
-                            }
-                        }
-                        
-                        // Process siblings
-                        $siblings = $record->get('siblings');
-                        Log::info('Processing Siblings:', [
-                            'individual_id' => $individualId,
-                            'siblings_count' => count($siblings),
-                            'siblings_data' => $siblings
-                        ]);
-                        
-                        foreach ($siblings as $sibling) {
-                            if ($sibling['related']) {
-                                $siblingId = $sibling['related']->getProperty('id');
-                                $relationships[] = [
-                                    'type' => 'SIBLING_OF',
-                                    'from' => $individualId,
-                                    'to' => $siblingId
-                                ];
-                            }
-                        }
-                    }
-                }
-
-                // Log the collected relationships
-                Log::info('Collected Relationships:', [
-                    'total_relationships' => count($relationships),
-                    'relationships_by_type' => array_count_values(array_column($relationships, 'type'))
-                ]);
-                
-                // Second pass: organize relationships into hierarchical structure
-                foreach ($relationships as $rel) {
-                    $from = $rel['from'];
-                    $to = $rel['to'];
-                    
-                    switch ($rel['type']) {
-                        case 'PARENT_OF':
-                            if (isset($individuals[$from]) && isset($individuals[$to])) {
-                                $individuals[$from]['children'][] = $individuals[$to];
-                            }
-                            break;
-                        case 'SPOUSE_OF':
-                            if (isset($individuals[$from]) && isset($individuals[$to])) {
-                                $individuals[$from]['spouses'][] = $individuals[$to];
-                            }
-                            break;
-                        case 'SIBLING_OF':
-                            if (isset($individuals[$from]) && isset($individuals[$to])) {
-                                $individuals[$from]['siblings'][] = $individuals[$to];
-                            }
-                            break;
-                    }
-                }
-                
-                // Find root nodes (individuals without parents)
-                foreach ($individuals as $id => $individual) {
-                    $hasParent = false;
-                    foreach ($relationships as $rel) {
-                        if ($rel['type'] === 'PARENT_OF' && $rel['to'] === $id) {
-                            $hasParent = true;
-                            break;
-                        }
-                    }
-                    if (!$hasParent) {
-                        $treeDataArray['children'][] = $individual;
-                    }
-                }
-
-                // Log the final tree structure
-                Log::info('Final Tree Structure:', [
-                    'tree_name' => $treeDataArray['name'],
-                    'root_nodes_count' => count($treeDataArray['children']),
-                    'tree_data' => $treeDataArray
-                ]);
-
-                // Neo4j transaction is automatically committed when the transaction object is destroyed
-                unset($neo4jTransaction);
-
-                return view('trees.visualization', [
-                    'tree' => $tree,
-                    'treeDataJson' => json_encode($treeDataArray),
-                ]);
-            } catch (\Exception $e) {
-                if ($neo4jTransaction) {
-                    try {
-                        // Neo4j transaction is automatically rolled back when the transaction object is destroyed
-                        unset($neo4jTransaction);
-                    } catch (\Exception $neo4jError) {
-                        Log::error('Failed to handle Neo4j transaction', [
-                            'exception' => $neo4jError,
-                        ]);
-                    }
-                }
-
-                Log::error('Failed to load tree visualization', [
-                    'tree_id' => $id,
-                    'exception' => $e,
-                ]);
-
-                return redirect()->route('trees.show', $id)
-                    ->withErrors(['error' => 'Failed to load tree visualization. Please try again later.']);
-            }
-        } catch (\Exception $e) {
-            if ($neo4jTransaction) {
-                try {
-                    // Neo4j transaction is automatically rolled back when the transaction object is destroyed
-                    unset($neo4jTransaction);
-                } catch (\Exception $neo4jError) {
-                    Log::error('Failed to handle Neo4j transaction', [
-                        'exception' => $neo4jError,
-                    ]);
-                }
-            }
-
-            Log::error('Failed to load tree visualization', [
-                'tree_id' => $id,
-                'exception' => $e,
+            Log::info('Executing Neo4j Query:', [
+                'query' => $query
             ]);
 
-            return redirect()->route('trees.show', $id)
-                ->withErrors(['error' => 'Failed to load tree visualization. Please try again later.']);
+            $result = $neo4jTransaction->run($query);
+            
+            Log::info('Neo4j Query Result:', [
+                'result_count' => $result->count(),
+                'has_results' => $result->count() > 0
+            ]);
+
+            $nodes = [];
+            $edges = [];
+            $processedNodes = new \SplObjectStorage();
+
+            foreach ($result as $record) {
+                $individual = $record->get('i');
+                $related = $record->get('j');
+                $relationship = $record->get('r');
+
+                // Process individual node
+                if ($individual && !isset($processedNodes[$individual])) {
+                    $nodes[] = [
+                        'id' => $individual->getProperty('id'),
+                        'name' => ($individual->getProperty('first_name') ?? '') . ' ' . ($individual->getProperty('last_name') ?? ''),
+                    ];
+                    $processedNodes[$individual] = true;
+                }
+
+                // Process related node if exists
+                if ($related && !isset($processedNodes[$related])) {
+                    $nodes[] = [
+                        'id' => $related->getProperty('id'),
+                        'name' => ($related->getProperty('first_name') ?? '') . ' ' . ($related->getProperty('last_name') ?? ''),
+                    ];
+                    $processedNodes[$related] = true;
+                }
+
+                // Process relationship if exists
+                if ($relationship && $individual && $related) {
+                    $edges[] = [
+                        'from' => $individual->getProperty('id'),
+                        'to' => $related->getProperty('id'),
+                        'type' => $relationship->getType()
+                    ];
+                }
+            }
+
+            $treeData = [
+                'nodes' => $nodes,
+                'edges' => $edges
+            ];
+
+            Log::info('Final tree structure:', [
+                'node_count' => count($nodes),
+                'edge_count' => count($edges),
+                'nodes' => $nodes,
+                'edges' => $edges
+            ]);
+
+            Log::info('Tree Data:', [
+                'treeData' => $treeData
+            ]);
+
+            return view('trees.visualization', [
+                'tree' => $tree,
+                'treeData' => $treeData
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in visualization:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            if (isset($neo4jTransaction)) {
+                unset($neo4jTransaction);
+            }
+            
+            return back()->with('error', 'Error loading tree visualization: ' . $e->getMessage());
         }
     }
 

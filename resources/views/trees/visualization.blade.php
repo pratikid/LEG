@@ -13,6 +13,6 @@
         </div>
     </div>
 
-    <x-family-tree :treeData="$treeDataJson" />
+    <x-family-tree :treeData="$treeData" />
 </div>
 @endsection 

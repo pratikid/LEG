@@ -1,84 +1,20 @@
 @props(['treeData'])
 
-<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-    <div class="p-6">
-        <!-- Controls Toolbar -->
-        <div class="mb-4 flex flex-wrap justify-between items-center gap-2">
-            <div class="flex space-x-2">
-                <button id="add-node" class="px-3 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">Add</button>
-                <button id="edit-node" class="px-3 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">Edit</button>
-                <button id="highlight-path" class="px-3 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">Highlight Path</button>
-                <button id="drag-toggle" class="px-3 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">Drag/Drop</button>
-            </div>
-            <div class="flex space-x-2">
-                <input id="tree-search" type="text" placeholder="Search..." class="border border-gray-300 rounded px-2 py-1" />
-                <button id="print-tree" class="px-3 py-2 bg-amber-500 text-white rounded hover:bg-amber-600">Print</button>
-                <button id="export-tree" class="px-3 py-2 bg-amber-500 text-white rounded hover:bg-amber-600">Export</button>
-            </div>
-            <div class="flex space-x-4">
-                <select id="tree-style" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm rounded-md">
-                    <option value="traditional">Traditional</option>
-                    <option value="fan">Fan Chart</option>
-                    <option value="radial">Radial</option>
-                    <option value="descendant">Descendant</option>
-                </select>
-            </div>
-        </div>
-        <!-- Tree Controls (Zoom) -->
-        <div class="mb-4 flex space-x-2">
-            <button id="zoom-in" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
-                <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-                Zoom In
-            </button>
-            <button id="zoom-out" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
-                <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
-                </svg>
-                Zoom Out
-            </button>
-            <button id="reset-zoom" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
-                <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
-                Reset
-            </button>
-        </div>
-        <!-- Tree Visualization Container -->
-        <div id="tree-container" class="w-full h-[600px] border border-gray-200 rounded-lg" data-tree='{!! json_encode($treeData) !!}'></div>
-        <!-- Node Details Modal/Sidebar (hidden by default) -->
-        <div id="node-details" class="fixed top-0 right-0 w-96 h-full bg-white shadow-lg border-l border-gray-200 p-6 z-50 hidden overflow-y-auto">
-            <button id="close-node-details" class="mb-4 text-gray-500 hover:text-gray-700">Close</button>
-            <h3 class="text-xl font-semibold mb-2">Individual Details</h3>
-            <div id="node-details-content">
-                <!-- Populated dynamically -->
-            </div>
-        </div>
-    </div>
+<div class="family-tree-container">
+    <div id="tree-container" style="width: 100%; height: 100%;"></div>
 </div>
 
 @push('scripts')
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const treeData = JSON.parse(document.getElementById('tree-container').dataset.tree);
-    
-    // Log tree data to Laravel log
-    fetch('/log-tree-data', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({ treeData })
-    });
-
     const container = document.getElementById('tree-container');
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-    const margin = {top: 20, right: 90, bottom: 30, left: 90};
-
+    const data = @json($treeData);
+    
+    // Debug data
+    console.log('Nodes:', data.nodes);
+    console.log('Edges:', data.edges);
+    
     // Color scheme
     const colors = {
         nodeFill: '#ffffff',
@@ -89,6 +25,10 @@ document.addEventListener('DOMContentLoaded', function() {
         nodeHover: '#818cf8', // Indigo-400
         linkHover: '#34d399' // Emerald-400
     };
+
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    const margin = {top: 20, right: 90, bottom: 30, left: 90};
 
     // Create SVG
     const svg = d3.select('#tree-container')
@@ -107,26 +47,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
     d3.select('#tree-container svg').call(zoom);
 
-    // Tree layout
-    const treeLayout = d3.tree()
-        .size([height - margin.top - margin.bottom, width - margin.left - margin.right]);
+    // Create a map of nodes for easy lookup
+    const nodeMap = new Map(data.nodes.map(node => [node.id, node]));
+    
+    // Debug nodeMap
+    console.log('NodeMap:', Array.from(nodeMap.entries()));
+    
+    // Create links array with validation
+    const links = data.edges.map(edge => {
+        const source = nodeMap.get(edge.from);
+        const target = nodeMap.get(edge.to);
+        
+        // Debug each link creation
+        console.log('Creating link:', {
+            from: edge.from,
+            to: edge.to,
+            sourceFound: !!source,
+            targetFound: !!target
+        });
+        
+        if (!source || !target) {
+            console.warn('Missing node for edge:', edge);
+            return null;
+        }
+        
+        return {
+            source: source,
+            target: target,
+            type: edge.type
+        };
+    }).filter(link => link !== null); // Remove any invalid links
 
-    // Create hierarchy
-    const root = d3.hierarchy(treeData);
-    const treeNodes = treeLayout(root);
+    // Debug final links
+    console.log('Final links:', links);
+
+    // Create a D3 force simulation
+    const simulation = d3.forceSimulation(data.nodes)
+        .force('link', d3.forceLink(links).id(d => d.id).distance(100))
+        .force('charge', d3.forceManyBody().strength(-300))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('collision', d3.forceCollide().radius(50));
 
     // Create links
-    const link = svg.selectAll('.link')
-        .data(treeNodes.links())
+    const link = svg.append('g')
+        .selectAll('path')
+        .data(links)
         .enter()
         .append('path')
         .attr('class', 'link')
         .attr('fill', 'none')
         .attr('stroke', colors.linkStroke)
         .attr('stroke-width', 2)
-        .attr('d', d3.linkHorizontal()
-            .x(d => d.y)
-            .y(d => d.x))
         .style('transition', 'stroke 0.3s')
         .on('mouseover', function() {
             d3.select(this)
@@ -139,13 +110,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 .attr('stroke-width', 2);
         });
 
+    // Add relationship labels
+    const linkLabels = svg.append('g')
+        .selectAll('text')
+        .data(links)
+        .enter()
+        .append('text')
+        .attr('class', 'link-label')
+        .attr('text-anchor', 'middle')
+        .attr('fill', colors.textFill)
+        .style('font-size', '12px')
+        .style('pointer-events', 'none')
+        .text(d => d.type);
+
     // Create nodes
-    const node = svg.selectAll('.node')
-        .data(treeNodes.descendants())
+    const node = svg.append('g')
+        .selectAll('g')
+        .data(data.nodes)
         .enter()
         .append('g')
         .attr('class', 'node')
-        .attr('transform', d => `translate(${d.y},${d.x})`);
+        .call(d3.drag()
+            .on('start', dragstarted)
+            .on('drag', dragged)
+            .on('end', dragended));
 
     // Add circles to nodes
     node.append('circle')
@@ -154,12 +142,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .attr('stroke', colors.nodeStroke)
         .attr('stroke-width', 2)
         .style('transition', 'all 0.3s')
-        .on('mouseover', function() {
+        .on('mouseover', function(event, d) {
             d3.select(this)
                 .attr('stroke', colors.nodeHover)
                 .attr('stroke-width', 3);
         })
-        .on('mouseout', function() {
+        .on('mouseout', function(event, d) {
             d3.select(this)
                 .attr('stroke', colors.nodeStroke)
                 .attr('stroke-width', 2);
@@ -168,42 +156,80 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add labels to nodes
     node.append('text')
         .attr('dy', '.31em')
-        .attr('x', d => d.children ? -15 : 15)
-        .attr('text-anchor', d => d.children ? 'end' : 'start')
+        .attr('x', 15)
+        .attr('text-anchor', 'start')
         .attr('fill', colors.textFill)
         .style('font-size', '14px')
         .style('font-weight', '500')
-        .text(d => d.data.name)
+        .text(d => d.name)
         .clone(true).lower()
         .attr('stroke', colors.textStroke)
         .attr('stroke-width', 3);
 
-    // Zoom controls
-    document.getElementById('zoom-in').addEventListener('click', () => {
-        d3.select('#tree-container svg').transition()
-            .duration(750)
-            .call(zoom.scaleBy, 1.3);
+    // Add tooltips
+    node.append('title')
+        .text(d => `Birth: ${d.birth_date}${d.death_date ? '\nDeath: ' + d.death_date : ''}`);
+
+    // Update positions on each tick
+    simulation.on('tick', () => {
+        link.attr('d', d => {
+            const dx = d.target.x - d.source.x;
+            const dy = d.target.y - d.source.y;
+            const dr = Math.sqrt(dx * dx + dy * dy);
+            return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+        });
+
+        linkLabels.attr('transform', d => {
+            const x = (d.source.x + d.target.x) / 2;
+            const y = (d.source.y + d.target.y) / 2;
+            const angle = Math.atan2(d.target.y - d.source.y, d.target.x - d.source.x) * 180 / Math.PI;
+            return `translate(${x},${y}) rotate(${angle})`;
+        });
+
+        node.attr('transform', d => `translate(${d.x},${d.y})`);
     });
 
-    document.getElementById('zoom-out').addEventListener('click', () => {
-        d3.select('#tree-container svg').transition()
-            .duration(750)
-            .call(zoom.scaleBy, 0.7);
-    });
+    // Drag functions
+    function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
 
-    document.getElementById('reset-zoom').addEventListener('click', () => {
-        d3.select('#tree-container svg').transition()
-            .duration(750)
-            .call(zoom.transform, d3.zoomIdentity);
-    });
+    function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+    }
 
-    // Tree style change handler
-    document.getElementById('tree-style').addEventListener('change', function(e) {
-        const style = e.target.value;
-        // Implement different tree layouts based on style
-        // This would require additional logic to transform the tree data
-        // and update the visualization accordingly
-    });
+    function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
 });
 </script>
-@endpush 
+@endpush
+
+<style>
+.family-tree-container {
+    width: 100%;
+    height: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.family-tree-container svg {
+    transition: all 0.3s ease;
+}
+
+.node circle {
+    cursor: pointer;
+}
+
+.link {
+    cursor: pointer;
+}
+</style> 
