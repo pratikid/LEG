@@ -231,46 +231,74 @@ class TreeController extends Controller
         try {
             $neo4jTransaction = $this->neo4jService->beginTransaction();
             
-            // Query to get all individuals and their relationships
+            // Query to get all individuals and their relationships (directed, no duplicates)
             $query = 'MATCH (i:Individual {tree_id: "'.$tree->id.'"})
-                     OPTIONAL MATCH (i)-[r]-(j:Individual {tree_id: "'.$tree->id.'"})
+                     OPTIONAL MATCH (i)-[r]->(j:Individual {tree_id: "'.$tree->id.'"})
                      RETURN i, r, j';
             
             $result = $neo4jTransaction->run($query);
             $nodes = [];
             $edges = [];
-            $processedNodes = new \SplObjectStorage();
+            $processedNodes = [];
+            $edgeSet = [];
 
             foreach ($result as $record) {
                 $individual = $record->get('i');
                 $relationship = $record->get('r');
                 $relatedIndividual = $record->get('j');
 
-                // Process source node if not already processed
-                if ($individual && !$processedNodes->contains($individual)) {
+                // Add node if not already added
+                $iId = $individual->getProperty('id');
+                if (!isset($processedNodes[$iId])) {
                     $nodes[] = [
-                        'id' => $individual->getProperty('id'),
-                        'name' => $individual->getProperty('first_name') . ' ' . $individual->getProperty('last_name')
+                        'id' => $iId,
+                        'name' => $individual->getProperty('first_name') . ' ' . $individual->getProperty('last_name'),
+                        'first_name' => $individual->getProperty('first_name'),
+                        'last_name' => $individual->getProperty('last_name'),
+                        'birth_date' => $individual->getProperty('birth_date'),
+                        //'death_date' => $individual->getProperty('death_date'),
                     ];
-                    $processedNodes->attach($individual);
+                    $processedNodes[$iId] = true;
                 }
 
-                // Process target node if not already processed
-                if ($relatedIndividual && !$processedNodes->contains($relatedIndividual)) {
-                    $nodes[] = [
-                        'id' => $relatedIndividual->getProperty('id'),
-                        'name' => $relatedIndividual->getProperty('first_name') . ' ' . $relatedIndividual->getProperty('last_name')
-                    ];
-                    $processedNodes->attach($relatedIndividual);
+                if ($relatedIndividual) {
+                    $jId = $relatedIndividual->getProperty('id');
+                    if (!isset($processedNodes[$jId])) {
+                        $nodes[] = [
+                            'id' => $jId,
+                            'name' => $relatedIndividual->getProperty('first_name') . ' ' . $relatedIndividual->getProperty('last_name'),
+                            'first_name' => $relatedIndividual->getProperty('first_name'),
+                            'last_name' => $relatedIndividual->getProperty('last_name'),
+                            'birth_date' => $relatedIndividual->getProperty('birth_date'),
+                            //'death_date' => $relatedIndividual->getProperty('death_date'),
+                        ];
+                        $processedNodes[$jId] = true;
+                    }
                 }
 
-                // Add edge if relationship exists
-                if ($relationship) {
-                    $edges[] = [
-                        'from' => $individual->getProperty('id'),
-                        'to' => $relatedIndividual->getProperty('id'),
-                        'type' => $relationship->getType()
-                    ];
+                // Only add edge if relationship exists and is not a duplicate
+                if ($relationship && $relatedIndividual) {
+                    $type = $relationship->getType();
+                    $from = $iId;
+                    $to = $relatedIndividual->getProperty('id');
+
+                    // For undirected relationships, only add one direction (lowest id first)
+                    if (in_array($type, ['SPOUSE_OF', 'SIBLING_OF'])) {
+                        if ($from > $to) {
+                            // Only add edge from lower id to higher id
+                            continue;
+                        }
+                    }
+
+                    $edgeKey = $from.'-'.$to.'-'.$type;
+                    if (!isset($edgeSet[$edgeKey])) {
+                        $edges[] = [
+                            'from' => $from,
+                            'to' => $to,
+                            'type' => $type
+                        ];
+                        $edgeSet[$edgeKey] = true;
+                    }
                 }
             }
 

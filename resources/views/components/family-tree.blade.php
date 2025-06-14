@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add circles to nodes
     node.append('circle')
-        .attr('r', 12)
+        .attr('r', 32)
         .attr('fill', colors.nodeFill)
         .attr('stroke', colors.nodeStroke)
         .attr('stroke-width', 2)
@@ -191,22 +191,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 .attr('stroke-width', 2);
         });
 
-    // Add labels to nodes
+    // Add first_name inside the node
     node.append('text')
-        .attr('dy', '.31em')
-        .attr('x', 15)
-        .attr('text-anchor', 'start')
+        .attr('text-anchor', 'middle')
+        .attr('dy', '.35em')
         .attr('fill', colors.textFill)
-        .style('font-size', '14px')
-        .style('font-weight', '500')
-        .text(d => d.name)
-        .clone(true).lower()
-        .attr('stroke', colors.textStroke)
-        .attr('stroke-width', 3);
+        .style('font-size', '12px')
+        .style('font-weight', '600')
+        .text(d => d.first_name);
 
     // Add tooltips
     node.append('title')
-        .text(d => `Birth: ${d.birth_date}${d.death_date ? '\nDeath: ' + d.death_date : ''}`);
+        .text(d => `${d.name}\nBirth: ${d.birth_date || ''}${d.death_date ? '\nDeath: ' + d.death_date : ''}`);
+
+    // Add arrow marker for directed edges
+    svg.append('defs').append('marker')
+        .attr('id', 'arrowhead')
+        .attr('viewBox', '-0 -5 10 10')
+        .attr('refX', 28)
+        .attr('refY', 0)
+        .attr('orient', 'auto')
+        .attr('markerWidth', 8)
+        .attr('markerHeight', 8)
+        .attr('xoverflow', 'visible')
+        .append('svg:path')
+        .attr('d', 'M 0,-5 L 10,0 L 0,5')
+        .attr('fill', colors.linkStroke)
+        .style('stroke','none');
+
+    // Create links with arrowheads
+    link.attr('marker-end', 'url(#arrowhead)');
 
     // Drag functions
     function dragstarted(event, d) {
