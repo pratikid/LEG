@@ -236,65 +236,50 @@ class TreeController extends Controller
                      OPTIONAL MATCH (i)-[r]-(j:Individual {tree_id: "'.$tree->id.'"})
                      RETURN i, r, j';
             
-            Log::info('Executing Neo4j Query:', [
-                'query' => $query
-            ]);
-
             $result = $neo4jTransaction->run($query);
-            
-            Log::info('Neo4j Query Result:', [
-                'result_count' => $result->count(),
-                'has_results' => $result->count() > 0
-            ]);
-
             $nodes = [];
             $edges = [];
             $processedNodes = new \SplObjectStorage();
 
             foreach ($result as $record) {
                 $individual = $record->get('i');
-                $related = $record->get('j');
                 $relationship = $record->get('r');
+                $relatedIndividual = $record->get('j');
 
-                // Process individual node
-                if ($individual && !isset($processedNodes[$individual])) {
+                // Process source node if not already processed
+                if ($individual && !$processedNodes->contains($individual)) {
                     $nodes[] = [
                         'id' => $individual->getProperty('id'),
-                        'name' => ($individual->getProperty('first_name') ?? '') . ' ' . ($individual->getProperty('last_name') ?? ''),
+                        'name' => $individual->getProperty('first_name') . ' ' . $individual->getProperty('last_name')
                     ];
-                    $processedNodes[$individual] = true;
+                    $processedNodes->attach($individual);
                 }
 
-                // Process related node if exists
-                if ($related && !isset($processedNodes[$related])) {
+                // Process target node if not already processed
+                if ($relatedIndividual && !$processedNodes->contains($relatedIndividual)) {
                     $nodes[] = [
-                        'id' => $related->getProperty('id'),
-                        'name' => ($related->getProperty('first_name') ?? '') . ' ' . ($related->getProperty('last_name') ?? ''),
+                        'id' => $relatedIndividual->getProperty('id'),
+                        'name' => $relatedIndividual->getProperty('first_name') . ' ' . $relatedIndividual->getProperty('last_name')
                     ];
-                    $processedNodes[$related] = true;
+                    $processedNodes->attach($relatedIndividual);
                 }
 
-                // Process relationship if exists
-                if ($relationship && $individual && $related) {
+                // Add edge if relationship exists
+                if ($relationship) {
                     $edges[] = [
                         'from' => $individual->getProperty('id'),
-                        'to' => $related->getProperty('id'),
+                        'to' => $relatedIndividual->getProperty('id'),
                         'type' => $relationship->getType()
                     ];
                 }
             }
 
             $treeData = [
-                'nodes' => $nodes,
-                'edges' => $edges
-            ];
-
-            Log::info('Final tree structure:', [
                 'node_count' => count($nodes),
                 'edge_count' => count($edges),
                 'nodes' => $nodes,
                 'edges' => $edges
-            ]);
+            ];
 
             Log::info('Tree Data:', [
                 'treeData' => $treeData
@@ -306,16 +291,15 @@ class TreeController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in visualization:', [
+            Log::error('Error in tree visualization:', [
+                'tree_id' => $tree->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
-            if (isset($neo4jTransaction)) {
-                unset($neo4jTransaction);
-            }
-            
-            return back()->with('error', 'Error loading tree visualization: ' . $e->getMessage());
+
+            return response()->json([
+                'error' => 'Failed to generate tree visualization'
+            ], 500);
         }
     }
 

@@ -1,7 +1,7 @@
 @props(['treeData'])
 
 <div class="family-tree-container">
-    <div id="tree-container" style="width: 100%; height: 100%;"></div>
+    <div id="tree-container" style="width: 100%; height: 1100px;"></div>
 </div>
 
 @push('scripts')
@@ -11,9 +11,37 @@ document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('tree-container');
     const data = @json($treeData);
     
+    // Deduplicate nodes by ID
+    const uniqueNodes = new Map();
+    data.nodes.forEach(node => {
+        if (!uniqueNodes.has(node.id)) {
+            uniqueNodes.set(node.id, node);
+        }
+    });
+    data.nodes = Array.from(uniqueNodes.values());
+    
+    // Deduplicate edges by creating a unique key for each edge
+    const uniqueEdges = new Map();
+    data.edges.forEach(edge => {
+        const key = `${edge.from}-${edge.to}-${edge.type}`;
+        if (!uniqueEdges.has(key)) {
+            uniqueEdges.set(key, edge);
+        }
+    });
+    data.edges = Array.from(uniqueEdges.values());
+    
+    // Filter out isolated nodes by only keeping nodes that have relationships
+    const connectedNodeIds = new Set(data.edges.flatMap(edge => [edge.from, edge.to]));
+    data.nodes = data.nodes.filter(node => connectedNodeIds.has(node.id));
+    
+    // Filter edges to only include those between connected nodes
+    data.edges = data.edges.filter(edge => 
+        connectedNodeIds.has(edge.from) && connectedNodeIds.has(edge.to)
+    );
+    
     // Debug data
-    console.log('Nodes:', data.nodes);
-    console.log('Edges:', data.edges);
+    console.log('Unique Nodes:', data.nodes);
+    console.log('Unique Edges:', data.edges);
     
     // Color scheme
     const colors = {
@@ -58,14 +86,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const source = nodeMap.get(edge.from);
         const target = nodeMap.get(edge.to);
         
-        // Debug each link creation
-        console.log('Creating link:', {
-            from: edge.from,
-            to: edge.to,
-            sourceFound: !!source,
-            targetFound: !!target
-        });
-        
         if (!source || !target) {
             console.warn('Missing node for edge:', edge);
             return null;
@@ -76,17 +96,35 @@ document.addEventListener('DOMContentLoaded', function() {
             target: target,
             type: edge.type
         };
-    }).filter(link => link !== null); // Remove any invalid links
+    }).filter(link => link !== null);
 
     // Debug final links
     console.log('Final links:', links);
 
-    // Create a D3 force simulation
+    // Create a D3 force simulation with only connected nodes
     const simulation = d3.forceSimulation(data.nodes)
         .force('link', d3.forceLink(links).id(d => d.id).distance(100))
         .force('charge', d3.forceManyBody().strength(-300))
         .force('center', d3.forceCenter(width / 2, height / 2))
-        .force('collision', d3.forceCollide().radius(50));
+        .force('collision', d3.forceCollide().radius(50))
+        .on('tick', () => {
+            // Update positions on each tick
+            link.attr('d', d => {
+                const dx = d.target.x - d.source.x;
+                const dy = d.target.y - d.source.y;
+                const dr = Math.sqrt(dx * dx + dy * dy);
+                return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+            });
+
+            linkLabels.attr('transform', d => {
+                const x = (d.source.x + d.target.x) / 2;
+                const y = (d.source.y + d.target.y) / 2;
+                const angle = Math.atan2(d.target.y - d.source.y, d.target.x - d.source.x) * 180 / Math.PI;
+                return `translate(${x},${y}) rotate(${angle})`;
+            });
+
+            node.attr('transform', d => `translate(${d.x},${d.y})`);
+        });
 
     // Create links
     const link = svg.append('g')
@@ -169,25 +207,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add tooltips
     node.append('title')
         .text(d => `Birth: ${d.birth_date}${d.death_date ? '\nDeath: ' + d.death_date : ''}`);
-
-    // Update positions on each tick
-    simulation.on('tick', () => {
-        link.attr('d', d => {
-            const dx = d.target.x - d.source.x;
-            const dy = d.target.y - d.source.y;
-            const dr = Math.sqrt(dx * dx + dy * dy);
-            return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
-        });
-
-        linkLabels.attr('transform', d => {
-            const x = (d.source.x + d.target.x) / 2;
-            const y = (d.source.y + d.target.y) / 2;
-            const angle = Math.atan2(d.target.y - d.source.y, d.target.x - d.source.x) * 180 / Math.PI;
-            return `translate(${x},${y}) rotate(${angle})`;
-        });
-
-        node.attr('transform', d => `translate(${d.x},${d.y})`);
-    });
 
     // Drag functions
     function dragstarted(event, d) {
