@@ -62,6 +62,7 @@ setup.bat   # For Windows
 ### Project Planning
 - [Enhancement Plan](docs/leg_enhancement_plan.md)
 - [Repository Organization](docs/repo_organization_guide.md)
+- [Lumen to Laravel Migration Plan](docs/lumen-migration-future-scope.md)
 
 ### Additional Resources
 - [Best Practices](docs/developer/best-practices.md)
