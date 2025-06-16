@@ -185,6 +185,7 @@ class IndividualController extends Controller
         if ($trees->isEmpty()) {
             $error = 'No trees available. Please create a tree first.';
         }
+
         return view('individuals.edit', compact('individual', 'trees', 'error'));
     }
 

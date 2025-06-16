@@ -230,12 +230,12 @@ class TreeController extends Controller
     {
         try {
             $neo4jTransaction = $this->neo4jService->beginTransaction();
-            
+
             // Query to get all individuals and their relationships (directed, no duplicates)
             $query = 'MATCH (i:Individual {tree_id: "'.$tree->id.'"})
                      OPTIONAL MATCH (i)-[r]->(j:Individual {tree_id: "'.$tree->id.'"})
                      RETURN i, r, j';
-            
+
             $result = $neo4jTransaction->run($query);
             $nodes = [];
             $edges = [];
@@ -249,30 +249,30 @@ class TreeController extends Controller
 
                 // Add node if not already added
                 $iId = $individual->getProperty('id');
-                if (!isset($processedNodes[$iId])) {
+                if (! isset($processedNodes[$iId])) {
                     $nodes[] = [
                         'id' => $iId,
-                        'name' => $individual->getProperty('first_name') . ' ' . $individual->getProperty('last_name'),
+                        'name' => $individual->getProperty('first_name').' '.$individual->getProperty('last_name'),
                         'first_name' => $individual->getProperty('first_name'),
                         'last_name' => $individual->getProperty('last_name'),
                         'birth_date' => $individual->getProperty('birth_date'),
-                        //'gender' => $individual->getProperty('gender'),
-                        //'death_date' => $individual->getProperty('death_date'),
+                        // 'gender' => $individual->getProperty('gender'),
+                        // 'death_date' => $individual->getProperty('death_date'),
                     ];
                     $processedNodes[$iId] = true;
                 }
 
                 if ($relatedIndividual) {
                     $jId = $relatedIndividual->getProperty('id');
-                    if (!isset($processedNodes[$jId])) {
+                    if (! isset($processedNodes[$jId])) {
                         $nodes[] = [
                             'id' => $jId,
-                            'name' => $relatedIndividual->getProperty('first_name') . ' ' . $relatedIndividual->getProperty('last_name'),
+                            'name' => $relatedIndividual->getProperty('first_name').' '.$relatedIndividual->getProperty('last_name'),
                             'first_name' => $relatedIndividual->getProperty('first_name'),
                             'last_name' => $relatedIndividual->getProperty('last_name'),
                             'birth_date' => $relatedIndividual->getProperty('birth_date'),
-                            //'gender' => $relatedIndividual->getProperty('gender'),
-                            //'death_date' => $relatedIndividual->getProperty('death_date'),
+                            // 'gender' => $relatedIndividual->getProperty('gender'),
+                            // 'death_date' => $relatedIndividual->getProperty('death_date'),
                         ];
                         $processedNodes[$jId] = true;
                     }
@@ -288,17 +288,18 @@ class TreeController extends Controller
                     if (in_array($type, ['SPOUSE_OF', 'SIBLING_OF'])) {
                         if ($from > $to) {
                             Log::info('Skipping edge from '.$from.' to '.$to.' because it is a duplicate');
+
                             // Only add edge from lower id to higher id
                             continue;
                         }
                     }
 
                     $edgeKey = $from.'-'.$to.'-'.$type;
-                    if (!isset($edgeSet[$edgeKey])) {
+                    if (! isset($edgeSet[$edgeKey])) {
                         $edges[] = [
                             'from' => $from,
                             'to' => $to,
-                            'type' => $type
+                            'type' => $type,
                         ];
                         $edgeSet[$edgeKey] = true;
                     }
@@ -309,27 +310,27 @@ class TreeController extends Controller
                 'node_count' => count($nodes),
                 'edge_count' => count($edges),
                 'nodes' => $nodes,
-                'edges' => $edges
+                'edges' => $edges,
             ];
 
             Log::info('Tree Data:', [
-                'treeData' => $treeData
+                'treeData' => $treeData,
             ]);
 
             return view('trees.visualization', [
                 'tree' => $tree,
-                'treeData' => $treeData
+                'treeData' => $treeData,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error in tree visualization:', [
                 'tree_id' => $tree->id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
-                'error' => 'Failed to generate tree visualization'
+                'error' => 'Failed to generate tree visualization',
             ], 500);
         }
     }

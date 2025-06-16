@@ -3,9 +3,6 @@
 if (! function_exists('activityIcon')) {
     /**
      * Get the appropriate icon for an activity action.
-     *
-     * @param string $action
-     * @return string
      */
     function activityIcon(string $action): string
     {
