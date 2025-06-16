@@ -55,6 +55,7 @@ class IndividualController extends Controller
             last_name: string,
             birth_date: string|null,
             death_date: string|null,
+            gender: string|null,
             tree_id: int,
             parent_ids: array<int>|null,
             spouse_ids: array<int>|null,
@@ -65,6 +66,7 @@ class IndividualController extends Controller
             'last_name' => 'required|string|max:255',
             'birth_date' => 'nullable|date',
             'death_date' => 'nullable|date|after_or_equal:birth_date',
+            'gender' => 'nullable|string|in:male,female',
             'tree_id' => 'required|exists:trees,id',
             'parent_ids' => 'nullable|array',
             'parent_ids.*' => 'exists:individuals,id',
@@ -178,8 +180,12 @@ class IndividualController extends Controller
     public function edit(int $id): View
     {
         $individual = Individual::findOrFail($id);
-
-        return view('individuals.edit', compact('individual'));
+        $trees = \App\Models\Tree::all();
+        $error = null;
+        if ($trees->isEmpty()) {
+            $error = 'No trees available. Please create a tree first.';
+        }
+        return view('individuals.edit', compact('individual', 'trees', 'error'));
     }
 
     /**
@@ -192,6 +198,7 @@ class IndividualController extends Controller
             last_name: string,
             birth_date: string|null,
             death_date: string|null,
+            gender: string|null,
             tree_id: int,
             parent_ids: array<int>|null,
             spouse_ids: array<int>|null,
@@ -202,6 +209,7 @@ class IndividualController extends Controller
             'last_name' => 'required|string|max:255',
             'birth_date' => 'nullable|date',
             'death_date' => 'nullable|date|after_or_equal:birth_date',
+            'gender' => 'nullable|string|in:male,female',
             'tree_id' => 'required|exists:trees,id',
             'parent_ids' => 'nullable|array',
             'parent_ids.*' => 'exists:individuals,id',

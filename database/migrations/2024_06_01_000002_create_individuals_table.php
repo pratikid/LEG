@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('last_name');
             $table->date('birth_date')->nullable();
             $table->date('death_date')->nullable();
+            $table->enum('gender', ['male', 'female'])->nullable();
             $table->foreignId('tree_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });

@@ -27,6 +27,9 @@
                                         <p class="text-sm font-medium text-gray-900">
                                             {{ $individual->first_name ?? '' }} {{ $individual->last_name ?? '' }}
                                         </p>
+                                        <p class="text-sm text-gray-500">
+                                            {{ ucfirst($individual->gender) }}
+                                        </p>
                                         @if($individual->birth_date || $individual->death_date)
                                             <p class="text-sm text-gray-500">
                                                 @php
@@ -42,6 +45,11 @@
                                     <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                     </svg>
+                                    <a href="{{ route('individuals.edit', $individual->id) }}" class="ml-3 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full" title="Edit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6-6m2 2l-6 6m2-2l-6 6m2-2l6-6" />
+                                        </svg>
+                                    </a>
                                 </div>
                             </div>
                         </a>

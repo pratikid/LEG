@@ -37,6 +37,7 @@ class Individual extends Model
         'death_date',
         'tree_id',
         'user_id',
+        'gender',
     ];
 
     /**
@@ -73,6 +74,7 @@ class Individual extends Model
                 'birth_date' => $individual->birth_date,
                 'death_date' => $individual->death_date,
                 'tree_id' => $individual->tree_id,
+                'gender' => $individual->gender,
             ]);
         });
         static::updated(function (Individual $individual) {
@@ -83,6 +85,7 @@ class Individual extends Model
                 'birth_date' => $individual->birth_date,
                 'death_date' => $individual->death_date,
                 'tree_id' => $individual->tree_id,
+                'gender' => $individual->gender,
             ]);
         });
         static::deleted(function (Individual $individual) {

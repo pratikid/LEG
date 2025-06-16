@@ -256,6 +256,7 @@ class TreeController extends Controller
                         'first_name' => $individual->getProperty('first_name'),
                         'last_name' => $individual->getProperty('last_name'),
                         'birth_date' => $individual->getProperty('birth_date'),
+                        //'gender' => $individual->getProperty('gender'),
                         //'death_date' => $individual->getProperty('death_date'),
                     ];
                     $processedNodes[$iId] = true;
@@ -270,6 +271,7 @@ class TreeController extends Controller
                             'first_name' => $relatedIndividual->getProperty('first_name'),
                             'last_name' => $relatedIndividual->getProperty('last_name'),
                             'birth_date' => $relatedIndividual->getProperty('birth_date'),
+                            //'gender' => $relatedIndividual->getProperty('gender'),
                             //'death_date' => $relatedIndividual->getProperty('death_date'),
                         ];
                         $processedNodes[$jId] = true;
@@ -285,6 +287,7 @@ class TreeController extends Controller
                     // For undirected relationships, only add one direction (lowest id first)
                     if (in_array($type, ['SPOUSE_OF', 'SIBLING_OF'])) {
                         if ($from > $to) {
+                            Log::info('Skipping edge from '.$from.' to '.$to.' because it is a duplicate');
                             // Only add edge from lower id to higher id
                             continue;
                         }

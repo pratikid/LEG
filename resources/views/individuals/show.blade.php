@@ -3,6 +3,7 @@
 <div class="container mx-auto mt-8">
     <h1 class="text-2xl font-bold mb-4">Individual Details (ID: {{ $individual->id ?? '-' }})</h1>
     <p>{{ $individual->first_name ?? '' }} {{ $individual->last_name ?? '' }}</p>
+    <p class="text-gray-700 mb-2">Gender: <span class="font-semibold">{{ ucfirst($individual->gender) }}</span></p>
 
     @if(isset($error) && $error)
         <div class="text-red-500 text-xs mb-4">{{ $error }}</div>

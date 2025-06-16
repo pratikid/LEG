@@ -15,6 +15,14 @@
             @error('last_name')<div class="text-red-500 text-xs mt-1">{{ $message }}</div>@enderror
         </div>
         <div class="mb-4">
+            <label for="gender" class="block mb-1 font-semibold">Gender <span class="text-red-500">*</span></label>
+            <select name="gender" id="gender" required class="w-full p-2 rounded bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                <option value="male" @if(old('gender') == 'male') selected @endif>Male</option>
+                <option value="female" @if(old('gender') == 'female') selected @endif>Female</option>
+            </select>
+            @error('gender')<div class="text-red-500 text-xs mt-1">{{ $message }}</div>@enderror
+        </div>
+        <div class="mb-4">
             <label for="birth_date" class="block mb-1 font-semibold">Birth Date</label>
             <input type="date" name="birth_date" id="birth_date" value="{{ old('birth_date') }}" class="w-full p-2 rounded bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-600">
             @error('birth_date')<div class="text-red-500 text-xs mt-1">{{ $message }}</div>@enderror
