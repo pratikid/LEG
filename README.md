@@ -41,10 +41,33 @@ setup.bat   # For Windows
 
 ## 📚 Documentation
 
-- [Getting Started Guide](docs/getting-started/installation.md)
+### Getting Started
+- [Installation Guide](docs/getting-started/installation.md)
 - [User Guide](docs/user-guide/README.md)
-- [Developer Documentation](docs/developer/README.md)
+
+### Developer Documentation
+- [Developer Guide](docs/developer/README.md)
 - [API Reference](docs/developer/api-reference.md)
+- [Best Practices](docs/developer/best-practices.md)
+- [Clean Code Guidelines](docs/developer/clean-code.md)
+- [Commit Guidelines](docs/developer/commit-guidelines.md)
+- [Security Guidelines](docs/developer/security.md)
+- [GEDCOM Compliance](docs/developer/gedcom-compliance.md)
+- [Tree View Implementation](docs/developer/tree-view.md)
+- [UI/UX Guidelines](docs/developer/ui-ux.md)
+- [Tools Integration](docs/developer/tools-integration.md)
+- [Technical Dictionary](docs/developer/dictionary.md)
+- [Navigation System](docs/developer/sidebar-navigation.md)
+
+### Project Planning
+- [Enhancement Plan](docs/leg_enhancement_plan.md)
+- [Repository Organization](docs/repo_organization_guide.md)
+
+### Additional Resources
+- [Best Practices](docs/developer/best-practices.md)
+- [Clean Code Guidelines](docs/developer/clean-code.md)
+- [Commit Guidelines](docs/developer/commit-guidelines.md)
+- [Repository Organization](docs/repo_organization_guide.md)
 
 ## 🤝 Contributing
 
