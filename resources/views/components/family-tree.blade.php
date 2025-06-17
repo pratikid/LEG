@@ -39,10 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
         connectedNodeIds.has(edge.from) && connectedNodeIds.has(edge.to)
     );
     
-    // Debug data
-    console.log('Unique Nodes:', data.nodes);
-    console.log('Unique Edges:', data.edges);
-    
     // Color scheme
     const colors = {
         nodeFill: '#ffffff',
@@ -77,10 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Create a map of nodes for easy lookup
     const nodeMap = new Map(data.nodes.map(node => [node.id, node]));
-    
-    // Debug nodeMap
-    console.log('NodeMap:', Array.from(nodeMap.entries()));
-    
+        
     // Create links array with validation
     const links = data.edges.map(edge => {
         const source = nodeMap.get(edge.from);
@@ -97,9 +90,6 @@ document.addEventListener('DOMContentLoaded', function() {
             type: edge.type
         };
     }).filter(link => link !== null);
-
-    // Debug final links
-    console.log('Final links:', links);
 
     // Create a D3 force simulation with only connected nodes
     const simulation = d3.forceSimulation(data.nodes)
