@@ -10,7 +10,7 @@
     @endif
 
     <!-- Parent-Child Relationship Form -->
-    <form method="POST" action="{{ route('relationships.parent-child') }}" class="mb-4" @if(isset($error) && $error) style="pointer-events:none;opacity:0.5;" @endif>
+    <form id="parent-child-form" class="mb-4" @if(isset($error) && $error) style="pointer-events:none;opacity:0.5;" @endif>
         @csrf
         <input type="hidden" name="child_id" value="{{ $individual->id }}">
         <label for="parent_id" class="block mb-2">Add Parent:</label>
@@ -26,7 +26,7 @@
     </form>
 
     <!-- Add Child Relationship Form -->
-    <form method="POST" action="{{ route('relationships.parent-child') }}" class="mb-4" @if(isset($error) && $error) style="pointer-events:none;opacity:0.5;" @endif>
+    <form id="add-child-form" class="mb-4" @if(isset($error) && $error) style="pointer-events:none;opacity:0.5;" @endif>
         @csrf
         <input type="hidden" name="parent_id" value="{{ $individual->id }}">
         <label for="child_id" class="block mb-2">Add Child:</label>
@@ -42,7 +42,7 @@
     </form>
 
     <!-- Spouse Relationship Form -->
-    <form method="POST" action="{{ route('relationships.spouse') }}" class="mb-4" @if(isset($error) && $error) style="pointer-events:none;opacity:0.5;" @endif>
+    <form id="spouse-form" class="mb-4" @if(isset($error) && $error) style="pointer-events:none;opacity:0.5;" @endif>
         @csrf
         <input type="hidden" name="spouse_a_id" value="{{ $individual->id }}">
         <label for="spouse_b_id" class="block mb-2">Add Spouse:</label>
@@ -58,7 +58,7 @@
     </form>
 
     <!-- Add Sibling Relationship Form -->
-    <form method="POST" action="{{ route('relationships.sibling') }}" class="mb-4" @if(isset($error) && $error) style="pointer-events:none;opacity:0.5;" @endif>
+    <form id="sibling-form" class="mb-4" @if(isset($error) && $error) style="pointer-events:none;opacity:0.5;" @endif>
         @csrf
         <input type="hidden" name="sibling_a_id" value="{{ $individual->id }}">
         <label for="sibling_b_id" class="block mb-2">Add Sibling:</label>
@@ -199,77 +199,208 @@
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Parents (with Remove button)
-        fetch("{{ route('relationships.parents', $individual->id) }}")
-            .then(res => res.json())
-            .then(data => {
-                const list = document.getElementById('parents-list');
-                list.innerHTML = '';
-                const template = document.getElementById('parent-item-template');
-                data.forEach(p => {
-                    const li = template.content.cloneNode(true);
-                    li.querySelector('.parent-name').textContent = `${p.properties.first_name} ${p.properties.last_name}`;
-                    li.querySelector('.parent-id-input').value = p.properties.id;
-                    li.querySelector('.remove-parent-form').action = "{{ route('relationships.remove-parent-child') }}";
-                    list.appendChild(li);
-                });
-            })
-            .catch(() => {
-                document.getElementById('parents-list').innerHTML = '<li class="text-red-500">Failed to load parents.</li>';
+        // Function to handle form submissions
+        function handleFormSubmit(formId, endpoint, successCallback) {
+            const form = document.getElementById(formId);
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const submitButton = form.querySelector('button[type="submit"]');
+                const originalText = submitButton.textContent;
+                
+                try {
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Adding...';
+                    
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        successCallback(data);
+                        form.reset();
+                        // Show success message
+                        const successMessage = document.createElement('div');
+                        successMessage.className = 'text-green-500 text-sm mt-2';
+                        successMessage.textContent = 'Relationship added successfully!';
+                        form.appendChild(successMessage);
+                        setTimeout(() => successMessage.remove(), 3000);
+                    } else {
+                        throw new Error(data.message || 'Failed to add relationship');
+                    }
+                } catch (error) {
+                    // Show error message
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'text-red-500 text-sm mt-2';
+                    errorMessage.textContent = error.message;
+                    form.appendChild(errorMessage);
+                    setTimeout(() => errorMessage.remove(), 3000);
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalText;
+                }
             });
-        // Children (with Remove button)
-        fetch("{{ route('relationships.children', $individual->id) }}")
-            .then(res => res.json())
-            .then(data => {
-                const list = document.getElementById('children-list');
-                list.innerHTML = '';
-                const template = document.getElementById('child-item-template');
-                data.forEach(c => {
-                    const li = template.content.cloneNode(true);
-                    li.querySelector('.child-name').textContent = `${c.properties.first_name} ${c.properties.last_name}`;
-                    li.querySelector('.child-id-input').value = c.properties.id;
-                    li.querySelector('.remove-child-form').action = "{{ route('relationships.remove-parent-child') }}";
-                    list.appendChild(li);
+        }
+
+        // Function to refresh relationship lists
+        function refreshRelationshipList(endpoint, listId, templateId, removeEndpoint) {
+            fetch(endpoint)
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    const list = document.getElementById(listId);
+                    list.innerHTML = '';
+                    const template = document.getElementById(templateId);
+
+                    if (!data || data.length === 0) {
+                        list.innerHTML = '<li class="text-gray-400">None found.</li>';
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        if (!item || !item.properties) {
+                            console.warn('Invalid item data:', item);
+                            return;
+                        }
+
+                        const li = template.content.cloneNode(true);
+                        const classMap = {
+                            'parents-list': 'parent',
+                            'children-list': 'child',
+                            'spouses-list': 'spouse',
+                            'siblings-list': 'sibling'
+                        };
+                        const classPrefix = classMap[listId];
+
+                        let idInputClass = `${classPrefix}-id-input`;
+                        if (listId === 'spouses-list') idInputClass = 'spouse-b-id-input';
+                        if (listId === 'siblings-list') idInputClass = 'sibling-b-id-input';
+
+                        const nameSpan = li.querySelector(`.${classPrefix}-name`);
+                        const idInput = li.querySelector(`.${idInputClass}`);
+                        const removeForm = li.querySelector(`.remove-${classPrefix}-form`);
+                        
+                        nameSpan.textContent = `${item.properties.first_name || ''} ${item.properties.last_name || ''}`;
+                        idInput.value = item.properties.id;
+                        removeForm.action = removeEndpoint;
+                        list.appendChild(li);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading relationships:', error);
+                    document.getElementById(listId).innerHTML = `<li class="text-red-500">Failed to load ${listId.replace('-list', '')}. Please try again.</li>`;
                 });
-            })
-            .catch(() => {
-                document.getElementById('children-list').innerHTML = '<li class="text-red-500">Failed to load children.</li>';
-            });
-        // Spouses (with Remove button)
-        fetch("{{ route('relationships.spouses', $individual->id) }}")
-            .then(res => res.json())
-            .then(data => {
-                const list = document.getElementById('spouses-list');
-                list.innerHTML = '';
-                const template = document.getElementById('spouse-item-template');
-                data.forEach(s => {
-                    const li = template.content.cloneNode(true);
-                    li.querySelector('.spouse-name').textContent = `${s.properties.first_name} ${s.properties.last_name}`;
-                    li.querySelector('.spouse-b-id-input').value = s.properties.id;
-                    li.querySelector('.remove-spouse-form').action = "{{ route('relationships.remove-spouse') }}";
-                    list.appendChild(li);
-                });
-            })
-            .catch(() => {
-                document.getElementById('spouses-list').innerHTML = '<li class="text-red-500">Failed to load spouses.</li>';
-            });
+        }
+
+        // Set up form handlers
+        handleFormSubmit('parent-child-form', "{{ route('relationships.parent-child') }}", () => {
+            refreshRelationshipList(
+                "{{ route('relationships.parents', $individual->id) }}",
+                'parents-list',
+                'parent-item-template',
+                "{{ route('relationships.remove-parent-child') }}"
+            );
+        });
+
+        handleFormSubmit('add-child-form', "{{ route('relationships.parent-child') }}", () => {
+            refreshRelationshipList(
+                "{{ route('relationships.children', $individual->id) }}",
+                'children-list',
+                'child-item-template',
+                "{{ route('relationships.remove-parent-child') }}"
+            );
+        });
+
+        handleFormSubmit('spouse-form', "{{ route('relationships.spouse') }}", () => {
+            refreshRelationshipList(
+                "{{ route('relationships.spouses', $individual->id) }}",
+                'spouses-list',
+                'spouse-item-template',
+                "{{ route('relationships.remove-spouse') }}"
+            );
+        });
+
+        handleFormSubmit('sibling-form', "{{ route('relationships.sibling') }}", () => {
+            refreshRelationshipList(
+                "{{ route('relationships.siblings', $individual->id) }}",
+                'siblings-list',
+                'sibling-item-template',
+                "{{ route('relationships.remove-sibling') }}"
+            );
+        });
+
+        // Initial load of relationship lists
+        refreshRelationshipList(
+            "{{ route('relationships.parents', $individual->id) }}",
+            'parents-list',
+            'parent-item-template',
+            "{{ route('relationships.remove-parent-child') }}"
+        );
+        refreshRelationshipList(
+            "{{ route('relationships.children', $individual->id) }}",
+            'children-list',
+            'child-item-template',
+            "{{ route('relationships.remove-parent-child') }}"
+        );
+        refreshRelationshipList(
+            "{{ route('relationships.spouses', $individual->id) }}",
+            'spouses-list',
+            'spouse-item-template',
+            "{{ route('relationships.remove-spouse') }}"
+        );
+        refreshRelationshipList(
+            "{{ route('relationships.siblings', $individual->id) }}",
+            'siblings-list',
+            'sibling-item-template',
+            "{{ route('relationships.remove-sibling') }}"
+        );
+
         // Helper for fetching with limit
         function fetchWithLimit(endpoint, limit, loadingId, listId, truncatedId, label) {
             document.getElementById(loadingId).style.display = '';
             document.getElementById(listId).innerHTML = '';
             document.getElementById(truncatedId).innerHTML = '';
+            
             fetch(endpoint + '?limit=' + limit)
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    return res.json();
+                })
                 .then(data => {
                     document.getElementById(loadingId).style.display = 'none';
-                    document.getElementById(listId).innerHTML = data.length ? data.map(x => `<li>${x.properties.first_name} ${x.properties.last_name}</li>`).join('') : `<li class='text-gray-400'>None found.</li>`;
+                    
+                    if (!data || data.length === 0) {
+                        document.getElementById(listId).innerHTML = '<li class="text-gray-400">None found.</li>';
+                        return;
+                    }
+
+                    const items = data
+                        .filter(x => x && x.properties)
+                        .map(x => `<li>${x.properties.first_name || ''} ${x.properties.last_name || ''}</li>`)
+                        .join('');
+                    
+                    document.getElementById(listId).innerHTML = items || '<li class="text-gray-400">None found.</li>';
+                    
                     if (data.length == limit) {
                         document.getElementById(truncatedId).innerHTML = `Showing only the first ${limit} ${label.toLowerCase()} (may be truncated).`;
                     }
                 })
-                .catch(() => {
+                .catch(error => {
+                    console.error('Error loading relationships:', error);
                     document.getElementById(loadingId).style.display = 'none';
-                    document.getElementById(listId).innerHTML = `<li class='text-red-500'>Failed to load ${label.toLowerCase()}.</li>`;
+                    document.getElementById(listId).innerHTML = `<li class="text-red-500">Failed to load ${label.toLowerCase()}. Please try again.</li>`;
                 });
         }
         // Ancestors

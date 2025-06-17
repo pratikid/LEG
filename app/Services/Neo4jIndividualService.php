@@ -741,15 +741,25 @@ class Neo4jIndividualService
 
     public function getSiblings(int $individualId, int $limit = 20, ?TransactionInterface $transaction = null): mixed
     {
-        $query = '
+        try {
+            $query = '
             MATCH (p:Individual)-[:PARENT_OF]->(i:Individual {id: $individualId})<-[:PARENT_OF]-(p)-[:PARENT_OF]->(sibling:Individual)
             WHERE sibling.id <> $individualId
             RETURN sibling
             LIMIT $limit
         ';
 
-        return $transaction ? $transaction->run($query, ['individualId' => $individualId, 'limit' => $limit])
-                           : $this->client->run($query, ['individualId' => $individualId, 'limit' => $limit]);
+            $result = $transaction ? $transaction->run($query, ['individualId' => $individualId, 'limit' => $limit])
+                                 : $this->client->run($query, ['individualId' => $individualId, 'limit' => $limit]);
+
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Failed to get siblings', [
+                'individual_id' => $individualId,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
 
     public function getShortestPath(int $fromId, int $toId, int $maxDepth = 10, ?TransactionInterface $transaction = null): mixed
@@ -1069,25 +1079,61 @@ class Neo4jIndividualService
 
     public function getChildren(int $parentId, ?TransactionInterface $transaction = null): mixed
     {
-        $query = 'MATCH (p:Individual {id: $parentId})-[:PARENT_OF]->(c:Individual) RETURN c';
+        try {
+            $query = '
+                MATCH (p:Individual {id: $parentId})-[:PARENT_OF]->(c:Individual) RETURN c
+            ';
 
-        return $transaction ? $transaction->run($query, ['parentId' => $parentId])
-                           : $this->client->run($query, ['parentId' => $parentId]);
+            $result = $transaction ? $transaction->run($query, ['parentId' => $parentId])
+                                 : $this->client->run($query, ['parentId' => $parentId]);
+
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Failed to get children', [
+                'parent_id' => $parentId,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
 
     public function getParents(int $childId, ?TransactionInterface $transaction = null): mixed
     {
-        $query = 'MATCH (p:Individual)-[:PARENT_OF]->(c:Individual {id: $childId}) RETURN p';
+        try {
+            $query = '
+                MATCH (p:Individual)-[:PARENT_OF]->(c:Individual {id: $childId}) RETURN p
+            ';
 
-        return $transaction ? $transaction->run($query, ['childId' => $childId])
-                           : $this->client->run($query, ['childId' => $childId]);
+            $result = $transaction ? $transaction->run($query, ['childId' => $childId])
+                                 : $this->client->run($query, ['childId' => $childId]);
+
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Failed to get parents', [
+                'child_id' => $childId,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
 
     public function getSpouses(int $individualId, ?TransactionInterface $transaction = null): mixed
     {
-        $query = 'MATCH (a:Individual {id: $individualId})-[:SPOUSE_OF]-(b:Individual) RETURN b';
+        try {
+            $query = '
+                MATCH (a:Individual {id: $individualId})-[:SPOUSE_OF]-(b:Individual) RETURN b
+            ';
 
-        return $transaction ? $transaction->run($query, ['individualId' => $individualId])
-                           : $this->client->run($query, ['individualId' => $individualId]);
+            $result = $transaction ? $transaction->run($query, ['individualId' => $individualId])
+                                 : $this->client->run($query, ['individualId' => $individualId]);
+
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Failed to get spouses', [
+                'individual_id' => $individualId,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
 }
