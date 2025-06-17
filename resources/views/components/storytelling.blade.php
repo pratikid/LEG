@@ -21,8 +21,8 @@
     <!-- Search/Filter Bar -->
     <div class="border-t border-gray-200 px-4 py-5 sm:px-6 flex justify-between items-center">
         <form method="GET" action="{{ route('stories.index') }}" class="flex space-x-2">
-            <input type="text" name="search" placeholder="Search stories..." value="{{ request('search') }}" class="border border-gray-300 rounded px-2 py-1" />
-            <select name="tag" class="border border-gray-300 rounded px-2 py-1">
+            <input type="text" name="search" id="story-search" placeholder="Search stories..." value="{{ request('search') }}" class="border border-gray-300 rounded px-2 py-1" />
+            <select name="tag" id="story-tag-filter" class="border border-gray-300 rounded px-2 py-1">
                 <option value="">All Tags</option>
                 @foreach($allTags ?? [] as $tag)
                     <option value="{{ $tag }}">{{ $tag }}</option>

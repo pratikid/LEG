@@ -111,8 +111,8 @@
         <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
             <h4 class="text-lg font-medium text-gray-900">Existing Sources</h4>
             <form method="GET" action="{{ route('sources.index') }}" class="flex space-x-2">
-                <input type="text" name="search" placeholder="Search sources..." value="{{ request('search') }}" class="border border-gray-300 rounded px-2 py-1" />
-                <select name="type" class="border border-gray-300 rounded px-2 py-1">
+                <input type="text" name="search" id="source-search" placeholder="Search sources..." value="{{ request('search') }}" class="border border-gray-300 rounded px-2 py-1" />
+                <select name="type" id="source-type-filter" class="border border-gray-300 rounded px-2 py-1">
                     <option value="">All Types</option>
                     <option value="birth">Birth</option>
                     <option value="death">Death</option>

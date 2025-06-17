@@ -21,8 +21,8 @@
     <!-- Search/Filter Bar and Map Controls -->
     <div class="border-t border-gray-200 px-4 py-5 sm:px-6 flex flex-wrap justify-between items-center gap-2">
         <form method="GET" action="{{ route('locations.index') }}" class="flex space-x-2">
-            <input type="text" name="search" placeholder="Search locations..." value="{{ request('search') }}" class="border border-gray-300 rounded px-2 py-1" />
-            <select name="region" class="border border-gray-300 rounded px-2 py-1">
+            <input type="text" name="search" id="geo-search" placeholder="Search locations..." value="{{ request('search') }}" class="border border-gray-300 rounded px-2 py-1" />
+            <select name="region" id="geo-region-filter" class="border border-gray-300 rounded px-2 py-1">
                 <option value="">All Regions</option>
                 @foreach($regions ?? [] as $region)
                     <option value="{{ $region }}">{{ $region }}</option>

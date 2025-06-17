@@ -67,7 +67,7 @@
             <div id="media-list" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 @foreach($media as $item)
                 <div class="relative group">
-                    <input type="checkbox" class="absolute top-2 left-2 z-10 bulk-checkbox" />
+                    <input type="checkbox" id="bulk-checkbox-{{ $item->id }}" name="bulk-checkbox-{{ $item->id }}" class="absolute top-2 left-2 z-10 bulk-checkbox" />
                     <div class="aspect-w-10 aspect-h-7 rounded-lg bg-gray-100 overflow-hidden cursor-pointer preview-trigger">
                         @if($item->type === 'photo')
                         <img src="{{ $item->url }}" alt="{{ $item->title }}" class="object-cover">

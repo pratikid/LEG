@@ -21,8 +21,8 @@
     <!-- Search/Filter Bar -->
     <div class="border-t border-gray-200 px-4 py-5 sm:px-6 flex justify-between items-center">
         <form method="GET" action="{{ route('events.index') }}" class="flex space-x-2">
-            <input type="text" name="search" placeholder="Search events..." value="{{ request('search') }}" class="border border-gray-300 rounded px-2 py-1" />
-            <select name="type" class="border border-gray-300 rounded px-2 py-1">
+            <input type="text" name="search" id="event-search" placeholder="Search events..." value="{{ request('search') }}" class="border border-gray-300 rounded px-2 py-1" />
+            <select name="type" id="event-type-filter" class="border border-gray-300 rounded px-2 py-1">
                 <option value="">All Types</option>
                 <option value="reunion">Reunion</option>
                 <option value="birthday">Birthday</option>
@@ -167,7 +167,7 @@
                                         <div class="flex items-center space-x-2">
                                             <input type="checkbox" name="attendees[]" value="{{ $member->id }}" id="attendee-{{ $member->id }}" class="rounded border-gray-300">
                                             <label for="attendee-{{ $member->id }}" class="text-sm text-gray-700">{{ $member->name }}</label>
-                                            <select name="rsvp[{{ $member->id }}]" class="ml-2 border border-gray-300 rounded px-2 py-1 text-sm">
+                                            <select name="rsvp[{{ $member->id }}]" id="rsvp-{{ $member->id }}" class="ml-2 border border-gray-300 rounded px-2 py-1 text-sm">
                                                 <option value="pending">Pending</option>
                                                 <option value="accepted">Accepted</option>
                                                 <option value="declined">Declined</option>

@@ -62,9 +62,9 @@
             <div class="mb-4">
                 <div class="flex space-x-4">
                     <div class="flex-1">
-                        <input type="text" placeholder="Search groups..." class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm">
+                        <input type="text" id="discover-group-search" name="discover-group-search" placeholder="Search groups..." class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm">
                     </div>
-                    <select class="block w-48 border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm">
+                    <select id="discover-group-category" name="discover-group-category" class="block w-48 border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm">
                         <option value="">All Categories</option>
                         <option value="genealogy">Genealogy</option>
                         <option value="dna">DNA Research</option>
