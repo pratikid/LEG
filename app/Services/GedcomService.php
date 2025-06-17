@@ -200,8 +200,95 @@ class GedcomService
      */
     public function exportFromDatabase(int $treeId): string
     {
-        // TODO: Gather all data for the tree and generate GEDCOM-compliant output
-        return '';
+        $output = "0 HEAD\n1 GEDC\n2 VERS 5.5.5\n2 FORM LINEAGE-LINKED\n1 CHAR UTF-8\n1 SOUR LEG\n1 SUBM @SUB1@\n";
+        
+        // Get all individuals in the tree
+        $individuals = \App\Models\Individual::where('tree_id', $treeId)->get();
+        $individualMap = [];
+        
+        // Helper to format date as D MMM YYYY
+        $formatGedcomDate = function ($date) {
+            if (!$date) return null;
+            $timestamp = strtotime($date);
+            if (!$timestamp) return null;
+            return strtoupper(date('j M Y', $timestamp));
+        };
+        
+        // Generate GEDCOM for each individual
+        foreach ($individuals as $individual) {
+            $xref = '@I' . $individual->id . '@';
+            $individualMap[$individual->id] = $xref;
+            
+            $output .= "0 {$xref} INDI\n";
+            
+            // Name
+            if ($individual->first_name || $individual->last_name) {
+                $name = $individual->first_name ?? '';
+                if ($individual->last_name) {
+                    $name .= ' /' . $individual->last_name . '/';
+                }
+                $output .= "1 NAME {$name}\n";
+            }
+            
+            // Sex
+            if ($individual->sex) {
+                $output .= "1 SEX {$individual->sex}\n";
+            }
+            
+            // Birth
+            if ($individual->birth_date) {
+                $gedDate = $formatGedcomDate($individual->birth_date);
+                if ($gedDate) {
+                    $output .= "1 BIRT\n2 DATE {$gedDate}\n";
+                }
+            }
+            
+            // Death
+            if ($individual->death_date) {
+                $gedDate = $formatGedcomDate($individual->death_date);
+                if ($gedDate) {
+                    $output .= "1 DEAT\n2 DATE {$gedDate}\n";
+                }
+            }
+        }
+        
+        // Get all groups (families) in the tree
+        $groups = \App\Models\Group::where('tree_id', $treeId)->get();
+        
+        // Generate GEDCOM for each family
+        foreach ($groups as $group) {
+            $xref = '@F' . $group->id . '@';
+            
+            $output .= "0 {$xref} FAM\n";
+            
+            // Husband
+            if ($group->husband_id && isset($individualMap[$group->husband_id])) {
+                $output .= "1 HUSB {$individualMap[$group->husband_id]}\n";
+            }
+            
+            // Wife
+            if ($group->wife_id && isset($individualMap[$group->wife_id])) {
+                $output .= "1 WIFE {$individualMap[$group->wife_id]}\n";
+            }
+            
+            // Children
+            $children = \App\Models\Individual::where('tree_id', $treeId)
+                ->whereHas('parents', function ($query) use ($group) {
+                    $query->where('group_id', $group->id);
+                })
+                ->get();
+                
+            foreach ($children as $child) {
+                if (isset($individualMap[$child->id])) {
+                    $output .= "1 CHIL {$individualMap[$child->id]}\n";
+                }
+            }
+        }
+        
+        // Add submitter record at the end
+        $output .= "0 @SUB1@ SUBM\n1 NAME LEG Exporter\n";
+        $output .= "0 TRLR\n";
+        return $output;
     }
 
     // --- Helper methods for name parsing ---
