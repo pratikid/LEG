@@ -144,10 +144,18 @@ class GedcomService
 
         // 2. Import Individuals
         foreach ($parsed['individuals'] as $xref => $indi) {
+            $firstName = $this->gedcomGivenName($indi['name']);
+            $lastName = $this->gedcomSurname($indi['name']);
+            if ($firstName === null) {
+                $firstName = ' ';
+            }
+            if ($lastName === null) {
+                $lastName = ' ';
+            }
             $individual = \App\Models\Individual::create([
-                'tree_id' => $treeId,
-                'first_name' => $this->gedcomGivenName($indi['name']),
-                'last_name' => $this->gedcomSurname($indi['name']),
+                'tree_id' => (string) $treeId,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
                 'sex' => $indi['sex'] ?? null,
                 'birth_date' => $indi['birth']['date'] ?? null,
                 'death_date' => $indi['death']['date'] ?? null,
@@ -156,16 +164,16 @@ class GedcomService
             $xrefToIndividualId[$xref] = $individual->id;
         }
 
-        // 3. Import Families/Groups
+        // 3. Import Trees
         foreach ($parsed['families'] as $xref => $fam) {
-            $group = \App\Models\Group::create([
+            /*
+            $tree = \App\Models\Tree::create([
                 'tree_id' => $treeId,
-                // Optionally: store husband_id, wife_id, marriage_date, etc.
-                // 'husband_id' => $xrefToIndividualId[$fam['husb']] ?? null,
-                // 'wife_id' => $xrefToIndividualId[$fam['wife']] ?? null,
-                // 'marriage_date' => $fam['marriage']['date'] ?? null,
+                'name' => $fam['name'] ?? null,
+                'description' => $fam['description'] ?? null,
             ]);
-            $xrefToFamilyId[$xref] = $group->id;
+            */
+            $xrefToFamilyId[$xref] = $treeId;
 
             // 4. Create Neo4j relationships for family members
             // Spouse relationship
@@ -325,9 +333,7 @@ class GedcomService
         if (! $husbandId || ! $wifeId) {
             return;
         }
-        // Use your Neo4j service/client here
-        // Example:
-        // app(Neo4jRelationshipService::class)->addSpouse($husbandId, $wifeId);
+        app(\App\Services\Neo4jIndividualService::class)->createSpouseRelationship($husbandId, $wifeId);
     }
 
     private function addParentChildRelationshipNeo4j(?int $parentId, ?int $childId): void
@@ -335,8 +341,6 @@ class GedcomService
         if (! $parentId || ! $childId) {
             return;
         }
-        // Use your Neo4j service/client here
-        // Example:
-        // app(Neo4jRelationshipService::class)->addParentChild($parentId, $childId);
+        app(\App\Services\Neo4jIndividualService::class)->createParentChildRelationship($parentId, $childId);
     }
 }
