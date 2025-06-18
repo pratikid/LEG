@@ -13,7 +13,7 @@
 Dynamic badges (build status, tests, coverage, code quality, contributors, etc.) will be added in the future when CI/CD and integrations are set up.
 -->
 
-LEG supports GEDCOM 5.5.5 (latest), with partial compliance: sources/notes import/export planned for a future release. See compliance report for details.
+LEG supports GEDCOM 5.5.5 (industry standard) and 7.0 (latest), with partial compliance: sources/notes import/export planned for a future release. See compliance report for details.
 
 # LEG: Lineage Exploration & Genealogy Platform
 
@@ -86,7 +86,7 @@ We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for deta
 ## 📋 Features
 
 - Interactive family tree visualization
-- GEDCOM 5.5.5 import/export support
+- GEDCOM 5.5.5 and 7.0 import/export support
 - Advanced search and filtering
 - Collaborative research tools
 - Privacy controls and sharing options

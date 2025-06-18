@@ -53,13 +53,16 @@ class TreeController extends Controller
 
     public function import(): View
     {
-        return view('trees.import');
+        // Only show trees with no individuals for selection
+        $emptyTrees = Tree::doesntHave('individuals')->get();
+        return view('trees.import', compact('emptyTrees'));
     }
 
     public function handleImport(Request $request): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'gedcom' => ['required', 'file', 'mimes:ged,gedcom', 'max:10240'],
+            'tree_id' => ['nullable', 'integer', 'exists:trees,id'],
         ]);
 
         $file = $request->file('gedcom');
@@ -67,13 +70,18 @@ class TreeController extends Controller
             return redirect()->back()->withErrors(['gedcom' => 'No file was uploaded.']);
         }
 
-        $path = $file->store('gedcoms', 'private');
+        $path = $file->store('gedcoms', 'local');
         $content = file_get_contents(storage_path('app/private/'.$path));
         if ($content === false) {
             return redirect()->back()->withErrors(['gedcom' => 'Failed to read the uploaded file.']);
         }
 
-        // Parse and import GEDCOM
+        // Detect GEDCOM version
+        $version = null;
+        if (preg_match('/^1 VERS (.+)$/m', $content, $m)) {
+            $version = trim($m[1]);
+        }
+
         $gedcomService = new GedcomService;
         $parsed = $gedcomService->parse($content);
 
@@ -82,12 +90,24 @@ class TreeController extends Controller
             return redirect()->route('login');
         }
 
-        // TODO: Choose/create tree for import. For now, create a new tree per import.
-        $tree = Tree::create([
-            'name' => 'Imported Tree '.now()->format('Y-m-d H:i:s'),
-            'user_id' => $user->id,
-            'description' => 'Imported from GEDCOM',
-        ]);
+        // Use selected tree or create a new one
+        $treeId = $request->input('tree_id');
+        if ($treeId) {
+            $tree = Tree::findOrFail($treeId);
+            $tree->update([
+                'user_id' => $user->id,
+                'description' => 'Imported from GEDCOM',
+            ]);
+        } else {
+            $tree = Tree::create([
+                'name' => 'Imported Tree '.now()->format('Y-m-d H:i:s'),
+                'user_id' => $user->id,
+                'description' => 'Imported from GEDCOM',
+            ]);
+        }
+
+        // Branch logic based on GEDCOM version if needed
+        // Example: if ($version === '7.0') { ... } else { ... }
         $gedcomService->importToDatabase($parsed, $tree->id);
 
         return redirect()->route('trees.index')->with('success', 'GEDCOM file imported successfully.');
@@ -181,13 +201,11 @@ class TreeController extends Controller
         }
     }
 
-    public function show(int $id): View
+    public function show(Tree $tree): View
     {
-        $tree = Tree::findOrFail($id);
-
         // Get tree data from Neo4j
-        $treeData = $this->neo4jService->getTreeIndividuals($id);
-        $treeStats = $this->neo4jService->getTreeStats($id);
+        $treeData = $this->neo4jService->getTreeIndividuals($tree->id);
+        $treeStats = $this->neo4jService->getTreeStats($tree->id);
 
         // Convert Neo4j results to array format for D3.js
         $treeDataArray = [

@@ -135,14 +135,17 @@ Route::post('/logout', function () {
     return redirect('/');
 })->name('logout')->middleware('auth');
 
-Route::resource('trees', TreeController::class)
-    ->middleware(['auth']);
+// Add import routes BEFORE the resource route
+Route::get('trees/import', [TreeController::class, 'import'])->name('trees.import.form')->middleware(['auth']);
+Route::post('trees/import', [TreeController::class, 'handleImport'])->name('trees.import')->middleware(['auth']);
+
+// Then the resource route
+Route::resource('trees', TreeController::class)->middleware(['auth']);
 
 Route::get('/trees/{tree}/visualization', [TreeController::class, 'visualization'])
     ->middleware(['auth'])
     ->name('trees.visualization');
 
-Route::post('trees/import', [TreeController::class, 'handleImport'])->name('trees.import')->middleware(['auth']);
 Route::get('/trees/{id}/export-gedcom', [\App\Http\Controllers\TreeController::class, 'exportGedcom'])->name('trees.export-gedcom');
 
 Route::resource('groups', GroupController::class)->middleware(['auth']);
