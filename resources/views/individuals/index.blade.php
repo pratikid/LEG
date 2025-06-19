@@ -57,6 +57,9 @@
                 @endforeach
             </ul>
         </div>
+        <div class="mt-6">
+            {{ $individuals->links('pagination::tailwind') }}
+        </div>
     @else
         <div class="bg-white shadow-sm rounded-lg p-6 text-center">
             <p class="text-gray-500">No individuals found.</p>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ImportGedcomJob;
 use App\Models\Tree;
 use App\Services\GedcomService;
 use App\Services\Neo4jIndividualService;
@@ -71,25 +72,14 @@ class TreeController extends Controller
             return redirect()->back()->withErrors(['gedcom' => 'No file was uploaded.']);
         }
 
-        $path = $file->store('gedcoms', 'local');
-        $content = file_get_contents(storage_path('app/private/'.$path));
-        if ($content === false) {
-            return redirect()->back()->withErrors(['gedcom' => 'Failed to read the uploaded file.']);
-        }
-
-        // Detect GEDCOM version
-        $version = null;
-        if (preg_match('/^1 VERS (.+)$/m', $content, $m)) {
-            $version = trim($m[1]);
-        }
-
-        $gedcomService = new GedcomService;
-        $parsed = $gedcomService->parse($content);
-
         $user = $request->user();
         if (! $user) {
             return redirect()->route('login');
         }
+
+        // Store the file temporarily
+        $path = $file->store('gedcoms', 'local');
+        $originalFileName = $file->getClientOriginalName();
 
         // Use selected tree or create a new one
         $treeId = $request->input('tree_id');
@@ -97,21 +87,21 @@ class TreeController extends Controller
             $tree = Tree::findOrFail($treeId);
             $tree->update([
                 'user_id' => $user->id,
-                'description' => 'Imported from GEDCOM',
+                'description' => 'Importing from GEDCOM...',
             ]);
         } else {
             $tree = Tree::create([
                 'name' => 'Imported Tree '.now()->format('Y-m-d H:i:s'),
                 'user_id' => $user->id,
-                'description' => 'Imported from GEDCOM',
+                'description' => 'Importing from GEDCOM...',
             ]);
         }
 
-        // Branch logic based on GEDCOM version if needed
-        // Example: if ($version === '7.0') { ... } else { ... }
-        $gedcomService->importToDatabase($parsed, $tree->id);
+        // Dispatch the background job
+        ImportGedcomJob::dispatch($path, $tree->id, $user->id, $originalFileName);
 
-        return redirect()->route('trees.index')->with('success', 'GEDCOM file imported successfully.');
+        return redirect()->route('trees.index')
+            ->with('success', 'GEDCOM file uploaded successfully. Import is processing in the background. You will receive a notification when it completes.');
     }
 
     /**

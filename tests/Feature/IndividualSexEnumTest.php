@@ -15,12 +15,13 @@ class IndividualSexEnumTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Tree $tree;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->user = User::factory()->create();
         $this->tree = Tree::factory()->create(['user_id' => $this->user->id]);
     }
@@ -29,7 +30,7 @@ class IndividualSexEnumTest extends TestCase
     {
         $expectedValues = ['M', 'F', 'U'];
         $actualValues = Individual::getSexValues();
-        
+
         $this->assertEquals($expectedValues, $actualValues);
     }
 
@@ -145,4 +146,4 @@ class IndividualSexEnumTest extends TestCase
         $this->assertEquals('F', Individual::SEX_FEMALE);
         $this->assertEquals('U', Individual::SEX_UNKNOWN);
     }
-} 
+}

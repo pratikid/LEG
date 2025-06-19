@@ -55,7 +55,9 @@ class Individual extends Model
      * Sex constants for better code readability
      */
     public const SEX_MALE = 'M';
+
     public const SEX_FEMALE = 'F';
+
     public const SEX_UNKNOWN = 'U';
 
     /**

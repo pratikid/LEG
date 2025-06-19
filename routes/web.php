@@ -10,9 +10,11 @@ use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HelpController;
+use App\Http\Controllers\ImportProgressController;
 use App\Http\Controllers\IndividualController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\Neo4jRelationshipController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\StoryController;
@@ -108,6 +110,24 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/relationships/parent-child', [Neo4jRelationshipController::class, 'removeParentChild'])->name('relationships.remove-parent-child');
     Route::delete('/relationships/spouse', [Neo4jRelationshipController::class, 'removeSpouse'])->name('relationships.remove-spouse');
     Route::delete('/relationships/sibling', [Neo4jRelationshipController::class, 'removeSibling'])->name('relationships.remove-sibling');
+});
+
+// Notification routes
+Route::middleware(['auth'])->group(function () {
+    Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])
+        ->name('notifications.mark-as-read');
+    Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])
+        ->name('notifications.mark-all-as-read');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])
+        ->name('notifications.unread-count');
+});
+
+// Import Progress routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/import-progress/{treeId}', [ImportProgressController::class, 'getProgress'])
+        ->name('import-progress.get');
+    Route::get('/import-progress', [ImportProgressController::class, 'getAllProgress'])
+        ->name('import-progress.all');
 });
 
 // Admin Routes
