@@ -47,7 +47,7 @@
                     </div>
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Sex</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $individual->sex }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $individual->sex === 'M' ? 'Male' : ($individual->sex === 'F' ? 'Female' : 'Unknown') }}</dd>
                     </div>
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Birth date</dt>

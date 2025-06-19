@@ -28,7 +28,7 @@
                                             {{ $individual->first_name ?? '' }} {{ $individual->last_name ?? '' }}
                                         </p>
                                         <p class="text-sm text-gray-500">
-                                            {{ ucfirst($individual->sex) }}
+                                            {{ $individual->sex === 'M' ? 'Male' : ($individual->sex === 'F' ? 'Female' : 'Unknown') }}
                                         </p>
                                         @if($individual->birth_date || $individual->death_date)
                                             <p class="text-sm text-gray-500">

@@ -32,7 +32,7 @@ GET /individuals/{id}
         "last_name": "Doe",
         "birth_date": "1990-01-01",
         "death_date": null,
-        "sex": "male",
+        "sex": "M",
         "tree_id": 1
     }
 }
@@ -50,7 +50,7 @@ POST /individuals
     "last_name": "Doe",
     "birth_date": "1990-01-01",
     "death_date": null,
-    "sex": "male",
+    "sex": "M",
     "tree_id": 1
 }
 ```
@@ -79,7 +79,7 @@ PUT /individuals/{id}
     "last_name": "Doe",
     "birth_date": "1990-01-01",
     "death_date": null,
-    "sex": "male"
+    "sex": "M"
 }
 ```
 
@@ -165,7 +165,7 @@ GET /relationships/{id}/parents
             "last_name": "Doe",
             "birth_date": "1960-01-01",
             "death_date": null,
-            "sex": "male"
+            "sex": "M"
         },
         {
             "id": 2,
@@ -173,7 +173,7 @@ GET /relationships/{id}/parents
             "last_name": "Doe",
             "birth_date": "1962-01-01",
             "death_date": null,
-            "sex": "female"
+            "sex": "F"
         }
     ]
 }
@@ -194,7 +194,7 @@ GET /relationships/{id}/children
             "last_name": "Doe",
             "birth_date": "1990-01-01",
             "death_date": null,
-            "sex": "male"
+            "sex": "M"
         }
     ]
 }
@@ -215,7 +215,7 @@ GET /relationships/{id}/spouses
             "last_name": "Doe",
             "birth_date": "1990-01-01",
             "death_date": null,
-            "sex": "female"
+            "sex": "F"
         }
     ]
 }
@@ -236,7 +236,7 @@ GET /relationships/{id}/siblings
             "last_name": "Doe",
             "birth_date": "1992-01-01",
             "death_date": null,
-            "sex": "male"
+            "sex": "M"
         }
     ]
 }
@@ -396,7 +396,7 @@ GET /relationships/{id}/ancestors
             "last_name": "Doe",
             "birth_date": "1900-01-01",
             "death_date": "1980-01-01",
-            "sex": "male",
+            "sex": "M",
             "depth": 1
         }
     ]

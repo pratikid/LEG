@@ -18,8 +18,8 @@
         <div class="mb-4">
             <label for="sex" class="block mb-1 font-semibold">Sex <span class="text-red-500">*</span></label>
             <select name="sex" id="sex" required class="w-full p-2 rounded bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-600">
-                <option value="male" @if(old('sex', $individual->sex) == 'male') selected @endif>Male</option>
-                <option value="female" @if(old('sex', $individual->sex) == 'female') selected @endif>Female</option>
+                <option value="M" @if(old('sex', $individual->sex) == 'M') selected @endif>Male</option>
+                <option value="F" @if(old('sex', $individual->sex) == 'F') selected @endif>Female</option>
             </select>
             @error('sex')<div class="text-red-500 text-xs mt-1">{{ $message }}</div>@enderror
         </div>
