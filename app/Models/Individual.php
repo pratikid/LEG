@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Services\Neo4jIndividualService;
+use App\Traits\HasPostgresEnums;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $last_name
  * @property \Illuminate\Support\Carbon|null $birth_date
  * @property \Illuminate\Support\Carbon|null $death_date
+ * @property string|null $sex
  * @property int $tree_id
  * @property int $user_id
  * @property \Illuminate\Support\Carbon $created_at
@@ -28,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Individual extends Model
 {
     use HasFactory;
+    use HasPostgresEnums;
     use LogsActivity;
 
     protected $fillable = [
@@ -47,6 +50,38 @@ class Individual extends Model
         'birth_date',
         'death_date',
     ];
+
+    /**
+     * Get all possible sex values
+     */
+    public static function getSexValues(): array
+    {
+        return static::getEnumValues('sex');
+    }
+
+    /**
+     * Scope to filter by sex
+     */
+    public function scopeWhereSex($query, string $sex)
+    {
+        return $query->whereEnum('sex', $sex);
+    }
+
+    /**
+     * Scope to filter by multiple sex values
+     */
+    public function scopeWhereSexIn($query, array $sexes)
+    {
+        return $query->whereEnumIn('sex', $sexes);
+    }
+
+    /**
+     * Check if sex value is valid
+     */
+    public static function isValidSex(string $sex): bool
+    {
+        return static::isValidEnumValue('sex', $sex);
+    }
 
     /**
      * @return BelongsTo<Tree, Individual>
