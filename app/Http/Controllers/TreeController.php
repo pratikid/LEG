@@ -55,6 +55,7 @@ class TreeController extends Controller
     {
         // Only show trees with no individuals for selection
         $emptyTrees = Tree::doesntHave('individuals')->get();
+
         return view('trees.import', compact('emptyTrees'));
     }
 

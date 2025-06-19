@@ -25,7 +25,7 @@ return new class extends Migration
     public function up(): void
     {
         // Create the PostgreSQL ENUM type first
-        DB::statement("CREATE TYPE sex_enum AS ENUM ('M', 'F')");
+        DB::statement("CREATE TYPE sex_enum AS ENUM ('M', 'F', 'U')");
         
         Schema::create('individuals', function (Blueprint $table) {
             $table->id();
@@ -85,6 +85,11 @@ class Individual extends Model
 {
     use HasPostgresEnums;
     
+    // Sex constants for better code readability
+    public const SEX_MALE = 'M';
+    public const SEX_FEMALE = 'F';
+    public const SEX_UNKNOWN = 'U';
+    
     // Get all possible enum values
     public static function getSexValues(): array
     {
@@ -122,15 +127,39 @@ Check if a value is valid for the enum column.
 ### `getRandomEnumValue(string $column): string`
 Get a random enum value for a column.
 
+## Individual Model Helper Methods
+
+The Individual model includes additional helper methods for working with sex values:
+
+### Constants
+- `Individual::SEX_MALE` - 'M'
+- `Individual::SEX_FEMALE` - 'F'
+- `Individual::SEX_UNKNOWN` - 'U'
+
+### Scopes
+- `whereMale()` - Filter males only
+- `whereFemale()` - Filter females only
+- `whereUnknownSex()` - Filter unknown sex only
+- `whereKnownSex()` - Filter known sex (male or female, excluding unknown)
+
+### Instance Methods
+- `isMale()` - Check if individual is male
+- `isFemale()` - Check if individual is female
+- `isUnknownSex()` - Check if individual's sex is unknown
+- `hasKnownSex()` - Check if individual has known sex (male or female)
+- `getSexLabel()` - Get human-readable sex label
+
 ## Usage Examples
 
 ```php
 // Get all possible sex values
-$sexValues = Individual::getSexValues(); // ['M', 'F']
+$sexValues = Individual::getSexValues(); // ['M', 'F', 'U']
 
 // Filter individuals by sex
-$males = Individual::whereSex('M')->get();
-$females = Individual::whereSex('F')->get();
+$males = Individual::whereMale()->get();
+$females = Individual::whereFemale()->get();
+$unknown = Individual::whereUnknownSex()->get();
+$known = Individual::whereKnownSex()->get();
 
 // Filter by multiple sex values
 $adults = Individual::whereSexIn(['M', 'F'])->get();
@@ -142,6 +171,20 @@ if (Individual::isValidSex('M')) {
 
 // Get random sex value
 $randomSex = Individual::getRandomEnumValue('sex');
+
+// Instance methods
+$individual = Individual::find(1);
+if ($individual->isMale()) {
+    echo "This is a male individual";
+}
+
+if ($individual->hasKnownSex()) {
+    echo "Sex is known: " . $individual->getSexLabel();
+}
+
+// Using constants
+$individual->sex = Individual::SEX_UNKNOWN;
+$individual->save();
 ```
 
 ## Adding New Enum Values
@@ -150,7 +193,7 @@ To add new values to an existing enum:
 
 ```php
 // Add new value to existing enum
-DB::statement("ALTER TYPE sex_enum ADD VALUE 'X' AFTER 'F'");
+DB::statement("ALTER TYPE sex_enum ADD VALUE 'X' AFTER 'U'");
 ```
 
 ## Migration Best Practices
@@ -160,6 +203,8 @@ DB::statement("ALTER TYPE sex_enum ADD VALUE 'X' AFTER 'F'");
 3. **Handle rollbacks properly** by dropping ENUM types in the `down()` method
 4. **Use the HasPostgresEnums trait** for consistent enum handling across models
 5. **Validate enum values** in your application logic
+6. **Consider GEDCOM standards** when designing enums (e.g., sex values: M, F, U)
+7. **Use constants** for better code readability and maintainability
 
 ## Performance Considerations
 
@@ -185,6 +230,13 @@ public function rules(): array
 if (!Individual::isValidSex($request->sex)) {
     return back()->withErrors(['sex' => 'Invalid sex value']);
 }
+
+// Using constants in validation
+'sex' => ['nullable', 'string', 'in:' . implode(',', [
+    Individual::SEX_MALE,
+    Individual::SEX_FEMALE,
+    Individual::SEX_UNKNOWN,
+])],
 ```
 
 ## Testing
@@ -192,7 +244,7 @@ if (!Individual::isValidSex($request->sex)) {
 ```php
 public function test_enum_values_are_correct()
 {
-    $expectedValues = ['M', 'F'];
+    $expectedValues = ['M', 'F', 'U'];
     $actualValues = Individual::getSexValues();
     
     $this->assertEquals($expectedValues, $actualValues);
@@ -202,5 +254,13 @@ public function test_invalid_enum_value_is_rejected()
 {
     $this->assertFalse(Individual::isValidSex('INVALID'));
     $this->assertTrue(Individual::isValidSex('M'));
+    $this->assertTrue(Individual::isValidSex('U'));
+}
+
+public function test_sex_constants_are_defined()
+{
+    $this->assertEquals('M', Individual::SEX_MALE);
+    $this->assertEquals('F', Individual::SEX_FEMALE);
+    $this->assertEquals('U', Individual::SEX_UNKNOWN);
 }
 ``` 

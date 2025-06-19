@@ -52,6 +52,13 @@ class Individual extends Model
     ];
 
     /**
+     * Sex constants for better code readability
+     */
+    public const SEX_MALE = 'M';
+    public const SEX_FEMALE = 'F';
+    public const SEX_UNKNOWN = 'U';
+
+    /**
      * Get all possible sex values
      */
     public static function getSexValues(): array
@@ -76,11 +83,88 @@ class Individual extends Model
     }
 
     /**
+     * Scope to filter males only
+     */
+    public function scopeWhereMale($query)
+    {
+        return $query->whereSex(self::SEX_MALE);
+    }
+
+    /**
+     * Scope to filter females only
+     */
+    public function scopeWhereFemale($query)
+    {
+        return $query->whereSex(self::SEX_FEMALE);
+    }
+
+    /**
+     * Scope to filter unknown sex only
+     */
+    public function scopeWhereUnknownSex($query)
+    {
+        return $query->whereSex(self::SEX_UNKNOWN);
+    }
+
+    /**
+     * Scope to filter known sex (male or female, excluding unknown)
+     */
+    public function scopeWhereKnownSex($query)
+    {
+        return $query->whereSexIn([self::SEX_MALE, self::SEX_FEMALE]);
+    }
+
+    /**
      * Check if sex value is valid
      */
     public static function isValidSex(string $sex): bool
     {
         return static::isValidEnumValue('sex', $sex);
+    }
+
+    /**
+     * Check if individual is male
+     */
+    public function isMale(): bool
+    {
+        return $this->sex === self::SEX_MALE;
+    }
+
+    /**
+     * Check if individual is female
+     */
+    public function isFemale(): bool
+    {
+        return $this->sex === self::SEX_FEMALE;
+    }
+
+    /**
+     * Check if individual's sex is unknown
+     */
+    public function isUnknownSex(): bool
+    {
+        return $this->sex === self::SEX_UNKNOWN;
+    }
+
+    /**
+     * Check if individual has known sex (male or female)
+     */
+    public function hasKnownSex(): bool
+    {
+        return in_array($this->sex, [self::SEX_MALE, self::SEX_FEMALE], true);
+    }
+
+    /**
+     * Get human-readable sex label
+     */
+    public function getSexLabel(): string
+    {
+        return match ($this->sex) {
+            self::SEX_MALE => 'Male',
+            self::SEX_FEMALE => 'Female',
+            self::SEX_UNKNOWN => 'Unknown',
+            default => 'Unknown',
+        };
     }
 
     /**
