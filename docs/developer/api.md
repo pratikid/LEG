@@ -71,7 +71,7 @@ Response:
             "last_name": "Doe",
             "birth_date": "1950-01-01",
             "death_date": null,
-            "gender": "M",
+            "sex": "M",
             "created_at": "2025-03-15T10:00:00Z",
             "updated_at": "2025-03-15T10:00:00Z"
         }
@@ -99,7 +99,7 @@ Response:
         "last_name": "Doe",
         "birth_date": "1950-01-01",
         "death_date": null,
-        "gender": "M",
+        "sex": "M",
         "created_at": "2025-03-15T10:00:00Z",
         "updated_at": "2025-03-15T10:00:00Z"
     }
@@ -119,7 +119,7 @@ Request Body:
     "last_name": "Doe",
     "birth_date": "1950-01-01",
     "death_date": null,
-    "gender": "M"
+    "sex": "M"
 }
 ```
 
@@ -132,7 +132,7 @@ Response:
         "last_name": "Doe",
         "birth_date": "1950-01-01",
         "death_date": null,
-        "gender": "M",
+        "sex": "M",
         "created_at": "2025-03-15T10:00:00Z",
         "updated_at": "2025-03-15T10:00:00Z"
     }
@@ -152,7 +152,7 @@ Request Body:
     "last_name": "Doe",
     "birth_date": "1950-01-01",
     "death_date": null,
-    "gender": "M"
+    "sex": "M"
 }
 ```
 
@@ -165,7 +165,7 @@ Response:
         "last_name": "Doe",
         "birth_date": "1950-01-01",
         "death_date": null,
-        "gender": "M",
+        "sex": "M",
         "created_at": "2025-03-15T10:00:00Z",
         "updated_at": "2025-03-15T10:00:00Z"
     }

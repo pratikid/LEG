@@ -142,7 +142,7 @@ This document outlines the technical implementation details and control specific
     name: String,
     birthDate: Date,
     deathDate: Date,
-    gender: String,
+    sex: String,
     relationships: Array
   },
   position: {

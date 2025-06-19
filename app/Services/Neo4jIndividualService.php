@@ -40,7 +40,8 @@ class Neo4jIndividualService
      *     last_name: string,
      *     birth_date: string|null,
      *     death_date: string|null,
-     *     tree_id: int
+     *     tree_id: int,
+     *     sex: string|null
      * } $data
      */
     public function createIndividualNode(array $data, ?TransactionInterface $transaction = null): mixed
@@ -53,6 +54,7 @@ class Neo4jIndividualService
                 i.birth_date = $birth_date,
                 i.death_date = $death_date,
                 i.tree_id    = $tree_id,
+                i.sex        = $sex,
                 i.created_at = datetime(),
                 i.updated_at = datetime()
             RETURN i
@@ -674,7 +676,8 @@ class Neo4jIndividualService
      *     last_name: string,
      *     birth_date: string|null,
      *     death_date: string|null,
-     *     tree_id: int
+     *     tree_id: int,
+     *     sex: string|null
      * } $data
      */
     public function updateIndividualNode(array $data, ?TransactionInterface $transaction = null): mixed
@@ -685,6 +688,7 @@ class Neo4jIndividualService
                      i.birth_date = $birth_date, 
                      i.death_date = $death_date, 
                      i.tree_id = $tree_id,
+                     i.sex = $sex,
                      i.updated_at = datetime() 
                  RETURN i';
 

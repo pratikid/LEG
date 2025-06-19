@@ -124,7 +124,7 @@ The system includes three user roles:
    - Name
    - Birth date
    - Death date (if applicable)
-   - Gender
+   - Sex
    - Additional information
 4. Click "Save"
 

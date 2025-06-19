@@ -46,8 +46,8 @@
                         <dd class="mt-1 text-sm text-gray-900">{{ $individual->full_name }}</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Gender</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $individual->gender }}</dd>
+                        <dt class="text-sm font-medium text-gray-500">Sex</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $individual->sex }}</dd>
                     </div>
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Birth date</dt>

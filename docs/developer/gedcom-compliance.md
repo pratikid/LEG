@@ -76,7 +76,7 @@ This document outlines LEG's compliance with the GEDCOM 5.5.5 standard for genea
 - `INDI`: Individual records
 - `FAM`: Family records
 - `NAME`: Individual names
-- `SEX`: Gender information
+- `SEX`: Sex information
 - `BIRT`: Birth information
 - `DEAT`: Death information
 - `MARR`: Marriage information
