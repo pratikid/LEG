@@ -3,7 +3,7 @@
 ## Overview
 This document outlines the planned enhancements and improvements for the LEG (Laravel Enhanced Genealogy) project. The plan is organized by priority and implementation timeline.
 
-## Phase 1: Core Functionality Improvements (Q2 2024)
+## Phase 1: Core Functionality Improvements (Q2 2025)
 
 ### 1. Relationship Management Enhancements
 - [ ] Implement relationship validation rules
@@ -37,7 +37,7 @@ This document outlines the planned enhancements and improvements for the LEG (La
 - [ ] Search history
 - [ ] Export search results
 
-## Phase 2: User Experience Enhancements (Q3 2024)
+## Phase 2: User Experience Enhancements (Q3 2025)
 
 ### 1. Tree Visualization
 - [ ] Interactive tree view
@@ -79,7 +79,7 @@ This document outlines the planned enhancements and improvements for the LEG (La
   - User activity logs
   - Audit trails
 
-## Phase 3: Advanced Features (Q4 2024)
+## Phase 3: Advanced Features (Q4 2025)
 
 ### 1. AI and Machine Learning
 - [ ] Smart relationship suggestions
