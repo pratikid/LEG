@@ -166,7 +166,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add circles to nodes
     node.append('circle')
         .attr('r', 32)
-        .attr('fill', colors.nodeFill)
+        .attr('fill', d => {
+            if (d.sex === 'F' || d.sex === 'female') return '#f9a8d4'; // Pink for female
+            if (d.sex === 'M' || d.sex === 'male') return '#60a5fa'; // Blue for male
+            return colors.nodeFill; // Default
+        })
         .attr('stroke', colors.nodeStroke)
         .attr('stroke-width', 2)
         .style('transition', 'all 0.3s')

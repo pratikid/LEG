@@ -274,8 +274,8 @@ class TreeController extends Controller
                         'name' => $individual->getProperty('first_name').' '.$individual->getProperty('last_name'),
                         'first_name' => $individual->getProperty('first_name'),
                         'last_name' => $individual->getProperty('last_name'),
+                        'sex' => $individual->getProperty('sex'),
                         // 'birth_date' => $individual->getProperty('birth_date'),
-                        // 'sex' => $individual->getProperty('sex'),
                         // 'death_date' => $individual->getProperty('death_date'),
                     ];
                     $processedNodes[$iId] = true;
@@ -289,8 +289,8 @@ class TreeController extends Controller
                             'name' => $relatedIndividual->getProperty('first_name').' '.$relatedIndividual->getProperty('last_name'),
                             'first_name' => $relatedIndividual->getProperty('first_name'),
                             'last_name' => $relatedIndividual->getProperty('last_name'),
+                            'sex' => $relatedIndividual->getProperty('sex'),
                             // 'birth_date' => $relatedIndividual->getProperty('birth_date'),
-                            // 'sex' => $relatedIndividual->getProperty('sex'),
                             // 'death_date' => $relatedIndividual->getProperty('death_date'),
                         ];
                         $processedNodes[$jId] = true;
