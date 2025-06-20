@@ -235,6 +235,19 @@ class TreeController extends Controller
         ]);
     }
 
+    /**
+     * Safely get a property from a Neo4j node, returning null if the property doesn't exist
+     */
+    private function getSafeProperty($node, string $propertyName)
+    {
+        try {
+            return $node->getProperty($propertyName);
+        } catch (\Exception $e) {
+            // Property doesn't exist, return null
+            return null;
+        }
+    }
+
     public function visualization(Tree $tree)
     {
         try {
@@ -261,12 +274,12 @@ class TreeController extends Controller
                 if (! isset($processedNodes[$iId])) {
                     $nodes[] = [
                         'id' => $iId,
-                        'name' => $individual->getProperty('first_name').' '.$individual->getProperty('last_name'),
-                        'first_name' => $individual->getProperty('first_name'),
-                        'last_name' => $individual->getProperty('last_name'),
-                        'sex' => $individual->getProperty('sex'),
-                        // 'birth_date' => $individual->getProperty('birth_date'),
-                        // 'death_date' => $individual->getProperty('death_date'),
+                        'name' => $this->getSafeProperty($individual, 'first_name').' '.$this->getSafeProperty($individual, 'last_name'),
+                        'first_name' => $this->getSafeProperty($individual, 'first_name'),
+                        'last_name' => $this->getSafeProperty($individual, 'last_name'),
+                        'sex' => $this->getSafeProperty($individual, 'sex'),
+                        'birth_date' => $this->getSafeProperty($individual, 'birth_date'),
+                        'death_date' => $this->getSafeProperty($individual, 'death_date'),
                     ];
                     $processedNodes[$iId] = true;
                 }
@@ -276,12 +289,12 @@ class TreeController extends Controller
                     if (! isset($processedNodes[$jId])) {
                         $nodes[] = [
                             'id' => $jId,
-                            'name' => $relatedIndividual->getProperty('first_name').' '.$relatedIndividual->getProperty('last_name'),
-                            'first_name' => $relatedIndividual->getProperty('first_name'),
-                            'last_name' => $relatedIndividual->getProperty('last_name'),
-                            'sex' => $relatedIndividual->getProperty('sex'),
-                            // 'birth_date' => $relatedIndividual->getProperty('birth_date'),
-                            // 'death_date' => $relatedIndividual->getProperty('death_date'),
+                            'name' => $this->getSafeProperty($relatedIndividual, 'first_name').' '.$this->getSafeProperty($relatedIndividual, 'last_name'),
+                            'first_name' => $this->getSafeProperty($relatedIndividual, 'first_name'),
+                            'last_name' => $this->getSafeProperty($relatedIndividual, 'last_name'),
+                            'sex' => $this->getSafeProperty($relatedIndividual, 'sex'),
+                            'birth_date' => $this->getSafeProperty($relatedIndividual, 'birth_date'),
+                            'death_date' => $this->getSafeProperty($relatedIndividual, 'death_date'),
                         ];
                         $processedNodes[$jId] = true;
                     }
