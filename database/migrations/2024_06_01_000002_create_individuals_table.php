@@ -9,8 +9,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Create the PostgreSQL ENUM type first
-        DB::statement("CREATE TYPE sex_enum AS ENUM ('M', 'F', 'U')");
+        // Create the PostgreSQL ENUM type first if it doesn't exist
+        if (!DB::select("SELECT 1 FROM pg_type WHERE typname = 'sex_enum'")) {
+            DB::statement("CREATE TYPE sex_enum AS ENUM ('M', 'F', 'U')");
+        }
 
         Schema::create('individuals', function (Blueprint $table) {
             $table->id();

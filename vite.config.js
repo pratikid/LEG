@@ -7,6 +7,7 @@ export default defineConfig({
         host: '0.0.0.0',
         port: 5173,
         cors: true,
+        https: false,
         hmr: {
             host: 'localhost',
             protocol: 'ws',
@@ -17,7 +18,9 @@ export default defineConfig({
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
+            buildDirectory: 'build',
         }),
         tailwindcss(),
     ],
+    base: process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:5173/',
 });

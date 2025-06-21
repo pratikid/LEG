@@ -29,8 +29,12 @@ class ContentSecurityPolicy
             "form-action 'self'",
             "frame-ancestors 'none'",
             'block-all-mixed-content',
-            'upgrade-insecure-requests',
         ];
+
+        // Only add upgrade-insecure-requests in production
+        if (app()->environment('production')) {
+            $csp[] = 'upgrade-insecure-requests';
+        }
 
         // Add CSP header
         $response->headers->set(

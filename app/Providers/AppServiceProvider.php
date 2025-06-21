@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\View as ViewContract;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +27,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Force HTTP for local development
+        if (app()->environment('local')) {
+            URL::forceScheme('http');
+        }
+
         View::composer('*', function (ViewContract $view) {
             $route = Route::currentRouteName();
             $tabMap = [
