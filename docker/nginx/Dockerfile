@@ -20,6 +20,9 @@ RUN apk add --no-cache \
 # Create SSL directory
 RUN mkdir -p /etc/nginx/ssl/live/localhost
 
+# Copy main Nginx configuration
+COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
+
 # Copy Nginx configuration
 COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 
