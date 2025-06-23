@@ -16,13 +16,32 @@ return new class extends Migration
 
         Schema::create('individuals', function (Blueprint $table) {
             $table->id();
-            $table->string('first_name');
-            $table->string('last_name');
+            $table->text('gedcom_xref')->unique()->nullable(); // Original GEDCOM reference
+            $table->text('first_name')->nullable(); // First name
+            $table->text('last_name')->nullable(); // Last name
+            $table->text('name_prefix')->nullable(); // Name prefix (e.g., Dr., Sir)
+            $table->text('name_suffix')->nullable(); // Name suffix (e.g., Jr., Sr.)
+            $table->text('nickname')->nullable(); // Nickname
+            $table->text('sex')->nullable(); // We'll modify this to use the enum type
             $table->date('birth_date')->nullable();
             $table->date('death_date')->nullable();
-            $table->string('sex')->nullable(); // We'll modify this to use the enum type
+            // Add for partial/unknown dates
+            $table->integer('birth_year')->nullable();
+            $table->integer('death_year')->nullable();
+            $table->text('birth_date_raw')->nullable();
+            $table->text('death_date_raw')->nullable();
+            $table->text('birth_place')->nullable(); // Birth place
+            $table->text('death_place')->nullable(); // Death place
+            $table->text('death_cause')->nullable(); // Death cause
+            $table->text('pedigree_type')->nullable(); // From FAMC.PEDI
             $table->foreignId('tree_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->timestamps();
+
+            // Add indexes for performance
+            $table->index(['tree_id', 'last_name', 'first_name'], 'idx_individuals_tree_name');
+            $table->index(['birth_date'], 'idx_individuals_birth_date');
+            $table->index(['gedcom_xref'], 'idx_individuals_gedcom_xref');
         });
 
         // Alter the column to use the ENUM type

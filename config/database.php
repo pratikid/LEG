@@ -112,6 +112,19 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'mongodb' => [
+            'driver'   => 'mongodb',
+            'host'     => env('MONGO_DB_HOST', 'mongodb'),
+            'port'     => env('MONGO_DB_PORT', 27017),
+            'database' => env('MONGO_DB_DATABASE', 'leg'),
+            'username' => env('MONGO_DB_USERNAME', 'leg_user'),
+            'password' => env('MONGO_DB_PASSWORD', 'password123'),
+            'uri'      => env('MONGO_DB_URI', 'mongodb://leg_user:password123@mongodb:27017/leg'),
+            'options'  => [
+                'authSource' => 'leg',
+            ],
+        ],
+
     ],
 
     /*

@@ -20,7 +20,8 @@ class GedcomImportCompleted extends Notification implements ShouldQueue
     public function __construct(
         protected Tree $tree,
         protected array $parsedData,
-        protected ?string $fileName = null
+        protected ?string $fileName = null,
+        protected ?string $cleanedFilePath = null
     ) {
         $this->onQueue('notifications');
     }
@@ -43,13 +44,20 @@ class GedcomImportCompleted extends Notification implements ShouldQueue
         $individualsCount = count($this->parsedData['individuals']);
         $familiesCount = count($this->parsedData['families']);
 
-        return (new MailMessage)
+        $mailMessage = (new MailMessage)
             ->subject('GEDCOM Import Completed Successfully')
             ->greeting('Hello '.$notifiable->name.'!')
             ->line('Your GEDCOM file has been imported successfully.')
             ->line('File: '.($this->fileName ?? 'Unknown file'))
             ->line('Tree: '.$this->tree->name)
-            ->line("Imported {$individualsCount} individuals and {$familiesCount} families.")
+            ->line("Imported {$individualsCount} individuals and {$familiesCount} families.");
+
+        // Add information about cleaned file if available
+        if ($this->cleanedFilePath) {
+            $mailMessage->line('Note: User-defined tags were removed during processing for compatibility.');
+        }
+
+        return $mailMessage
             ->action('View Tree Visualization', route('trees.visualization', $this->tree->id))
             ->line('You can now explore your family tree and view the relationships.')
             ->salutation('Best regards, LEG Team');
@@ -62,7 +70,7 @@ class GedcomImportCompleted extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-        return [
+        $data = [
             'type' => 'gedcom_import_completed',
             'title' => 'GEDCOM Import Completed',
             'message' => "Successfully imported {$this->fileName} into tree '{$this->tree->name}'",
@@ -74,6 +82,14 @@ class GedcomImportCompleted extends Notification implements ShouldQueue
             'action_url' => route('trees.visualization', $this->tree->id),
             'action_text' => 'View Tree Visualization',
         ];
+
+        // Add cleaned file path if available
+        if ($this->cleanedFilePath) {
+            $data['cleaned_file_path'] = $this->cleanedFilePath;
+            $data['user_defined_tags_removed'] = true;
+        }
+
+        return $data;
     }
 
     /**

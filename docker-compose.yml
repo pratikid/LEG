@@ -26,6 +26,12 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 0.25G
+        reservations:
+          memory: 0.125G
 
   # PHP/Laravel Application
   app:
@@ -59,6 +65,12 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
 
   # PostgreSQL Database
   postgres:
@@ -80,6 +92,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 0.75G
+        reservations:
+          memory: 0.25G
 
   # Neo4j Graph Database
   neo4j:
@@ -104,6 +122,12 @@ services:
       interval: 5s
       timeout: 10s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 0.75G
+        reservations:
+          memory: 0.25G
 
   # MongoDB Document Database
   mongodb:
@@ -115,8 +139,10 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: leg
       MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: leg
     volumes:
       - mongodb-data:/data/db
+      - ./docker/mongodb/init:/docker-entrypoint-initdb.d
     networks:
       - leg-network
     healthcheck:
@@ -124,6 +150,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 0.5G
+        reservations:
+          memory: 0.25G
 
   # Redis Cache
   redis:
@@ -141,6 +173,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 0.25G
+        reservations:
+          memory: 0.125G
 
   # Node service for frontend assets
   node:
@@ -156,6 +194,14 @@ services:
       - leg-network
     ports:
       - "5173:5173"
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=4096
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+        reservations:
+          memory: 0.5G
 
   # Queue Worker for background jobs
   queue:
@@ -184,6 +230,12 @@ services:
       - SESSION_DRIVER=redis
       - PERMISSIONS_USER=www-data
     command: php artisan queue:work redis --queue=imports,notifications,default --sleep=3 --tries=3 --max-time=3600
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+        reservations:
+          memory: 0.5G
 
 networks:
   leg-network:

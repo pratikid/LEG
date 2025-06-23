@@ -41,6 +41,7 @@ return [
             'queue' => env('DB_QUEUE', 'default'),
             'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
             'after_commit' => false,
+            'timeout' => (int) env('DB_QUEUE_TIMEOUT', 1800), // 30 minutes default
         ],
 
         'beanstalkd' => [
