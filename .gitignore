@@ -52,3 +52,10 @@ Thumbs.db
 # Settings
 settings.json
 .cursor
+
+# Node
+.npm-cache
+
+# GED/GEDCOM files
+*.ged
+*.gedcom

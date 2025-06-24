@@ -12,22 +12,22 @@ db.createCollection('sources');
 db.createCollection('media');
 
 // Create indexes for better performance
-// db.individuals.createIndex({ "individual_id": 1 });
-// db.individuals.createIndex({ "tree_id": 1 });
-// db.individuals.createIndex({ "gedcom_xref": 1 });
+db.individuals.createIndex({ "gedcom_xref": 1 });
+db.individuals.createIndex({ "tree_id": 1 });
+db.individuals.createIndex({ "individual_id": 1 });
 
-// db.families.createIndex({ "family_id": 1 });
-// db.families.createIndex({ "tree_id": 1 });
-// db.families.createIndex({ "gedcom_xref": 1 });
+db.families.createIndex({ "gedcom_xref": 1 });
+db.families.createIndex({ "tree_id": 1 });
+db.families.createIndex({ "family_id": 1 });
 
-// db.notes.createIndex({ "tree_id": 1 });
-// db.notes.createIndex({ "gedcom_xref": 1 });
+db.notes.createIndex({ "gedcom_xref": 1 });
+db.notes.createIndex({ "tree_id": 1 });
 
-// db.sources.createIndex({ "tree_id": 1 });
-// db.sources.createIndex({ "gedcom_xref": 1 });
+db.sources.createIndex({ "gedcom_xref": 1 });
+db.sources.createIndex({ "tree_id": 1 });
 
-// db.media.createIndex({ "tree_id": 1 });
-// db.media.createIndex({ "gedcom_xref": 1 });
+db.media.createIndex({ "gedcom_xref": 1 });
+db.media.createIndex({ "tree_id": 1 });
 
 // Create a user for the leg database with appropriate permissions
 db.createUser({

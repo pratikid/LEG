@@ -250,7 +250,7 @@ class GedcomService
             $year = (int)$matches[1];
             if ($year >= 1 && $year <= date('Y') + 10) {
                 $cleanedDate = $prefix ? "$prefix $year" : (string)$year;
-                Log::info('Standardized year-only date', compact('originalDate', 'cleanedDate'));
+                // Log::info('Standardized year-only date', compact('originalDate', 'cleanedDate'));
                 return $cleanedDate;
             }
         }
@@ -261,7 +261,7 @@ class GedcomService
             $endYear = (int)$matches[2];
             if ($startYear >= 1 && $endYear >= 1 && $startYear <= $endYear && $endYear <= date('Y') + 10) {
                 $cleanedDate = $prefix ? "$prefix $startYear-$endYear" : "$startYear-$endYear";
-                Log::info('Standardized year range date', compact('originalDate', 'cleanedDate'));
+                // Log::info('Standardized year range date', compact('originalDate', 'cleanedDate'));
                 return $cleanedDate;
             }
         }
@@ -272,7 +272,7 @@ class GedcomService
             $endYear = (int)$matches[2];
             if ($startYear >= 1 && $endYear >= 1 && $startYear <= $endYear && $endYear <= date('Y') + 10) {
                 $cleanedDate = "BET $startYear AND $endYear";
-                Log::info('Standardized between date', compact('originalDate', 'cleanedDate'));
+                // Log::info('Standardized between date', compact('originalDate', 'cleanedDate'));
                 return $cleanedDate;
             }
         }
@@ -293,7 +293,7 @@ class GedcomService
                 ];
                 $standardMonth = $monthMap[$month] ?? strtoupper($month);
                 $cleanedDate = $prefix ? "$prefix $day $standardMonth $year" : "$day $standardMonth $year";
-                Log::info('Standardized full date', compact('originalDate', 'cleanedDate'));
+                // Log::info('Standardized full date', compact('originalDate', 'cleanedDate'));
                 return $cleanedDate;
             }
         }

@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use MongoDB\Client as MongoClient;
 use Laudis\Neo4j\Client as Neo4jClient;
+use Laudis\Neo4j\Contracts\TransactionInterface;
 use MongoDB\BSON\UTCDateTime;
 
 /**
@@ -32,7 +33,7 @@ class GedcomMultiDatabaseService
         $this->neo4jService = $neo4jService;
         
         // Initialize MongoDB client
-        $this->mongoClient = new MongoClient(config('database.mongodb.uri'));
+        $this->mongoClient = new MongoClient(config('database.connections.mongodb.uri'));
         
         // Neo4j client is handled by Neo4jIndividualService
         $this->neo4jClient = $this->neo4jService->getClient();
@@ -107,8 +108,22 @@ class GedcomMultiDatabaseService
             Log::error('GEDCOM import failed', [
                 'tree_id' => $treeId,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'cleaned_file_path' => $cleanedFilePath ?? null
             ]);
+            
+            // Clean up the cleaned file if it exists and import failed
+            if (isset($cleanedFilePath) && file_exists($cleanedFilePath)) {
+                try {
+                    unlink($cleanedFilePath);
+                    Log::info('Cleaned up failed import file', ['file_path' => $cleanedFilePath]);
+                } catch (\Exception $cleanupException) {
+                    Log::warning('Failed to cleanup cleaned file', [
+                        'file_path' => $cleanedFilePath,
+                        'error' => $cleanupException->getMessage()
+                    ]);
+                }
+            }
             
             throw $e;
         }
@@ -236,7 +251,6 @@ class GedcomMultiDatabaseService
             $year = (int)$matches[1];
             if ($year >= 1 && $year <= date('Y') + 10) {
                 $cleanedDate = $prefix ? "$prefix $year" : (string)$year;
-                Log::info('Standardized year-only date', compact('originalDate', 'cleanedDate'));
                 return $cleanedDate;
             }
         }
@@ -247,7 +261,6 @@ class GedcomMultiDatabaseService
             $endYear = (int)$matches[2];
             if ($startYear >= 1 && $endYear >= 1 && $startYear <= $endYear && $endYear <= date('Y') + 10) {
                 $cleanedDate = $prefix ? "$prefix $startYear-$endYear" : "$startYear-$endYear";
-                Log::info('Standardized year range date', compact('originalDate', 'cleanedDate'));
                 return $cleanedDate;
             }
         }
@@ -258,7 +271,6 @@ class GedcomMultiDatabaseService
             $endYear = (int)$matches[2];
             if ($startYear >= 1 && $endYear >= 1 && $startYear <= $endYear && $endYear <= date('Y') + 10) {
                 $cleanedDate = "BET $startYear AND $endYear";
-                Log::info('Standardized between date', compact('originalDate', 'cleanedDate'));
                 return $cleanedDate;
             }
         }
@@ -268,31 +280,61 @@ class GedcomMultiDatabaseService
             $day = (int)$matches[1];
             $month = ucfirst(strtolower($matches[2]));
             $year = (int)$matches[3];
+            
             if ($day >= 1 && $day <= 31 && $year >= 1 && $year <= date('Y') + 10) {
-                $monthMap = [
-                    'Jan' => 'JAN', 'Feb' => 'FEB', 'Mar' => 'MAR', 'Apr' => 'APR',
-                    'May' => 'MAY', 'Jun' => 'JUN', 'Jul' => 'JUL', 'Aug' => 'AUG',
-                    'Sep' => 'SEP', 'Oct' => 'OCT', 'Nov' => 'NOV', 'Dec' => 'DEC',
-                    'January' => 'JAN', 'February' => 'FEB', 'March' => 'MAR', 'April' => 'APR',
-                    'June' => 'JUN', 'July' => 'JUL', 'August' => 'AUG', 'September' => 'SEP',
-                    'October' => 'OCT', 'November' => 'NOV', 'December' => 'DEC'
-                ];
-                $standardMonth = $monthMap[$month] ?? strtoupper($month);
-                $cleanedDate = $prefix ? "$prefix $day $standardMonth $year" : "$day $standardMonth $year";
-                Log::info('Standardized full date', compact('originalDate', 'cleanedDate'));
+                $cleanedDate = $prefix ? "$prefix $day $month $year" : "$day $month $year";
                 return $cleanedDate;
             }
         }
 
-        // Handle unknown dates
-        if (preg_match('/^(UNKNOWN|UNK|\?)$/i', $dateString)) {
-            $cleanedDate = 'UNKNOWN';
-            Log::info('Standardized unknown date', compact('originalDate', 'cleanedDate'));
+        // Handle month-year dates (MMM YYYY)
+        if (preg_match('/^([A-Za-z]{3,})\s+(\d{1,4})$/i', $dateString, $matches)) {
+            $month = ucfirst(strtolower($matches[1]));
+            $year = (int)$matches[2];
+            
+            if ($year >= 1 && $year <= date('Y') + 10) {
+                $cleanedDate = $prefix ? "$prefix $month $year" : "$month $year";
+                return $cleanedDate;
+            }
+        }
+
+        // Handle day-month dates (DD MMM) - add current year
+        if (preg_match('/^(\d{1,2})\s+([A-Za-z]{3,})$/i', $dateString, $matches)) {
+            $day = (int)$matches[1];
+            $month = ucfirst(strtolower($matches[2]));
+            
+            if ($day >= 1 && $day <= 31) {
+                $cleanedDate = $prefix ? "$prefix $day $month" : "$day $month";
+                return $cleanedDate;
+            }
+        }
+
+        // Handle month-only dates (MMM) - add current year
+        if (preg_match('/^([A-Za-z]{3,})$/i', $dateString, $matches)) {
+            $month = ucfirst(strtolower($matches[1]));
+            $cleanedDate = $prefix ? "$prefix $month" : $month;
             return $cleanedDate;
         }
 
-        // Fallback: log and return raw string
-        Log::warning('Unrecognized date format', compact('originalDate', 'dateString'));
+        // If we can't parse the date, return the original but log it less frequently
+        static $unrecognizedDates = [];
+        $dateKey = md5($originalDate);
+        
+        if (!isset($unrecognizedDates[$dateKey])) {
+            $unrecognizedDates[$dateKey] = 0;
+        }
+        
+        // Only log every 10th occurrence of the same date format to reduce log spam
+        if ($unrecognizedDates[$dateKey] % 10 === 0) {
+            Log::warning('Unrecognized date format', [
+                'originalDate' => $originalDate,
+                'dateString' => $dateString,
+                'occurrence_count' => $unrecognizedDates[$dateKey] + 1
+            ]);
+        }
+        
+        $unrecognizedDates[$dateKey]++;
+        
         return $originalDate;
     }
 
@@ -353,121 +395,212 @@ class GedcomMultiDatabaseService
             'media' => 0
         ];
 
-        // Import individuals
+        // Bulk import individuals with batch processing
+        $individualData = [];
         foreach ($parsed['individuals'] as $xref => $individual) {
-            try {
-                // --- Date handling ---
-                $birthDateRaw = $individual['birth']['date'] ?? null;
-                $birthDate = null;
-                $birthYear = null;
-                if ($birthDateRaw) {
-                    if (preg_match('/^\d{4}$/', $birthDateRaw)) {
-                        $birthYear = (int)$birthDateRaw;
-                        $birthDate = null;
-                    } elseif (strtotime($birthDateRaw)) {
-                        $birthDate = date('Y-m-d', strtotime($birthDateRaw));
-                        $birthYear = (int)date('Y', strtotime($birthDateRaw));
-                    } else {
-                        $birthDate = null;
-                        $birthYear = null;
-                    }
+            // --- Date handling ---
+            $birthDateRaw = $individual['birth']['date'] ?? null;
+            $birthDate = null;
+            $birthYear = null;
+            if ($birthDateRaw) {
+                if (preg_match('/^\d{4}$/', $birthDateRaw)) {
+                    $birthYear = (int)$birthDateRaw;
+                    $birthDate = null;
+                } elseif (strtotime($birthDateRaw)) {
+                    $birthDate = date('Y-m-d', strtotime($birthDateRaw));
+                    $birthYear = (int)date('Y', strtotime($birthDateRaw));
+                } else {
+                    $birthDate = null;
+                    $birthYear = null;
                 }
-                $deathDateRaw = $individual['death']['date'] ?? null;
-                $deathDate = null;
-                $deathYear = null;
-                if ($deathDateRaw) {
-                    if (preg_match('/^\d{4}$/', $deathDateRaw)) {
-                        $deathYear = (int)$deathDateRaw;
-                        $deathDate = null;
-                    } elseif (strtotime($deathDateRaw)) {
-                        $deathDate = date('Y-m-d', strtotime($deathDateRaw));
-                        $deathYear = (int)date('Y', strtotime($deathDateRaw));
-                    } else {
-                        $deathDate = null;
-                        $deathYear = null;
-                    }
+            }
+            $deathDateRaw = $individual['death']['date'] ?? null;
+            $deathDate = null;
+            $deathYear = null;
+            if ($deathDateRaw) {
+                if (preg_match('/^\d{4}$/', $deathDateRaw)) {
+                    $deathYear = (int)$deathDateRaw;
+                    $deathDate = null;
+                } elseif (strtotime($deathDateRaw)) {
+                    $deathDate = date('Y-m-d', strtotime($deathDateRaw));
+                    $deathYear = (int)date('Y', strtotime($deathDateRaw));
+                } else {
+                    $deathDate = null;
+                    $deathYear = null;
                 }
-                $individualModel = Individual::create([
-                    'tree_id' => $treeId,
-                    'gedcom_xref' => $xref,
-                    'first_name' => $individual['name']['given'] ?? 'Unknown',
-                    'last_name' => $individual['name']['surname'] ?? 'Unknown',
-                    'name_prefix' => $individual['name']['prefix'] ?? null,
-                    'name_suffix' => $individual['name']['suffix'] ?? null,
-                    'nickname' => $individual['name']['nickname'] ?? null,
-                    'sex' => $individual['sex'] ?? null,
-                    'birth_date' => $birthDate,
-                    'birth_year' => $birthYear,
-                    'birth_date_raw' => $birthDateRaw,
-                    'death_date' => $deathDate,
-                    'death_year' => $deathYear,
-                    'death_date_raw' => $deathDateRaw,
-                    'birth_place' => $individual['birth']['place'] ?? null,
-                    'death_place' => $individual['death']['place'] ?? null,
-                    'death_cause' => $individual['death']['cause'] ?? null,
-                ]);
+            }
 
-                $results['individuals']++;
-                Cache::put("gedcom_xref:{$xref}", $individualModel->id, 3600);
-            } catch (\Exception $e) {
-                Log::warning("Failed to import individual {$xref}: " . $e->getMessage());
+            $individualData[] = [
+                'tree_id' => $treeId,
+                'gedcom_xref' => $xref,
+                'first_name' => $individual['name']['given'] ?? 'Unknown',
+                'last_name' => $individual['name']['surname'] ?? 'Unknown',
+                'name_prefix' => $individual['name']['prefix'] ?? null,
+                'name_suffix' => $individual['name']['suffix'] ?? null,
+                'nickname' => $individual['name']['nickname'] ?? null,
+                'sex' => $individual['sex'] ?? null,
+                'birth_date' => $birthDate,
+                'birth_year' => $birthYear,
+                'birth_date_raw' => $birthDateRaw,
+                'death_date' => $deathDate,
+                'death_year' => $deathYear,
+                'death_date_raw' => $deathDateRaw,
+                'birth_place' => $individual['birth']['place'] ?? null,
+                'death_place' => $individual['death']['place'] ?? null,
+                'death_cause' => $individual['death']['cause'] ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        // Batch insert individuals (500 records per batch to avoid parameter limits)
+        if (!empty($individualData)) {
+            $batchSize = 500;
+            $batches = array_chunk($individualData, $batchSize);
+            
+            foreach ($batches as $batch) {
+                Individual::insert($batch);
+            }
+            
+            $results['individuals'] = count($individualData);
+            
+            // Cache the IDs for cross-references
+            $individuals = Individual::where('tree_id', $treeId)
+                ->whereIn('gedcom_xref', array_keys($parsed['individuals']))
+                ->get(['id', 'gedcom_xref']);
+                
+            foreach ($individuals as $individual) {
+                Cache::put("gedcom_xref:{$individual->gedcom_xref}", $individual->id, 3600);
             }
         }
 
-        // Import families
+        // Bulk import families with batch processing
+        $familyData = [];
         foreach ($parsed['families'] as $xref => $family) {
-            try {
-                // Handle null husband/wife references
-                $husbandId = null;
-                $wifeId = null;
-                
-                if (!empty($family['husband'])) {
-                    $husbandId = $this->getIndividualIdByXref($family['husband']);
+            $husbandId = null;
+            $wifeId = null;
+            
+            if (!empty($family['husband'])) {
+                $husbandId = $this->getIndividualIdByXref($family['husband']);
+            }
+            
+            if (!empty($family['wife'])) {
+                $wifeId = $this->getIndividualIdByXref($family['wife']);
+            }
+            
+            // Clean and format marriage date
+            $marriageDateRaw = $family['marriage']['date'] ?? null;
+            $marriageDate = null;
+            $marriageYear = null;
+            if ($marriageDateRaw) {
+                $cleanedMarriageDate = $this->cleanGedcomDate($marriageDateRaw);
+                if (preg_match('/^\d{4}$/', $cleanedMarriageDate)) {
+                    $marriageYear = (int)$cleanedMarriageDate;
+                    $marriageDate = null;
+                } elseif (strtotime($cleanedMarriageDate)) {
+                    $marriageDate = date('Y-m-d', strtotime($cleanedMarriageDate));
+                    $marriageYear = (int)date('Y', strtotime($cleanedMarriageDate));
+                } else {
+                    // For non-standard dates like "BEF 969", store as null but keep raw value
+                    $marriageDate = null;
+                    $marriageYear = null;
                 }
-                
-                if (!empty($family['wife'])) {
-                    $wifeId = $this->getIndividualIdByXref($family['wife']);
+            }
+            
+            // Clean and format divorce date
+            $divorceDateRaw = $family['divorce']['date'] ?? null;
+            $divorceDate = null;
+            $divorceYear = null;
+            if ($divorceDateRaw) {
+                $cleanedDivorceDate = $this->cleanGedcomDate($divorceDateRaw);
+                if (preg_match('/^\d{4}$/', $cleanedDivorceDate)) {
+                    $divorceYear = (int)$cleanedDivorceDate;
+                    $divorceDate = null;
+                } elseif (strtotime($cleanedDivorceDate)) {
+                    $divorceDate = date('Y-m-d', strtotime($cleanedDivorceDate));
+                    $divorceYear = (int)date('Y', strtotime($cleanedDivorceDate));
+                } else {
+                    // For non-standard dates like "BEF 969", store as null but keep raw value
+                    $divorceDate = null;
+                    $divorceYear = null;
                 }
-                
-                $familyModel = Family::create([
-                    'tree_id' => $treeId,
-                    'gedcom_xref' => $xref,
-                    'husband_id' => $husbandId,
-                    'wife_id' => $wifeId,
-                    'marriage_date' => $family['marriage']['date'] ?? null,
-                    'marriage_place' => $family['marriage']['place'] ?? null,
-                    'marriage_type' => $family['marriage']['type'] ?? null,
-                    'divorce_date' => $family['divorce']['date'] ?? null,
-                    'divorce_place' => $family['divorce']['place'] ?? null,
-                ]);
+            }
+            
+            $familyData[] = [
+                'tree_id' => $treeId,
+                'gedcom_xref' => $xref,
+                'husband_id' => $husbandId,
+                'wife_id' => $wifeId,
+                'marriage_date' => $marriageDate,
+                'marriage_year' => $marriageYear,
+                'marriage_date_raw' => $marriageDateRaw,
+                'marriage_place' => $family['marriage']['place'] ?? null,
+                'marriage_type' => $family['marriage']['type'] ?? null,
+                'divorce_date' => $divorceDate,
+                'divorce_year' => $divorceYear,
+                'divorce_date_raw' => $divorceDateRaw,
+                'divorce_place' => $family['divorce']['place'] ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
 
-                $results['families']++;
-                Cache::put("gedcom_xref:{$xref}", $familyModel->id, 3600);
+        // Batch insert families
+        if (!empty($familyData)) {
+            $batchSize = 500;
+            $batches = array_chunk($familyData, $batchSize);
+            
+            foreach ($batches as $batch) {
+                Family::insert($batch);
+            }
+            
+            $results['families'] = count($familyData);
+            
+            // Cache the IDs for cross-references
+            $families = Family::where('tree_id', $treeId)
+                ->whereIn('gedcom_xref', array_keys($parsed['families']))
+                ->get(['id', 'gedcom_xref']);
                 
-            } catch (\Exception $e) {
-                Log::warning("Failed to import family {$xref}: " . $e->getMessage());
+            foreach ($families as $family) {
+                Cache::put("gedcom_xref:{$family->gedcom_xref}", $family->id, 3600);
             }
         }
 
-        // Import sources
+        // Bulk import sources with batch processing
+        $sourceData = [];
         foreach ($parsed['sources'] as $xref => $source) {
-            try {
-                $sourceModel = Source::create([
-                    'tree_id' => $treeId,
-                    'gedcom_xref' => $xref,
-                    'title' => $source['title'] ?? 'Untitled Source',
-                    'author' => $source['author'] ?? null,
-                    'publication' => $source['publication'] ?? null,
-                    'repository_id' => $this->getRepositoryIdByXref($source['repository']),
-                    'call_number' => $source['call_number'] ?? null,
-                    'data_quality' => $source['quality'] ?? 0,
-                ]);
+            $sourceData[] = [
+                'tree_id' => $treeId,
+                'gedcom_xref' => $xref,
+                'title' => $source['title'] ?? 'Untitled Source',
+                'author' => $source['author'] ?? null,
+                'publication' => $source['publication'] ?? null,
+                'repository_id' => $this->getRepositoryIdByXref($source['repository']),
+                'call_number' => $source['call_number'] ?? null,
+                'data_quality' => $source['quality'] ?? 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
 
-                $results['sources']++;
-                Cache::put("gedcom_xref:{$xref}", $sourceModel->id, 3600);
+        // Batch insert sources
+        if (!empty($sourceData)) {
+            $batchSize = 500;
+            $batches = array_chunk($sourceData, $batchSize);
+            
+            foreach ($batches as $batch) {
+                Source::insert($batch);
+            }
+            
+            $results['sources'] = count($sourceData);
+            
+            // Cache the IDs for cross-references
+            $sources = Source::where('tree_id', $treeId)
+                ->whereIn('gedcom_xref', array_keys($parsed['sources']))
+                ->get(['id', 'gedcom_xref']);
                 
-            } catch (\Exception $e) {
-                Log::warning("Failed to import source {$xref}: " . $e->getMessage());
+            foreach ($sources as $source) {
+                Cache::put("gedcom_xref:{$source->gedcom_xref}", $source->id, 3600);
             }
         }
 
@@ -479,7 +612,7 @@ class GedcomMultiDatabaseService
      */
     protected function importToMongodb(array $parsed, int $treeId): array
     {
-        $database = $this->mongoClient->selectDatabase(config('database.mongodb.database'));
+        $database = $this->mongoClient->selectDatabase(config('database.connections.mongodb.database'));
         $results = [
             'individuals' => 0,
             'families' => 0,
@@ -488,93 +621,87 @@ class GedcomMultiDatabaseService
             'media' => 0
         ];
 
-        // Import individual documents
+        // Bulk import individual documents
         $individualsCollection = $database->selectCollection('individuals');
+        $individualDocuments = [];
         foreach ($parsed['individuals'] as $xref => $individual) {
-            try {
-                $individualId = $this->getIndividualIdByXref($xref);
-                if (!$individualId) continue;
+            $individualId = $this->getIndividualIdByXref($xref);
+            if (!$individualId) continue;
 
-                $document = [
-                    'individual_id' => $individualId,
-                    'tree_id' => $treeId,
-                    'gedcom_xref' => $xref,
-                    'name_components' => $individual['name'] ?? [],
-                    'events' => $individual['events'] ?? [],
-                    'custom_fields' => $individual['custom_fields'] ?? [],
-                    'metadata' => [
-                        'import_source' => 'GEDCOM',
-                        'import_date' => new UTCDateTime(),
-                        'version' => 1
-                    ]
-                ];
-
-                $individualsCollection->insertOne($document);
-                $results['individuals']++;
-                
-            } catch (\Exception $e) {
-                Log::warning("Failed to import individual document {$xref}: " . $e->getMessage());
-            }
+            $individualDocuments[] = [
+                'individual_id' => $individualId,
+                'tree_id' => $treeId,
+                'gedcom_xref' => $xref,
+                'name_components' => $individual['name'] ?? [],
+                'events' => $individual['events'] ?? [],
+                'custom_fields' => $individual['custom_fields'] ?? [],
+                'metadata' => [
+                    'import_source' => 'GEDCOM',
+                    'import_date' => new UTCDateTime(),
+                    'version' => 1
+                ]
+            ];
         }
 
-        // Import family documents
+        if (!empty($individualDocuments)) {
+            $individualsCollection->insertMany($individualDocuments);
+            $results['individuals'] = count($individualDocuments);
+        }
+
+        // Bulk import family documents
         $familiesCollection = $database->selectCollection('families');
+        $familyDocuments = [];
         foreach ($parsed['families'] as $xref => $family) {
-            try {
-                $familyId = $this->getFamilyIdByXref($xref);
-                if (!$familyId) continue;
+            $familyId = $this->getFamilyIdByXref($xref);
+            if (!$familyId) continue;
 
-                $document = [
-                    'family_id' => $familyId,
-                    'tree_id' => $treeId,
-                    'gedcom_xref' => $xref,
-                    'marriage_event' => $family['marriage'] ?? [],
-                    'divorce_event' => $family['divorce'] ?? [],
-                    'children' => $family['children'] ?? [],
-                    'custom_fields' => $family['custom_fields'] ?? [],
-                    'metadata' => [
-                        'import_source' => 'GEDCOM',
-                        'import_date' => new UTCDateTime(),
-                        'version' => 1
-                    ]
-                ];
-
-                $familiesCollection->insertOne($document);
-                $results['families']++;
-                
-            } catch (\Exception $e) {
-                Log::warning("Failed to import family document {$xref}: " . $e->getMessage());
-            }
+            $familyDocuments[] = [
+                'family_id' => $familyId,
+                'tree_id' => $treeId,
+                'gedcom_xref' => $xref,
+                'marriage_event' => $family['marriage'] ?? [],
+                'divorce_event' => $family['divorce'] ?? [],
+                'children' => $family['children'] ?? [],
+                'custom_fields' => $family['custom_fields'] ?? [],
+                'metadata' => [
+                    'import_source' => 'GEDCOM',
+                    'import_date' => new UTCDateTime(),
+                    'version' => 1
+                ]
+            ];
         }
 
-        // Import notes
-        $notesCollection = $database->selectCollection('notes');
-        foreach ($parsed['notes'] as $xref => $note) {
-            try {
-                $document = [
-                    'tree_id' => $treeId,
-                    'gedcom_xref' => $xref,
-                    'content' => $note['content'] ?? '',
-                    'type' => $note['type'] ?? 'general',
-                    'relationships' => $note['relationships'] ?? [],
-                    'metadata' => [
-                        'import_source' => 'GEDCOM',
-                        'import_date' => new UTCDateTime(),
-                        'version' => 1
-                    ],
-                    'formatting' => [
-                        'is_html' => false,
-                        'has_links' => false,
-                        'word_count' => str_word_count($note['content'] ?? '')
-                    ]
-                ];
+        if (!empty($familyDocuments)) {
+            $familiesCollection->insertMany($familyDocuments);
+            $results['families'] = count($familyDocuments);
+        }
 
-                $notesCollection->insertOne($document);
-                $results['notes']++;
-                
-            } catch (\Exception $e) {
-                Log::warning("Failed to import note {$xref}: " . $e->getMessage());
-            }
+        // Bulk import notes
+        $notesCollection = $database->selectCollection('notes');
+        $noteDocuments = [];
+        foreach ($parsed['notes'] as $xref => $note) {
+            $noteDocuments[] = [
+                'tree_id' => $treeId,
+                'gedcom_xref' => $xref,
+                'content' => $note['content'] ?? '',
+                'type' => $note['type'] ?? 'general',
+                'relationships' => $note['relationships'] ?? [],
+                'metadata' => [
+                    'import_source' => 'GEDCOM',
+                    'import_date' => new UTCDateTime(),
+                    'version' => 1
+                ],
+                'formatting' => [
+                    'is_html' => false,
+                    'has_links' => false,
+                    'word_count' => str_word_count($note['content'] ?? '')
+                ]
+            ];
+        }
+
+        if (!empty($noteDocuments)) {
+            $notesCollection->insertMany($noteDocuments);
+            $results['notes'] = count($noteDocuments);
         }
 
         return $results;
@@ -591,9 +718,13 @@ class GedcomMultiDatabaseService
             'relationships' => 0
         ];
 
-        $transaction = $this->neo4jService->beginTransaction();
+        $transaction = null;
+        $transactionActive = false;
 
         try {
+            $transaction = $this->neo4jService->beginTransaction();
+            $transactionActive = true;
+
             // Create individual nodes
             foreach ($parsed['individuals'] as $xref => $individual) {
                 $individualId = $this->getIndividualIdByXref($xref);
@@ -663,10 +794,32 @@ class GedcomMultiDatabaseService
                 }
             }
 
-            $transaction->commit();
+            if ($transaction && $transactionActive) {
+                $transaction->commit();
+                $transactionActive = false;
+            }
             
         } catch (\Exception $e) {
-            $transaction->rollback();
+            // Only attempt rollback if transaction is still active
+            if ($transaction && $transactionActive) {
+                try {
+                    $transaction->rollback();
+                } catch (\Exception $rollbackException) {
+                    Log::warning('Failed to rollback Neo4j transaction', [
+                        'original_error' => $e->getMessage(),
+                        'rollback_error' => $rollbackException->getMessage(),
+                        'tree_id' => $treeId
+                    ]);
+                }
+                $transactionActive = false;
+            }
+            
+            Log::error('Neo4j import failed', [
+                'tree_id' => $treeId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             throw $e;
         }
 

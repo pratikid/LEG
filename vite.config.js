@@ -23,4 +23,53 @@ export default defineConfig({
         tailwindcss(),
     ],
     base: process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:5173/',
+    
+    // Build optimizations
+    build: {
+        // Enable source maps for debugging (disable for production)
+        sourcemap: process.env.NODE_ENV !== 'production',
+        
+        // Optimize chunk size
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: ['axios', 'alpinejs'],
+                    d3: ['d3'],
+                },
+            },
+        },
+        
+        // Enable minification
+        minify: 'terser',
+        
+        // Optimize CSS
+        cssMinify: true,
+        
+        // Set chunk size warning limit
+        chunkSizeWarningLimit: 1000,
+        
+        // Enable build cache
+        cache: true,
+    },
+    
+    // Optimize dependencies
+    optimizeDeps: {
+        include: ['axios', 'alpinejs', 'd3'],
+        exclude: [],
+    },
+    
+    // CSS optimization
+    css: {
+        devSourcemap: process.env.NODE_ENV !== 'production',
+    },
+    
+    // Worker configuration for parallel processing
+    worker: {
+        format: 'es',
+    },
+    
+    // Enable esbuild for faster builds
+    esbuild: {
+        target: 'es2020',
+    },
 });

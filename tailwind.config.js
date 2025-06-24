@@ -7,6 +7,10 @@ export default {
     "./resources/**/*.vue",
     "./app/Http/Livewire/**/*.php",
   ],
+  // Optimize for faster builds
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
   theme: {
     extend: {
       colors: {
@@ -38,4 +42,8 @@ export default {
     },
   },
   plugins: [],
+  // Optimize for production builds
+  corePlugins: {
+    preflight: true,
+  },
 } 

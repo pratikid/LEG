@@ -18,9 +18,13 @@ return new class extends Migration
             $table->unsignedBigInteger('husband_id')->nullable();
             $table->unsignedBigInteger('wife_id')->nullable();
             $table->date('marriage_date')->nullable();
+            $table->integer('marriage_year')->nullable();
+            $table->text('marriage_date_raw')->nullable();
             $table->string('marriage_place', 255)->nullable();
             $table->string('marriage_type', 50)->nullable();
             $table->date('divorce_date')->nullable();
+            $table->integer('divorce_year')->nullable();
+            $table->text('divorce_date_raw')->nullable();
             $table->string('divorce_place', 255)->nullable();
             $table->timestamps();
 

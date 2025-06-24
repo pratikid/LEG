@@ -186,22 +186,28 @@ services:
     container_name: leg-node
     working_dir: /var/www/html
 #    command: sh -c "npm install && npm run dev"
-    command: sh -c "npm install -g npm@11.4.2 && npm install && npm run build"
+    command: sh -c "npm install -g npm@11.4.2 && npm install --include=dev && npm run build:fast"
     volumes:
       - ./:/var/www/html
       - node_modules:/var/www/html/node_modules
+      - npm_cache:/root/.npm
+      - vite_cache:/tmp/vite-cache
     networks:
       - leg-network
     ports:
       - "5173:5173"
     environment:
+      - NODE_ENV=production
       - NODE_OPTIONS=--max-old-space-size=4096
+      - VITE_CACHE_DIR=/tmp/vite-cache
     deploy:
       resources:
         limits:
-          memory: 1.5G
+          memory: 3G
+          cpus: '2.0'
         reservations:
-          memory: 0.5G
+          memory: 1G
+          cpus: '1.0'
 
   # Queue Worker for background jobs
   queue:
@@ -229,13 +235,13 @@ services:
       - QUEUE_CONNECTION=redis
       - SESSION_DRIVER=redis
       - PERMISSIONS_USER=www-data
-    command: php artisan queue:work redis --queue=imports,notifications,default --sleep=3 --tries=3 --max-time=3600
+    command: php artisan queue:work redis --queue=imports,notifications,default --sleep=1 --tries=3 --max-time=3600 --memory=1024 --timeout=1800
     deploy:
       resources:
         limits:
-          memory: 1.5G
+          memory: 2G
         reservations:
-          memory: 0.5G
+          memory: 1G
 
 networks:
   leg-network:
@@ -249,6 +255,8 @@ volumes:
   redis-data:
   node_modules:
   ssl-certs:
+  npm_cache:
+  vite_cache:
 
 # For production, after build, run:
 # docker compose exec app composer install --optimize-autoloader --no-dev

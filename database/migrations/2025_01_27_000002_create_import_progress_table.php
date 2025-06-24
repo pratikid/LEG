@@ -16,6 +16,7 @@ return new class extends Migration
             $table->integer('total_records')->default(0);
             $table->integer('processed_records')->default(0);
             $table->text('error_message')->nullable();
+            $table->string('status_message')->nullable();
             $table->timestamps();
 
             $table->index(['user_id', 'status']);

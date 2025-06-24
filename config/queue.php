@@ -71,6 +71,13 @@ return [
             'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 90),
             'block_for' => null,
             'after_commit' => false,
+            'options' => [
+                'priority' => [
+                    'imports' => 1,      // Highest priority
+                    'notifications' => 2, // Medium priority
+                    'default' => 3,      // Lowest priority
+                ],
+            ],
         ],
 
     ],

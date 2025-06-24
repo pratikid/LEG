@@ -32,6 +32,7 @@ class ImportProgress extends Model
         'total_records',
         'processed_records',
         'error_message',
+        'status_message'
     ];
 
     protected $casts = [
