@@ -900,6 +900,21 @@ class Neo4jIndividualService
         return $transaction ? $transaction->run($query, $data) : $this->client->run($query, $data);
     }
 
+    /**
+     * @param array{
+     *     id: int,
+     *     tree_id: int,
+     *     gedcom_xref: string,
+     *     type: string
+     * } $data
+     */
+    public function createFamilyNode(array $data, ?TransactionInterface $transaction = null): mixed
+    {
+        $query = 'CREATE (f:Family {id: $id, tree_id: $tree_id, gedcom_xref: $gedcom_xref, type: $type, created_at: datetime(), updated_at: datetime()}) RETURN f';
+
+        return $transaction ? $transaction->run($query, $data) : $this->client->run($query, $data);
+    }
+
     public function linkIndividualToTree(int $individualId, int $treeId, ?TransactionInterface $transaction = null): mixed
     {
         $query = '

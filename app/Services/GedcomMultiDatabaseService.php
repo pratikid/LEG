@@ -750,7 +750,7 @@ class GedcomMultiDatabaseService
                 if (!$familyId) continue;
 
                 // Create family node
-                $this->neo4jService->createTreeNode([
+                $this->neo4jService->createFamilyNode([
                     'id' => $familyId,
                     'tree_id' => $treeId,
                     'gedcom_xref' => $xref,
