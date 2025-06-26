@@ -16,6 +16,11 @@ class GedcomImportCompleted extends Notification implements ShouldQueue
 
     /**
      * Create a new notification instance.
+     * 
+     * @param Tree $tree The tree that was imported into
+     * @param array $parsedData Array containing integer counts: ['individuals' => int, 'families' => int]
+     * @param string|null $fileName Original filename of the imported GEDCOM file
+     * @param string|null $cleanedFilePath Path to the cleaned GEDCOM file if user-defined tags were removed
      */
     public function __construct(
         protected Tree $tree,
@@ -41,8 +46,8 @@ class GedcomImportCompleted extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $individualsCount = count($this->parsedData['individuals']);
-        $familiesCount = count($this->parsedData['families']);
+        $individualsCount = $this->parsedData['individuals'];
+        $familiesCount = $this->parsedData['families'];
 
         $mailMessage = (new MailMessage)
             ->subject('GEDCOM Import Completed Successfully')
@@ -77,8 +82,8 @@ class GedcomImportCompleted extends Notification implements ShouldQueue
             'tree_id' => $this->tree->id,
             'tree_name' => $this->tree->name,
             'file_name' => $this->fileName,
-            'individuals_count' => count($this->parsedData['individuals']),
-            'families_count' => count($this->parsedData['families']),
+            'individuals_count' => $this->parsedData['individuals'],
+            'families_count' => $this->parsedData['families'],
             'action_url' => route('trees.visualization', $this->tree->id),
             'action_text' => 'View Tree Visualization',
         ];
