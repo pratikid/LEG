@@ -36,6 +36,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Family> $familiesAsHusband
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Family> $familiesAsWife
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Family> $familiesAsChild
+ * @property-read string $full_name
+ * @property-read string $display_name
+ * @property-read string|null $birth_date_display
+ * @property-read string|null $death_date_display
+ * @property-read int|null $age
+ * @property-read string|null $age_display
  *
  * @method static \Database\Factories\IndividualFactory factory()
  */
@@ -332,6 +338,38 @@ class Individual extends Model
             return $this->death_date_raw;
         }
         return null;
+    }
+
+    /**
+     * Get the age of the individual at death or current age
+     */
+    public function getAgeAttribute(): ?int
+    {
+        if (!$this->birth_date) {
+            return null;
+        }
+
+        $endDate = $this->death_date ?? now();
+        
+        return (int) $this->birth_date->diffInYears($endDate);
+    }
+
+    /**
+     * Get a human-readable age string
+     */
+    public function getAgeDisplayAttribute(): ?string
+    {
+        $age = $this->age;
+        
+        if ($age === null) {
+            return null;
+        }
+
+        if ($this->death_date) {
+            return "Died at age {$age}";
+        }
+
+        return "Age {$age}";
     }
 
     protected static function booted(): void

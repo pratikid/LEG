@@ -24,6 +24,10 @@ use App\Http\Controllers\TimelineReportController;
 use App\Http\Controllers\ToolsController;
 use App\Http\Controllers\TreeController;
 use App\Http\Controllers\TutorialController;
+use App\Models\ActivityLog;
+use App\Models\Individual;
+use App\Models\TimelineEvent;
+use App\Models\Tree;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -43,20 +47,29 @@ Route::post('/register', [RegisterController::class, 'register'])
 
 // Dashboard Route
 Route::get('/dashboard', function () {
-    // $totalMembers = \App\Models\Individual::count();
-    $totalMembers = 0;
-    $generations = 6; // TODO: Replace with actual calculation if available
-    // $totalPhotos = \App\Models\TimelineEvent::count(); // Placeholder for photos
-    $totalPhotos = 0;
-    $activities = \App\Models\ActivityLog::with('user')
-        ->where('user_id', Auth::id())
+    $user = Auth::user();
+    $userTrees = Tree::forUser($user->id)->limit(3)->get();
+    
+    // Calculate total members across all user's trees
+    $totalMembers = $userTrees->sum('individual_count');
+    
+    // Calculate total generations across all user's trees
+    $generations = $userTrees->sum('generation_count');
+    
+    // Calculate total photos (using timeline events as placeholder)
+    $totalPhotos = TimelineEvent::where('user_id', $user->id)->count();
+    
+    $activities = ActivityLog::with('user')
+        ->where('user_id', $user->id)
         ->orderByDesc('created_at')
         ->limit(3)
         ->get();
-    // $userTrees = \App\Models\Tree::where('user_id', auth()->id())->limit(3)->get();
-    $userTrees = [];
-    // $recentIndividuals = \App\Models\Individual::orderByDesc('created_at')->limit(3)->get();
-    $recentIndividuals = [];
+    
+    // Get recent individuals from user's trees
+    $recentIndividuals = Individual::whereIn('tree_id', $userTrees->pluck('id'))
+        ->orderByDesc('created_at')
+        ->limit(3)
+        ->get();
 
     return view('dashboard', compact('totalMembers', 'generations', 'totalPhotos', 'activities', 'userTrees', 'recentIndividuals'));
 })->middleware(['auth'])->name('dashboard');
