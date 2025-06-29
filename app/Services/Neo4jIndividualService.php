@@ -69,12 +69,12 @@ class Neo4jIndividualService
         try {
             // If no transaction is provided, create a local one
             if (! $transaction) {
-                Log::info('Creating local transaction');
+                // Log::info('Creating local transaction');
                 $localTransaction = $this->client->beginTransaction();
                 $transaction = $localTransaction;
-                Log::info('Local transaction created', [
-                    'transaction_id' => spl_object_hash($transaction),
-                ]);
+                // Log::info('Local transaction created', [
+                //     'transaction_id' => spl_object_hash($transaction),
+                // ]);
             }
 
             // First verify both nodes exist
@@ -85,23 +85,24 @@ class Neo4jIndividualService
             ';
 
             $verifyParams = ['parentId' => $parentId, 'childId' => $childId];
-            Log::info('Verifying nodes exist', [
-                'query' => $verifyQuery,
-                'parameters' => $verifyParams,
-                'parent_id_type' => gettype($parentId),
-                'child_id_type' => gettype($childId),
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Verifying nodes exist', [
+            //     'query' => $verifyQuery,
+            //     'parameters' => $verifyParams,
+            //     'parent_id_type' => gettype($parentId),
+            //     'child_id_type' => gettype($childId),
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             /** @var \Laudis\Neo4j\Types\CypherList<\Laudis\Neo4j\Types\CypherMap> $verifyResult */
             $verifyResult = $transaction->run($verifyQuery, $verifyParams);
 
-            Log::info('Verify query result', [
-                'result_count' => $verifyResult->count(),
-                'has_parent' => $verifyResult->first() ? $verifyResult->first()->get('parent') !== null : false,
-                'has_child' => $verifyResult->first() ? $verifyResult->first()->get('child') !== null : false,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            $firstResult = $this->getFirstResult($verifyResult);
+            // Log::info('Verify query result', [
+            //     'result_count' => $verifyResult->count(),
+            //     'has_parent' => $firstResult ? $firstResult->get('parent') !== null : false,
+            //     'has_child' => $firstResult ? $firstResult->get('child') !== null : false,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             if ($verifyResult->count() === 0) {
                 Log::error('Parent or child node not found', [
@@ -121,29 +122,29 @@ class Neo4jIndividualService
             ';
 
             $checkParams = ['parentId' => $parentId, 'childId' => $childId];
-            Log::info('Checking existing relationship', [
-                'query' => $checkQuery,
-                'parameters' => $checkParams,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Checking existing relationship', [
+            //     'query' => $checkQuery,
+            //     'parameters' => $checkParams,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             /** @var \Laudis\Neo4j\Types\CypherList<\Laudis\Neo4j\Types\CypherMap> $checkResult */
             $checkResult = $transaction->run($checkQuery, $checkParams);
 
-            Log::info('Check relationship result', [
-                'result_count' => $checkResult->count(),
-                'has_relationship' => $checkResult->count() > 0,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Check relationship result', [
+            //     'result_count' => $checkResult->count(),
+            //     'has_relationship' => $checkResult->count() > 0,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             if ($checkResult->count() > 0) {
-                Log::info('Parent-child relationship already exists', [
-                    'parent_id' => $parentId,
-                    'child_id' => $childId,
-                    'transaction_id' => spl_object_hash($transaction),
-                ]);
+                // Log::info('Parent-child relationship already exists', [
+                //     'parent_id' => $parentId,
+                //     'child_id' => $childId,
+                //     'transaction_id' => spl_object_hash($transaction),
+                // ]);
                 if ($localTransaction) {
-                    Log::info('Committing local transaction for existing relationship');
+                    // Log::info('Committing local transaction for existing relationship');
                     $localTransaction->commit();
                 }
 
@@ -159,24 +160,25 @@ class Neo4jIndividualService
             ';
 
             $createParams = ['parentId' => $parentId, 'childId' => $childId];
-            Log::info('Creating parent-child relationship', [
-                'query' => $query,
-                'parameters' => $createParams,
-                'parent_id_type' => gettype($parentId),
-                'child_id_type' => gettype($childId),
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Creating parent-child relationship', [
+            //     'query' => $query,
+            //     'parameters' => $createParams,
+            //     'parent_id_type' => gettype($parentId),
+            //     'child_id_type' => gettype($childId),
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             // Try running the query directly first to verify it works
             try {
-                Log::info('Attempting direct query execution');
+                // Log::info('Attempting direct query execution');
                 $directResult = $this->client->run($query, $createParams);
-                Log::info('Direct query execution result', [
-                    'result_count' => $directResult->count(),
-                    'has_parent' => $directResult->first() ? $directResult->first()->get('parent') !== null : false,
-                    'has_child' => $directResult->first() ? $directResult->first()->get('child') !== null : false,
-                    'has_relationship' => $directResult->first() ? $directResult->first()->get('r') !== null : false,
-                ]);
+                $directFirstResult = $this->getFirstResult($directResult);
+                // Log::info('Direct query execution result', [
+                //     'result_count' => $directResult->count(),
+                //     'has_parent' => $directFirstResult ? $directFirstResult->get('parent') !== null : false,
+                //     'has_child' => $directFirstResult ? $directFirstResult->get('child') !== null : false,
+                //     'has_relationship' => $directFirstResult ? $directFirstResult->get('r') !== null : false,
+                // ]);
             } catch (\Exception $e) {
                 Log::error('Direct query execution failed', [
                     'error' => $e->getMessage(),
@@ -187,13 +189,14 @@ class Neo4jIndividualService
             /** @var \Laudis\Neo4j\Types\CypherList<\Laudis\Neo4j\Types\CypherMap> $result */
             $result = $transaction->run($query, $createParams);
 
-            Log::info('Create relationship result', [
-                'result_count' => $result->count(),
-                'has_parent' => $result->first() ? $result->first()->get('parent') !== null : false,
-                'has_child' => $result->first() ? $result->first()->get('child') !== null : false,
-                'has_relationship' => $result->first() ? $result->first()->get('r') !== null : false,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            $resultFirst = $this->getFirstResult($result);
+            // Log::info('Create relationship result', [
+            //     'result_count' => $result->count(),
+            //     'has_parent' => $resultFirst ? $resultFirst->get('parent') !== null : false,
+            //     'has_child' => $resultFirst ? $resultFirst->get('child') !== null : false,
+            //     'has_relationship' => $resultFirst ? $resultFirst->get('r') !== null : false,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             if ($result->count() === 0) {
                 throw new \Exception('Failed to create parent-child relationship');
@@ -208,12 +211,12 @@ class Neo4jIndividualService
             /** @var \Laudis\Neo4j\Types\CypherList<\Laudis\Neo4j\Types\CypherMap> $verifyRelResult */
             $verifyRelResult = $transaction->run($verifyRelQuery, $createParams);
 
-            Log::info('Verifying relationship creation', [
-                'query' => $verifyRelQuery,
-                'parameters' => $createParams,
-                'relationship_exists' => $verifyRelResult->count() > 0,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Verifying relationship creation', [
+            //     'query' => $verifyRelQuery,
+            //     'parameters' => $createParams,
+            //     'relationship_exists' => $verifyRelResult->count() > 0,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             if ($verifyRelResult->count() === 0) {
                 throw new \Exception('Relationship verification failed');
@@ -221,29 +224,29 @@ class Neo4jIndividualService
 
             // Explicitly commit the transaction if it's a local one
             if ($localTransaction) {
-                Log::info('Committing local transaction');
+                // Log::info('Committing local transaction');
                 $localTransaction->commit();
-                Log::info('Local transaction committed successfully');
+                // Log::info('Local transaction committed successfully');
             }
 
-            Log::info('Successfully created parent-child relationship', [
-                'parent_id' => $parentId,
-                'child_id' => $childId,
-                'relationship_verified' => true,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Successfully created parent-child relationship', [
+            //     'parent_id' => $parentId,
+            //     'child_id' => $childId,
+            //     'relationship_verified' => true,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             return $result;
         } catch (\Exception $e) {
             // Rollback the transaction if it's a local one
             if ($localTransaction) {
-                Log::info('Rolling back local transaction due to error', [
-                    'error' => $e->getMessage(),
-                    'transaction_id' => spl_object_hash($transaction),
-                ]);
+                // Log::info('Rolling back local transaction due to error', [
+                //     'error' => $e->getMessage(),
+                //     'transaction_id' => spl_object_hash($transaction),
+                // ]);
                 try {
                     $localTransaction->rollback();
-                    Log::info('Local transaction rolled back successfully');
+                    // Log::info('Local transaction rolled back successfully');
                 } catch (\Exception $rollbackError) {
                     Log::error('Failed to rollback transaction', [
                         'error' => $rollbackError->getMessage(),
@@ -271,12 +274,12 @@ class Neo4jIndividualService
         try {
             // If no transaction is provided, create a local one
             if (! $transaction) {
-                Log::info('Creating local transaction');
+                // Log::info('Creating local transaction');
                 $localTransaction = $this->client->beginTransaction();
                 $transaction = $localTransaction;
-                Log::info('Local transaction created', [
-                    'transaction_id' => spl_object_hash($transaction),
-                ]);
+                // Log::info('Local transaction created', [
+                //     'transaction_id' => spl_object_hash($transaction),
+                // ]);
             }
 
             // First verify both nodes exist
@@ -287,23 +290,24 @@ class Neo4jIndividualService
             ';
 
             $verifyParams = ['spouseAId' => $spouseAId, 'spouseBId' => $spouseBId];
-            Log::info('Verifying nodes exist', [
-                'query' => $verifyQuery,
-                'parameters' => $verifyParams,
-                'spouse_a_id_type' => gettype($spouseAId),
-                'spouse_b_id_type' => gettype($spouseBId),
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Verifying nodes exist', [
+            //     'query' => $verifyQuery,
+            //     'parameters' => $verifyParams,
+            //     'spouse_a_id_type' => gettype($spouseAId),
+            //     'spouse_b_id_type' => gettype($spouseBId),
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             /** @var \Laudis\Neo4j\Types\CypherList<\Laudis\Neo4j\Types\CypherMap> $verifyResult */
             $verifyResult = $transaction->run($verifyQuery, $verifyParams);
 
-            Log::info('Verify query result', [
-                'result_count' => $verifyResult->count(),
-                'has_spouse_a' => $verifyResult->first() ? $verifyResult->first()->get('a') !== null : false,
-                'has_spouse_b' => $verifyResult->first() ? $verifyResult->first()->get('b') !== null : false,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            $firstResult = $this->getFirstResult($verifyResult);
+            // Log::info('Verify query result', [
+            //     'result_count' => $verifyResult->count(),
+            //     'has_spouse_a' => $firstResult ? $firstResult->get('a') !== null : false,
+            //     'has_spouse_b' => $firstResult ? $firstResult->get('b') !== null : false,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             if ($verifyResult->count() === 0) {
                 Log::error('One or both spouse nodes not found', [
@@ -323,29 +327,29 @@ class Neo4jIndividualService
             ';
 
             $checkParams = ['spouseAId' => $spouseAId, 'spouseBId' => $spouseBId];
-            Log::info('Checking existing relationship', [
-                'query' => $checkQuery,
-                'parameters' => $checkParams,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Checking existing relationship', [
+            //     'query' => $checkQuery,
+            //     'parameters' => $checkParams,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             /** @var \Laudis\Neo4j\Types\CypherList<\Laudis\Neo4j\Types\CypherMap> $checkResult */
             $checkResult = $transaction->run($checkQuery, $checkParams);
 
-            Log::info('Check relationship result', [
-                'result_count' => $checkResult->count(),
-                'has_relationship' => $checkResult->count() > 0,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Check relationship result', [
+            //     'result_count' => $checkResult->count(),
+            //     'has_relationship' => $checkResult->count() > 0,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             if ($checkResult->count() > 0) {
-                Log::info('Spouse relationship already exists', [
-                    'spouse_a_id' => $spouseAId,
-                    'spouse_b_id' => $spouseBId,
-                    'transaction_id' => spl_object_hash($transaction),
-                ]);
+                // Log::info('Spouse relationship already exists', [
+                //     'spouse_a_id' => $spouseAId,
+                //     'spouse_b_id' => $spouseBId,
+                //     'transaction_id' => spl_object_hash($transaction),
+                // ]);
                 if ($localTransaction) {
-                    Log::info('Committing local transaction for existing relationship');
+                    // Log::info('Committing local transaction for existing relationship');
                     $localTransaction->commit();
                 }
 
@@ -361,24 +365,25 @@ class Neo4jIndividualService
             ';
 
             $createParams = ['spouseAId' => $spouseAId, 'spouseBId' => $spouseBId];
-            Log::info('Creating spouse relationship', [
-                'query' => $query,
-                'parameters' => $createParams,
-                'spouse_a_id_type' => gettype($spouseAId),
-                'spouse_b_id_type' => gettype($spouseBId),
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Creating spouse relationship', [
+            //     'query' => $query,
+            //     'parameters' => $createParams,
+            //     'spouse_a_id_type' => gettype($spouseAId),
+            //     'spouse_b_id_type' => gettype($spouseBId),
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             // Try running the query directly first to verify it works
             try {
-                Log::info('Attempting direct query execution');
+                // Log::info('Attempting direct query execution');
                 $directResult = $this->client->run($query, $createParams);
-                Log::info('Direct query execution result', [
-                    'result_count' => $directResult->count(),
-                    'has_spouse_a' => $directResult->first() ? $directResult->first()->get('a') !== null : false,
-                    'has_spouse_b' => $directResult->first() ? $directResult->first()->get('b') !== null : false,
-                    'has_relationship' => $directResult->first() ? $directResult->first()->get('r') !== null : false,
-                ]);
+                $directFirstResult = $this->getFirstResult($directResult);
+                // Log::info('Direct query execution result', [
+                //     'result_count' => $directResult->count(),
+                //     'has_spouse_a' => $directFirstResult ? $directFirstResult->get('a') !== null : false,
+                //     'has_spouse_b' => $directFirstResult ? $directFirstResult->get('b') !== null : false,
+                //     'has_relationship' => $directFirstResult ? $directFirstResult->get('r') !== null : false,
+                // ]);
             } catch (\Exception $e) {
                 Log::error('Direct query execution failed', [
                     'error' => $e->getMessage(),
@@ -389,13 +394,14 @@ class Neo4jIndividualService
             /** @var \Laudis\Neo4j\Types\CypherList<\Laudis\Neo4j\Types\CypherMap> $result */
             $result = $transaction->run($query, $createParams);
 
-            Log::info('Create relationship result', [
-                'result_count' => $result->count(),
-                'has_spouse_a' => $result->first() ? $result->first()->get('a') !== null : false,
-                'has_spouse_b' => $result->first() ? $result->first()->get('b') !== null : false,
-                'has_relationship' => $result->first() ? $result->first()->get('r') !== null : false,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            $resultFirst = $this->getFirstResult($result);
+            // Log::info('Create relationship result', [
+            //     'result_count' => $result->count(),
+            //     'has_spouse_a' => $resultFirst ? $resultFirst->get('a') !== null : false,
+            //     'has_spouse_b' => $resultFirst ? $resultFirst->get('b') !== null : false,
+            //     'has_relationship' => $resultFirst ? $resultFirst->get('r') !== null : false,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             if ($result->count() === 0) {
                 throw new \Exception('Failed to create spouse relationship');
@@ -410,12 +416,12 @@ class Neo4jIndividualService
             /** @var \Laudis\Neo4j\Types\CypherList<\Laudis\Neo4j\Types\CypherMap> $verifyRelResult */
             $verifyRelResult = $transaction->run($verifyRelQuery, $createParams);
 
-            Log::info('Verifying relationship creation', [
-                'query' => $verifyRelQuery,
-                'parameters' => $createParams,
-                'relationship_exists' => $verifyRelResult->count() > 0,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Verifying relationship creation', [
+            //     'query' => $verifyRelQuery,
+            //     'parameters' => $createParams,
+            //     'relationship_exists' => $verifyRelResult->count() > 0,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             if ($verifyRelResult->count() === 0) {
                 throw new \Exception('Relationship verification failed');
@@ -423,29 +429,29 @@ class Neo4jIndividualService
 
             // Explicitly commit the transaction if it's a local one
             if ($localTransaction) {
-                Log::info('Committing local transaction');
+                // Log::info('Committing local transaction');
                 $localTransaction->commit();
-                Log::info('Local transaction committed successfully');
+                // Log::info('Local transaction committed successfully');
             }
 
-            Log::info('Successfully created spouse relationship', [
-                'spouse_a_id' => $spouseAId,
-                'spouse_b_id' => $spouseBId,
-                'relationship_verified' => true,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Successfully created spouse relationship', [
+            //     'spouse_a_id' => $spouseAId,
+            //     'spouse_b_id' => $spouseBId,
+            //     'relationship_verified' => true,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             return $result;
         } catch (\Exception $e) {
             // Rollback the transaction if it's a local one
             if ($localTransaction) {
-                Log::info('Rolling back local transaction due to error', [
-                    'error' => $e->getMessage(),
-                    'transaction_id' => spl_object_hash($transaction),
-                ]);
+                // Log::info('Rolling back local transaction due to error', [
+                //     'error' => $e->getMessage(),
+                //     'transaction_id' => spl_object_hash($transaction),
+                // ]);
                 try {
                     $localTransaction->rollback();
-                    Log::info('Local transaction rolled back successfully');
+                    // Log::info('Local transaction rolled back successfully');
                 } catch (\Exception $rollbackError) {
                     Log::error('Failed to rollback transaction', [
                         'error' => $rollbackError->getMessage(),
@@ -473,12 +479,12 @@ class Neo4jIndividualService
         try {
             // If no transaction is provided, create a local one
             if (! $transaction) {
-                Log::info('Creating local transaction');
+                // Log::info('Creating local transaction');
                 $localTransaction = $this->client->beginTransaction();
                 $transaction = $localTransaction;
-                Log::info('Local transaction created', [
-                    'transaction_id' => spl_object_hash($transaction),
-                ]);
+                // Log::info('Local transaction created', [
+                //     'transaction_id' => spl_object_hash($transaction),
+                // ]);
             }
 
             // First verify both nodes exist
@@ -489,23 +495,24 @@ class Neo4jIndividualService
             ';
 
             $verifyParams = ['siblingAId' => $siblingAId, 'siblingBId' => $siblingBId];
-            Log::info('Verifying nodes exist', [
-                'query' => $verifyQuery,
-                'parameters' => $verifyParams,
-                'sibling_a_id_type' => gettype($siblingAId),
-                'sibling_b_id_type' => gettype($siblingBId),
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Verifying nodes exist', [
+            //     'query' => $verifyQuery,
+            //     'parameters' => $verifyParams,
+            //     'sibling_a_id_type' => gettype($siblingAId),
+            //     'sibling_b_id_type' => gettype($siblingBId),
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             /** @var \Laudis\Neo4j\Types\CypherList<\Laudis\Neo4j\Types\CypherMap> $verifyResult */
             $verifyResult = $transaction->run($verifyQuery, $verifyParams);
 
-            Log::info('Verify query result', [
-                'result_count' => $verifyResult->count(),
-                'has_sibling_a' => $verifyResult->first() ? $verifyResult->first()->get('a') !== null : false,
-                'has_sibling_b' => $verifyResult->first() ? $verifyResult->first()->get('b') !== null : false,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            $firstResult = $this->getFirstResult($verifyResult);
+            // Log::info('Verify query result', [
+            //     'result_count' => $verifyResult->count(),
+            //     'has_sibling_a' => $firstResult ? $firstResult->get('a') !== null : false,
+            //     'has_sibling_b' => $firstResult ? $firstResult->get('b') !== null : false,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             if ($verifyResult->count() === 0) {
                 Log::error('One or both sibling nodes not found', [
@@ -525,29 +532,29 @@ class Neo4jIndividualService
             ';
 
             $checkParams = ['siblingAId' => $siblingAId, 'siblingBId' => $siblingBId];
-            Log::info('Checking existing relationship', [
-                'query' => $checkQuery,
-                'parameters' => $checkParams,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Checking existing relationship', [
+            //     'query' => $checkQuery,
+            //     'parameters' => $checkParams,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             /** @var \Laudis\Neo4j\Types\CypherList<\Laudis\Neo4j\Types\CypherMap> $checkResult */
             $checkResult = $transaction->run($checkQuery, $checkParams);
 
-            Log::info('Check relationship result', [
-                'result_count' => $checkResult->count(),
-                'has_relationship' => $checkResult->count() > 0,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Check relationship result', [
+            //     'result_count' => $checkResult->count(),
+            //     'has_relationship' => $checkResult->count() > 0,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             if ($checkResult->count() > 0) {
-                Log::info('Sibling relationship already exists', [
-                    'sibling_a_id' => $siblingAId,
-                    'sibling_b_id' => $siblingBId,
-                    'transaction_id' => spl_object_hash($transaction),
-                ]);
+                // Log::info('Sibling relationship already exists', [
+                //     'sibling_a_id' => $siblingAId,
+                //     'sibling_b_id' => $siblingBId,
+                //     'transaction_id' => spl_object_hash($transaction),
+                // ]);
                 if ($localTransaction) {
-                    Log::info('Committing local transaction for existing relationship');
+                    // Log::info('Committing local transaction for existing relationship');
                     $localTransaction->commit();
                 }
 
@@ -563,24 +570,25 @@ class Neo4jIndividualService
             ';
 
             $createParams = ['siblingAId' => $siblingAId, 'siblingBId' => $siblingBId];
-            Log::info('Creating sibling relationship', [
-                'query' => $query,
-                'parameters' => $createParams,
-                'sibling_a_id_type' => gettype($siblingAId),
-                'sibling_b_id_type' => gettype($siblingBId),
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Creating sibling relationship', [
+            //     'query' => $query,
+            //     'parameters' => $createParams,
+            //     'sibling_a_id_type' => gettype($siblingAId),
+            //     'sibling_b_id_type' => gettype($siblingBId),
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             // Try running the query directly first to verify it works
             try {
-                Log::info('Attempting direct query execution');
+                // Log::info('Attempting direct query execution');
                 $directResult = $this->client->run($query, $createParams);
-                Log::info('Direct query execution result', [
-                    'result_count' => $directResult->count(),
-                    'has_sibling_a' => $directResult->first() ? $directResult->first()->get('a') !== null : false,
-                    'has_sibling_b' => $directResult->first() ? $directResult->first()->get('b') !== null : false,
-                    'has_relationship' => $directResult->first() ? $directResult->first()->get('r') !== null : false,
-                ]);
+                $directFirstResult = $this->getFirstResult($directResult);
+                // Log::info('Direct query execution result', [
+                //     'result_count' => $directResult->count(),
+                //     'has_sibling_a' => $directFirstResult ? $directFirstResult->get('a') !== null : false,
+                //     'has_sibling_b' => $directFirstResult ? $directFirstResult->get('b') !== null : false,
+                //     'has_relationship' => $directFirstResult ? $directFirstResult->get('r') !== null : false,
+                // ]);
             } catch (\Exception $e) {
                 Log::error('Direct query execution failed', [
                     'error' => $e->getMessage(),
@@ -591,13 +599,14 @@ class Neo4jIndividualService
             /** @var \Laudis\Neo4j\Types\CypherList<\Laudis\Neo4j\Types\CypherMap> $result */
             $result = $transaction->run($query, $createParams);
 
-            Log::info('Create relationship result', [
-                'result_count' => $result->count(),
-                'has_sibling_a' => $result->first() ? $result->first()->get('a') !== null : false,
-                'has_sibling_b' => $result->first() ? $result->first()->get('b') !== null : false,
-                'has_relationship' => $result->first() ? $result->first()->get('r') !== null : false,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            $resultFirst = $this->getFirstResult($result);
+            // Log::info('Create relationship result', [
+            //     'result_count' => $result->count(),
+            //     'has_sibling_a' => $resultFirst ? $resultFirst->get('a') !== null : false,
+            //     'has_sibling_b' => $resultFirst ? $resultFirst->get('b') !== null : false,
+            //     'has_relationship' => $resultFirst ? $resultFirst->get('r') !== null : false,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             if ($result->count() === 0) {
                 throw new \Exception('Failed to create sibling relationship');
@@ -612,12 +621,12 @@ class Neo4jIndividualService
             /** @var \Laudis\Neo4j\Types\CypherList<\Laudis\Neo4j\Types\CypherMap> $verifyRelResult */
             $verifyRelResult = $transaction->run($verifyRelQuery, $createParams);
 
-            Log::info('Verifying relationship creation', [
-                'query' => $verifyRelQuery,
-                'parameters' => $createParams,
-                'relationship_exists' => $verifyRelResult->count() > 0,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Verifying relationship creation', [
+            //     'query' => $verifyRelQuery,
+            //     'parameters' => $createParams,
+            //     'relationship_exists' => $verifyRelResult->count() > 0,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             if ($verifyRelResult->count() === 0) {
                 throw new \Exception('Relationship verification failed');
@@ -625,29 +634,29 @@ class Neo4jIndividualService
 
             // Explicitly commit the transaction if it's a local one
             if ($localTransaction) {
-                Log::info('Committing local transaction');
+                // Log::info('Committing local transaction');
                 $localTransaction->commit();
-                Log::info('Local transaction committed successfully');
+                // Log::info('Local transaction committed successfully');
             }
 
-            Log::info('Successfully created sibling relationship', [
-                'sibling_a_id' => $siblingAId,
-                'sibling_b_id' => $siblingBId,
-                'relationship_verified' => true,
-                'transaction_id' => spl_object_hash($transaction),
-            ]);
+            // Log::info('Successfully created sibling relationship', [
+            //     'sibling_a_id' => $siblingAId,
+            //     'sibling_b_id' => $siblingBId,
+            //     'relationship_verified' => true,
+            //     'transaction_id' => spl_object_hash($transaction),
+            // ]);
 
             return $result;
         } catch (\Exception $e) {
             // Rollback the transaction if it's a local one
             if ($localTransaction) {
-                Log::info('Rolling back local transaction due to error', [
-                    'error' => $e->getMessage(),
-                    'transaction_id' => spl_object_hash($transaction),
-                ]);
+                // Log::info('Rolling back local transaction due to error', [
+                //     'error' => $e->getMessage(),
+                //     'transaction_id' => spl_object_hash($transaction),
+                // ]);
                 try {
                     $localTransaction->rollback();
-                    Log::info('Local transaction rolled back successfully');
+                    // Log::info('Local transaction rolled back successfully');
                 } catch (\Exception $rollbackError) {
                     Log::error('Failed to rollback transaction', [
                         'error' => $rollbackError->getMessage(),
@@ -1022,7 +1031,8 @@ class Neo4jIndividualService
         $result = $transaction ? $transaction->run($query, ['id' => $treeId])
                               : $this->client->run($query, ['id' => $treeId]);
 
-        return $result->first()->get('count') > 0;
+        $firstResult = $this->getFirstResult($result);
+        return $firstResult ? $firstResult->get('count') > 0 : false;
     }
 
     public function getTreeStats(int $treeId, ?TransactionInterface $transaction = null): mixed
@@ -1064,7 +1074,8 @@ class Neo4jIndividualService
         $result = $transaction ? $transaction->run($query, ['fromId' => $fromId, 'toId' => $toId])
                               : $this->client->run($query, ['fromId' => $fromId, 'toId' => $toId]);
 
-        return $result->first()->get('count') > 0;
+        $firstResult = $this->getFirstResult($result);
+        return $firstResult ? $firstResult->get('count') > 0 : false;
     }
 
     public function validateNoCycles(int $fromId, int $toId, string $type, ?TransactionInterface $transaction = null): bool
@@ -1077,7 +1088,8 @@ class Neo4jIndividualService
         $result = $transaction ? $transaction->run($query, ['fromId' => $fromId, 'toId' => $toId])
                               : $this->client->run($query, ['fromId' => $fromId, 'toId' => $toId]);
 
-        return $result->first()->get('count') === 0;
+        $firstResult = $this->getFirstResult($result);
+        return $firstResult ? $firstResult->get('count') === 0 : true;
     }
 
     public function getRelationshipStats(int $individualId, ?TransactionInterface $transaction = null): mixed
@@ -1154,5 +1166,13 @@ class Neo4jIndividualService
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * Safely get the first result from a CypherList
+     */
+    private function getFirstResult(\Laudis\Neo4j\Types\CypherList $cypherList): ?\Laudis\Neo4j\Types\CypherMap
+    {
+        return $cypherList->count() > 0 ? $cypherList->first() : null;
     }
 }

@@ -254,8 +254,13 @@ class TreeController extends Controller
             $neo4jTransaction = $this->neo4jService->beginTransaction();
 
             // Query to get all individuals and their relationships (directed, no duplicates)
+            /*
             $query = 'MATCH (i:Individual {tree_id: "'.$tree->id.'"})
                      OPTIONAL MATCH (i)-[r]->(j:Individual {tree_id: "'.$tree->id.'"})
+                     RETURN i, r, j';
+            */
+            $query = 'MATCH (i:Individual {tree_id: '.$tree->id.'})
+                     OPTIONAL MATCH (i)-[r]->(j:Individual {tree_id: '.$tree->id.'})
                      RETURN i, r, j';
 
             $result = $neo4jTransaction->run($query);
@@ -309,7 +314,7 @@ class TreeController extends Controller
                     // For undirected relationships, only add one direction (lowest id first)
                     if (in_array($type, ['SPOUSE_OF', 'SIBLING_OF'])) {
                         if ($from > $to) {
-                            Log::info('Skipping edge from '.$from.' to '.$to.' because it is a duplicate');
+                            // Log::info('Skipping edge from '.$from.' to '.$to.' because it is a duplicate');
 
                             // Only add edge from lower id to higher id
                             continue;
@@ -335,9 +340,9 @@ class TreeController extends Controller
                 'edges' => $edges,
             ];
 
-            Log::info('Tree Data:', [
-                'treeData' => $treeData,
-            ]);
+            // Log::info('Tree Data:', [
+            //     'treeData' => $treeData,
+            // ]);
 
             return view('trees.visualization', [
                 'tree' => $tree,
