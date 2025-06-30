@@ -10,7 +10,7 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@tailwindcss/postcss": "^4.1.10",
+        "@tailwindcss/postcss": "^4.1.11",
         "@tailwindcss/vite": "^4.1.10",
         "alpinejs": "^3.14.9",
         "autoprefixer": "^10.4.21",
