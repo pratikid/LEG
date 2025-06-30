@@ -32,6 +32,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SearchController;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -224,9 +225,9 @@ Route::get('/admin/logs', [AdminController::class, 'logs'])->name('admin.logs')-
 Route::get('/admin/settings', [AdminController::class, 'settings'])->name('admin.settings')->middleware(['auth', 'admin']);
 Route::get('/admin/notifications', [AdminController::class, 'notifications'])->name('admin.notifications')->middleware(['auth', 'admin']);
 
-Route::get('/search', function () {
-    return view('search.index');
-})->name('search')->middleware(['auth']);
+// Search Routes
+Route::get('/search', [SearchController::class, 'index'])->name('search')->middleware(['auth']);
+Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions')->middleware(['auth']);
 
 Route::post('/log-tree-data', function (Request $request) {
     Log::info('Tree Data:', [
