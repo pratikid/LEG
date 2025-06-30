@@ -1,7 +1,7 @@
 @props(['treeData'])
 
 <div class="family-tree-container">
-    <div id="tree-container" style="width: 100%; height: 1100px;"></div>
+    <div id="tree-container" style="width: 100%; height: 1100px;" data-tree-data='{!! json_encode($treeData) !!}'></div>
 </div>
 
 {{-- Include all layout components --}}
@@ -665,6 +665,54 @@ class FamilyTreeCore {
         console.log('Edit node:', node);
     }
     
+    /**
+     * Resize SVG method for fullscreen functionality
+     * 
+     * This method is called when the visualization enters or exits fullscreen mode.
+     * It updates the SVG dimensions to match the container size and recalculates
+     * the layout to ensure proper display in the new dimensions.
+     * 
+     * Features:
+     * - Updates SVG width and height to match container
+     * - Recalculates layout for optimal node positioning
+     * - Handles edge cases where SVG might not exist
+     * - Maintains zoom and pan functionality
+     */
+    resizeSVG() {
+        if (!this.container) {
+            console.warn('Container not found for SVG resize');
+            return;
+        }
+        
+        // Update dimensions
+        this.width = this.container.clientWidth;
+        this.height = this.container.clientHeight;
+        
+        // Find the main SVG element
+        const mainSVG = d3.select('#tree-container svg');
+        if (mainSVG.empty()) {
+            console.warn('SVG element not found for resize');
+            return;
+        }
+        
+        // Update the main SVG element dimensions
+        mainSVG
+            .attr('width', this.width)
+            .attr('height', this.height);
+        
+        // Update the inner group transform if it exists
+        if (this.svg && !this.svg.empty()) {
+            this.svg.attr('transform', `translate(${this.margin.left},${this.margin.top})`);
+        }
+        
+        // Recalculate layout if needed
+        if (this.treeState.currentLayout) {
+            this.updateLayout(this.treeState.currentLayout);
+        }
+        
+        console.log('SVG resized to:', this.width, 'x', this.height);
+    }
+    
     setupEventListeners() {
         // Control button event listeners
         const addEventListenerSafely = (elementId, event, handler, maxRetries = 5) => {
@@ -758,8 +806,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (treeDataElement) {
             treeData = JSON.parse(treeDataElement.textContent);
         } else {
-            // Fallback to the old method
-            treeData = JSON.parse('{!! json_encode($treeData) !!}');
+            // Fallback to reading from data attribute
+            const container = document.getElementById('tree-container');
+            if (container && container.dataset.treeData) {
+                treeData = JSON.parse(container.dataset.treeData);
+            } else {
+                console.error('No tree data available');
+                return;
+            }
         }
         
         // Validate tree data before creating the visualization

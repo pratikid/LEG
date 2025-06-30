@@ -35,7 +35,7 @@
         </div>
     </div>
 
-    <div class="relative">
+    <div class="relative" id="tree-visualization-container">
         <!-- Left Side Controls -->
         <div class="absolute left-4 top-4 z-10 flex flex-col space-y-2">
             <!-- Zoom In -->
@@ -71,6 +71,13 @@
 
         <!-- Right Side Controls -->
         <div class="absolute right-4 top-4 z-10 flex flex-col space-y-2">
+            <!-- Fullscreen Toggle -->
+            <button id="fullscreenToggle" class="control-btn" title="Toggle Fullscreen">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                </svg>
+            </button>
+            
             <!-- Add Person -->
             <div class="relative">
                 <button id="showAddMenu" class="control-btn" title="Add Person">
@@ -158,5 +165,129 @@
 .menu-item:hover {
     background-color: #f3f4f6;
 }
+
+/* Fullscreen styles */
+#tree-visualization-container.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    background-color: white;
+    padding: 1rem;
+}
+
+#tree-visualization-container.fullscreen .family-tree-container {
+    width: 100%;
+    height: 100%;
+}
+
+#tree-visualization-container.fullscreen #tree-container {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+#tree-visualization-container.fullscreen #tree-container svg {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Fullscreen button icon states */
+#fullscreenToggle.fullscreen-active svg {
+    transform: rotate(180deg);
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fullscreenToggle = document.getElementById('fullscreenToggle');
+    const container = document.getElementById('tree-visualization-container');
+    const treeContainer = document.getElementById('tree-container');
+    
+    // Fullscreen functionality
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            // Enter fullscreen
+            if (container.requestFullscreen) {
+                container.requestFullscreen();
+            } else if (container.webkitRequestFullscreen) {
+                container.webkitRequestFullscreen();
+            } else if (container.msRequestFullscreen) {
+                container.msRequestFullscreen();
+            }
+        } else {
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+    }
+    
+    // Update fullscreen button state
+    function updateFullscreenButton() {
+        if (document.fullscreenElement) {
+            fullscreenToggle.classList.add('fullscreen-active');
+            container.classList.add('fullscreen');
+            // Resize tree container for fullscreen
+            if (treeContainer) {
+                treeContainer.style.width = '100%';
+                treeContainer.style.height = '100%';
+                // Call resizeSVG method on the family tree instance
+                if (window.familyTree && typeof window.familyTree.resizeSVG === 'function') {
+                    setTimeout(() => {
+                        window.familyTree.resizeSVG();
+                    }, 100); // Small delay to ensure DOM updates are complete
+                }
+            }
+        } else {
+            fullscreenToggle.classList.remove('fullscreen-active');
+            container.classList.remove('fullscreen');
+            // Reset tree container size
+            if (treeContainer) {
+                treeContainer.style.width = '100%';
+                treeContainer.style.height = '1100px';
+                // Call resizeSVG method on the family tree instance
+                if (window.familyTree && typeof window.familyTree.resizeSVG === 'function') {
+                    setTimeout(() => {
+                        window.familyTree.resizeSVG();
+                    }, 100); // Small delay to ensure DOM updates are complete
+                }
+            }
+        }
+    }
+    
+    // Event listeners
+    fullscreenToggle.addEventListener('click', toggleFullscreen);
+    
+    // Listen for fullscreen change events
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+    document.addEventListener('mozfullscreenchange', updateFullscreenButton);
+    document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+    
+    // Handle window resize events for fullscreen mode
+    window.addEventListener('resize', function() {
+        if (document.fullscreenElement && window.familyTree && typeof window.familyTree.resizeSVG === 'function') {
+            setTimeout(() => {
+                window.familyTree.resizeSVG();
+            }, 100);
+        }
+    });
+    
+    // Handle escape key to exit fullscreen
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.fullscreenElement) {
+            toggleFullscreen();
+        }
+    });
+    
+    // Initialize button state
+    updateFullscreenButton();
+});
+</script>
 @endsection 
