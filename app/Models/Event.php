@@ -28,14 +28,47 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $created_by
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
- * @property-read \App\Models\Tree $tree
- * @property-read \App\Models\Individual|null $individual
- * @property-read \App\Models\Family|null $family
- * @property-read \App\Models\User $creator
+ * @property-read Tree $tree
+ * @property-read Individual|null $individual
+ * @property-read Family|null $family
+ * @property-read User $creator
  */
-class Event extends Model
+final class Event extends Model
 {
     use HasFactory;
+
+    /**
+     * Event types constants
+     */
+    public const TYPE_BIRTH = 'birth';
+
+    public const TYPE_DEATH = 'death';
+
+    public const TYPE_MARRIAGE = 'marriage';
+
+    public const TYPE_DIVORCE = 'divorce';
+
+    public const TYPE_BAPTISM = 'baptism';
+
+    public const TYPE_BURIAL = 'burial';
+
+    public const TYPE_CENSUS = 'census';
+
+    public const TYPE_IMMIGRATION = 'immigration';
+
+    public const TYPE_EMIGRATION = 'emigration';
+
+    public const TYPE_NATURALIZATION = 'naturalization';
+
+    public const TYPE_MILITARY = 'military';
+
+    public const TYPE_EDUCATION = 'education';
+
+    public const TYPE_OCCUPATION = 'occupation';
+
+    public const TYPE_RESIDENCE = 'residence';
+
+    public const TYPE_OTHER = 'other';
 
     protected $fillable = [
         'tree_id',
@@ -60,25 +93,6 @@ class Event extends Model
         'event_date' => 'date',
         'additional_data' => 'array',
     ];
-
-    /**
-     * Event types constants
-     */
-    public const TYPE_BIRTH = 'birth';
-    public const TYPE_DEATH = 'death';
-    public const TYPE_MARRIAGE = 'marriage';
-    public const TYPE_DIVORCE = 'divorce';
-    public const TYPE_BAPTISM = 'baptism';
-    public const TYPE_BURIAL = 'burial';
-    public const TYPE_CENSUS = 'census';
-    public const TYPE_IMMIGRATION = 'immigration';
-    public const TYPE_EMIGRATION = 'emigration';
-    public const TYPE_NATURALIZATION = 'naturalization';
-    public const TYPE_MILITARY = 'military';
-    public const TYPE_EDUCATION = 'education';
-    public const TYPE_OCCUPATION = 'occupation';
-    public const TYPE_RESIDENCE = 'residence';
-    public const TYPE_OTHER = 'other';
 
     /**
      * Get all available event types.
@@ -156,7 +170,7 @@ class Event extends Model
      */
     public function hasLocation(): bool
     {
-        return !empty($this->event_place) || !empty($this->event_city);
+        return ! empty($this->event_place) || ! empty($this->event_city);
     }
 
     /**
@@ -164,7 +178,7 @@ class Event extends Model
      */
     public function hasCoordinates(): bool
     {
-        return !empty($this->event_latitude) && !empty($this->event_longitude);
+        return ! empty($this->event_latitude) && ! empty($this->event_longitude);
     }
 
     /**
@@ -214,7 +228,7 @@ class Event extends Model
     {
         return $query->where(function ($q) {
             $q->whereNotNull('event_place')
-              ->orWhereNotNull('event_city');
+                ->orWhereNotNull('event_city');
         });
     }
 
@@ -224,6 +238,6 @@ class Event extends Model
     public function scopeWithCoordinates($query)
     {
         return $query->whereNotNull('event_latitude')
-                    ->whereNotNull('event_longitude');
+            ->whereNotNull('event_longitude');
     }
 }

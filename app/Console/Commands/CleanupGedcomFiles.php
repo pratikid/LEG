@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 
-class CleanupGedcomFiles extends Command
+final class CleanupGedcomFiles extends Command
 {
     /**
      * The name and signature of the console command.
@@ -34,11 +33,12 @@ class CleanupGedcomFiles extends Command
         $days = (int) $this->option('days');
         $dryRun = $this->option('dry-run');
         $cutoffDate = now()->subDays($days);
-        
+
         $cleanedDir = storage_path('app/gedcom/cleaned');
-        
-        if (!is_dir($cleanedDir)) {
+
+        if (! is_dir($cleanedDir)) {
             $this->info('No cleaned GEDCOM files directory found.');
+
             return 0;
         }
 
@@ -47,14 +47,14 @@ class CleanupGedcomFiles extends Command
 
         // Recursively find all .ged files
         $files = File::allFiles($cleanedDir);
-        
+
         foreach ($files as $file) {
             if ($file->getExtension() === 'ged') {
                 $fileModified = \Carbon\Carbon::createFromTimestamp($file->getMTime());
-                
+
                 if ($fileModified->lt($cutoffDate)) {
                     $fileSize = $file->getSize();
-                    
+
                     if ($dryRun) {
                         $this->line("Would delete: {$file->getPathname()} (modified: {$fileModified->format('Y-m-d H:i:s')})");
                     } else {
@@ -71,14 +71,14 @@ class CleanupGedcomFiles extends Command
         }
 
         // Clean up empty directories
-        if (!$dryRun) {
+        if (! $dryRun) {
             $this->cleanupEmptyDirectories($cleanedDir);
         }
 
         if ($dryRun) {
             $this->info("Dry run completed. Found {$deletedCount} files that would be deleted.");
         } else {
-            $this->info("Cleanup completed. Deleted {$deletedCount} files (" . $this->formatBytes($deletedSize) . ").");
+            $this->info("Cleanup completed. Deleted {$deletedCount} files (".$this->formatBytes($deletedSize).').');
         }
 
         return 0;
@@ -90,17 +90,17 @@ class CleanupGedcomFiles extends Command
     private function cleanupEmptyDirectories(string $directory): void
     {
         $items = scandir($directory);
-        
+
         foreach ($items as $item) {
             if ($item === '.' || $item === '..') {
                 continue;
             }
-            
-            $path = $directory . DIRECTORY_SEPARATOR . $item;
-            
+
+            $path = $directory.DIRECTORY_SEPARATOR.$item;
+
             if (is_dir($path)) {
                 $this->cleanupEmptyDirectories($path);
-                
+
                 // Remove directory if it's empty
                 if (count(scandir($path)) === 2) { // Only . and ..
                     rmdir($path);
@@ -119,9 +119,9 @@ class CleanupGedcomFiles extends Command
         $bytes = max($bytes, 0);
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
-        
+
         $bytes /= pow(1024, $pow);
-        
-        return round($bytes, 2) . ' ' . $units[$pow];
+
+        return round($bytes, 2).' '.$units[$pow];
     }
-} 
+}

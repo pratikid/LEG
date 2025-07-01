@@ -25,10 +25,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $website
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
- * @property-read \App\Models\Tree $tree
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Source> $sources
+ * @property-read Tree $tree
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Source> $sources
  */
-class Repository extends Model
+final class Repository extends Model
 {
     use HasFactory;
 
@@ -99,7 +99,7 @@ class Repository extends Model
      */
     public function hasContactInfo(): bool
     {
-        return !empty($this->phone) || !empty($this->email) || !empty($this->website);
+        return ! empty($this->phone) || ! empty($this->email) || ! empty($this->website);
     }
 
     /**
@@ -107,7 +107,7 @@ class Repository extends Model
      */
     public function hasAddress(): bool
     {
-        return !empty($this->address_line1) || !empty($this->city);
+        return ! empty($this->address_line1) || ! empty($this->city);
     }
 
     /**
@@ -149,8 +149,8 @@ class Repository extends Model
     {
         return $query->where(function ($q) {
             $q->whereNotNull('phone')
-              ->orWhereNotNull('email')
-              ->orWhereNotNull('website');
+                ->orWhereNotNull('email')
+                ->orWhereNotNull('website');
         });
     }
 
@@ -161,7 +161,7 @@ class Repository extends Model
     {
         return $query->where(function ($q) {
             $q->whereNotNull('address_line1')
-              ->orWhereNotNull('city');
+                ->orWhereNotNull('city');
         });
     }
-} 
+}

@@ -39,22 +39,6 @@ trait HasPostgresEnums
     }
 
     /**
-     * Scope to filter by enum value
-     */
-    public function scopeWhereEnum(Builder $query, string $column, string $value): Builder
-    {
-        return $query->where($column, $value);
-    }
-
-    /**
-     * Scope to filter by multiple enum values
-     */
-    public function scopeWhereEnumIn(Builder $query, string $column, array $values): Builder
-    {
-        return $query->whereIn($column, $values);
-    }
-
-    /**
      * Check if a value is valid for the enum column
      */
     public static function isValidEnumValue(string $column, string $value): bool
@@ -70,5 +54,21 @@ trait HasPostgresEnums
         $values = static::getEnumValues($column);
 
         return $values[array_rand($values)];
+    }
+
+    /**
+     * Scope to filter by enum value
+     */
+    public function scopeWhereEnum(Builder $query, string $column, string $value): Builder
+    {
+        return $query->where($column, $value);
+    }
+
+    /**
+     * Scope to filter by multiple enum values
+     */
+    public function scopeWhereEnumIn(Builder $query, string $column, array $values): Builder
+    {
+        return $query->whereIn($column, $values);
     }
 }

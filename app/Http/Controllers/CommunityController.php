@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\View\View;
 
-class CommunityController extends Controller
+final class CommunityController extends Controller
 {
     public function directory(): View
     {

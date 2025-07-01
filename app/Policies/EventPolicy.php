@@ -7,7 +7,7 @@ namespace App\Policies;
 use App\Models\Event;
 use App\Models\User;
 
-class EventPolicy
+final class EventPolicy
 {
     /**
      * Create a new policy instance.

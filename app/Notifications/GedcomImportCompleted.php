@@ -10,17 +10,17 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class GedcomImportCompleted extends Notification implements ShouldQueue
+final class GedcomImportCompleted extends Notification implements ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
-     * 
-     * @param Tree $tree The tree that was imported into
-     * @param array $parsedData Array containing integer counts: ['individuals' => int, 'families' => int]
-     * @param string|null $fileName Original filename of the imported GEDCOM file
-     * @param string|null $cleanedFilePath Path to the cleaned GEDCOM file if user-defined tags were removed
+     *
+     * @param  Tree  $tree  The tree that was imported into
+     * @param  array  $parsedData  Array containing integer counts: ['individuals' => int, 'families' => int]
+     * @param  string|null  $fileName  Original filename of the imported GEDCOM file
+     * @param  string|null  $cleanedFilePath  Path to the cleaned GEDCOM file if user-defined tags were removed
      */
     public function __construct(
         protected Tree $tree,

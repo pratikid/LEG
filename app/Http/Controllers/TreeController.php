@@ -8,12 +8,13 @@ use App\Jobs\ImportGedcomJob;
 use App\Models\Tree;
 use App\Services\GedcomService;
 use App\Services\Neo4jIndividualService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
-class TreeController extends Controller
+final class TreeController extends Controller
 {
     protected Neo4jIndividualService $neo4jService;
 
@@ -142,7 +143,7 @@ class TreeController extends Controller
 
             $user = $request->user();
             if (! $user) {
-                throw new \Exception('User not authenticated');
+                throw new Exception('User not authenticated');
             }
 
             $validated['user_id'] = $user->id;
@@ -159,7 +160,7 @@ class TreeController extends Controller
 
             // Verify tree was created in Neo4j
             if (! $this->neo4jService->validateTreeExists($tree->id, $neo4jTransaction)) {
-                throw new \Exception('Failed to create tree in Neo4j');
+                throw new Exception('Failed to create tree in Neo4j');
             }
 
             // Neo4j transaction is automatically committed when the transaction object is destroyed
@@ -168,12 +169,12 @@ class TreeController extends Controller
 
             return redirect()->route('trees.show', $tree)
                 ->with('success', 'Tree created successfully.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if (isset($neo4jTransaction)) {
                 try {
                     // Neo4j transaction is automatically rolled back when the transaction object is destroyed
                     unset($neo4jTransaction);
-                } catch (\Exception $neo4jError) {
+                } catch (Exception $neo4jError) {
                     Log::error('Failed to handle Neo4j transaction', [
                         'exception' => $neo4jError,
                     ]);
@@ -349,7 +350,7 @@ class TreeController extends Controller
                 'treeData' => $treeData,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error in tree visualization:', [
                 'tree_id' => $tree->id,
                 'error' => $e->getMessage(),
@@ -400,12 +401,12 @@ class TreeController extends Controller
 
             return redirect()->route('trees.show', $tree)
                 ->with('success', 'Tree updated successfully.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if ($neo4jTransaction) {
                 try {
                     // Neo4j transaction is automatically rolled back when the transaction object is destroyed
                     unset($neo4jTransaction);
-                } catch (\Exception $neo4jError) {
+                } catch (Exception $neo4jError) {
                     Log::error('Failed to handle Neo4j transaction', [
                         'exception' => $neo4jError,
                     ]);
@@ -446,7 +447,7 @@ class TreeController extends Controller
 
             // Verify tree was deleted from Neo4j
             if ($this->neo4jService->validateTreeExists($id, $neo4jTransaction)) {
-                throw new \Exception('Failed to delete tree from Neo4j');
+                throw new Exception('Failed to delete tree from Neo4j');
             }
 
             // Neo4j transaction is automatically committed when the transaction object is destroyed
@@ -455,12 +456,12 @@ class TreeController extends Controller
 
             return redirect()->route('trees.index')
                 ->with('success', 'Tree deleted successfully.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if ($neo4jTransaction) {
                 try {
                     // Neo4j transaction is automatically rolled back when the transaction object is destroyed
                     unset($neo4jTransaction);
-                } catch (\Exception $neo4jError) {
+                } catch (Exception $neo4jError) {
                     Log::error('Failed to handle Neo4j transaction', [
                         'exception' => $neo4jError,
                     ]);
@@ -475,6 +476,19 @@ class TreeController extends Controller
 
             return redirect()->back()
                 ->withErrors(['error' => 'An unexpected error occurred. Please try again later.']);
+        }
+    }
+
+    /**
+     * Safely get a property from a Neo4j node, returning null if the property doesn't exist
+     */
+    private function getSafeProperty($node, string $propertyName)
+    {
+        try {
+            return $node->getProperty($propertyName);
+        } catch (Exception $e) {
+            // Property doesn't exist, return null
+            return null;
         }
     }
 }

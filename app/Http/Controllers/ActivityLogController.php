@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
+use RuntimeException;
 
-class ActivityLogController extends Controller
+final class ActivityLogController extends Controller
 {
     public function __construct()
     {
@@ -77,7 +80,7 @@ class ActivityLogController extends Controller
         return response()->streamDownload(function () use ($logs) {
             $file = fopen('php://output', 'w');
             if ($file === false) {
-                throw new \RuntimeException('Failed to open output stream');
+                throw new RuntimeException('Failed to open output stream');
             }
 
             // Add headers

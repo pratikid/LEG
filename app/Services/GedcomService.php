@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Service for parsing, importing, and exporting GEDCOM files.
  * Handles individuals, families, events, sources, notes, and relationships.
  */
-class GedcomService
+final class GedcomService
 {
     /**
      * Parse GEDCOM content into structured arrays for individuals, families, sources, and notes.
@@ -38,16 +39,16 @@ class GedcomService
     {
         // Remove user-defined tags before parsing
         $cleanedGedcomContent = $this->removeUserDefinedTags($gedcomContent);
-        
+
         // Store cleaned content to file
         $cleanedFilePath = $this->storeCleanedGedcomContent($cleanedGedcomContent);
-        
+
         Log::info('Stored cleaned GEDCOM content', [
             'cleaned_file_path' => $cleanedFilePath,
-            'original_size' => strlen($gedcomContent),
-            'cleaned_size' => strlen($cleanedGedcomContent)
+            'original_size' => mb_strlen($gedcomContent),
+            'cleaned_size' => mb_strlen($cleanedGedcomContent),
         ]);
-        
+
         $lines = preg_split('/\r?\n/', $cleanedGedcomContent);
         if ($lines === false) {
             return [
@@ -237,7 +238,7 @@ class GedcomService
         $prefix = '';
         foreach ($prefixMap as $norm => $variants) {
             foreach ($variants as $variant) {
-                if (preg_match('/^' . preg_quote($variant, '/') + '\s+/i', $dateString)) {
+                if (preg_match('/^'.preg_quote($variant, '/') + '\s+/i', $dateString)) {
                     $prefix = $norm;
                     $dateString = preg_replace('/^' + preg_quote($variant, '/') + '\s+/i', '', $dateString);
                     break 2;
@@ -247,9 +248,10 @@ class GedcomService
 
         // Handle year-only dates (1–current year+10)
         if (preg_match('/^(\d{1,4})$/', $dateString, $matches)) {
-            $year = (int)$matches[1];
+            $year = (int) $matches[1];
             if ($year >= 1 && $year <= date('Y') + 10) {
-                $cleanedDate = $prefix ? "$prefix $year" : (string)$year;
+                $cleanedDate = $prefix ? "$prefix $year" : (string) $year;
+
                 // Log::info('Standardized year-only date', compact('originalDate', 'cleanedDate'));
                 return $cleanedDate;
             }
@@ -257,10 +259,11 @@ class GedcomService
 
         // Handle year ranges (e.g., 463-465)
         if (preg_match('/^(\d{1,4})\s*-\s*(\d{1,4})$/', $dateString, $matches)) {
-            $startYear = (int)$matches[1];
-            $endYear = (int)$matches[2];
+            $startYear = (int) $matches[1];
+            $endYear = (int) $matches[2];
             if ($startYear >= 1 && $endYear >= 1 && $startYear <= $endYear && $endYear <= date('Y') + 10) {
                 $cleanedDate = $prefix ? "$prefix $startYear-$endYear" : "$startYear-$endYear";
+
                 // Log::info('Standardized year range date', compact('originalDate', 'cleanedDate'));
                 return $cleanedDate;
             }
@@ -268,10 +271,11 @@ class GedcomService
 
         // Handle BET/BETWEEN (e.g., BET 463 AND 465)
         if (preg_match('/^BET(?:WEEN)?\s+(\d{1,4})\s+AND\s+(\d{1,4})$/i', $dateString, $matches)) {
-            $startYear = (int)$matches[1];
-            $endYear = (int)$matches[2];
+            $startYear = (int) $matches[1];
+            $endYear = (int) $matches[2];
             if ($startYear >= 1 && $endYear >= 1 && $startYear <= $endYear && $endYear <= date('Y') + 10) {
                 $cleanedDate = "BET $startYear AND $endYear";
+
                 // Log::info('Standardized between date', compact('originalDate', 'cleanedDate'));
                 return $cleanedDate;
             }
@@ -279,9 +283,9 @@ class GedcomService
 
         // Handle full dates (DD MMM YYYY)
         if (preg_match('/^(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{1,4})$/i', $dateString, $matches)) {
-            $day = (int)$matches[1];
-            $month = ucfirst(strtolower($matches[2]));
-            $year = (int)$matches[3];
+            $day = (int) $matches[1];
+            $month = ucfirst(mb_strtolower($matches[2]));
+            $year = (int) $matches[3];
             if ($day >= 1 && $day <= 31 && $year >= 1 && $year <= date('Y') + 10) {
                 $monthMap = [
                     'Jan' => 'JAN', 'Feb' => 'FEB', 'Mar' => 'MAR', 'Apr' => 'APR',
@@ -289,10 +293,11 @@ class GedcomService
                     'Sep' => 'SEP', 'Oct' => 'OCT', 'Nov' => 'NOV', 'Dec' => 'DEC',
                     'January' => 'JAN', 'February' => 'FEB', 'March' => 'MAR', 'April' => 'APR',
                     'June' => 'JUN', 'July' => 'JUL', 'August' => 'AUG', 'September' => 'SEP',
-                    'October' => 'OCT', 'November' => 'NOV', 'December' => 'DEC'
+                    'October' => 'OCT', 'November' => 'NOV', 'December' => 'DEC',
                 ];
-                $standardMonth = $monthMap[$month] ?? strtoupper($month);
+                $standardMonth = $monthMap[$month] ?? mb_strtoupper($month);
                 $cleanedDate = $prefix ? "$prefix $day $standardMonth $year" : "$day $standardMonth $year";
+
                 // Log::info('Standardized full date', compact('originalDate', 'cleanedDate'));
                 return $cleanedDate;
             }
@@ -302,36 +307,14 @@ class GedcomService
         if (preg_match('/^(UNKNOWN|UNK|\?)$/i', $dateString)) {
             $cleanedDate = 'UNKNOWN';
             Log::info('Standardized unknown date', compact('originalDate', 'cleanedDate'));
+
             return $cleanedDate;
         }
 
         // Fallback: log and return raw string
         Log::warning('Unrecognized date format', compact('originalDate', 'dateString'));
-        return $originalDate;
-    }
 
-    /**
-     * Store cleaned GEDCOM content to a file
-     * 
-     * @param string $cleanedContent The cleaned GEDCOM content
-     * @return string The path to the stored file
-     */
-    protected function storeCleanedGedcomContent(string $cleanedContent): string
-    {
-        $timestamp = now()->format('Y-m-d_H-i-s');
-        $filename = "cleaned_gedcom_{$timestamp}.ged";
-        $filePath = storage_path("app/gedcom/cleaned/{$filename}");
-        
-        // Ensure directory exists
-        $directory = dirname($filePath);
-        if (!is_dir($directory)) {
-            mkdir($directory, 0755, true);
-        }
-        
-        // Store the cleaned content
-        file_put_contents($filePath, $cleanedContent);
-        
-        return $filePath;
+        return $originalDate;
     }
 
     /**
@@ -374,11 +357,11 @@ class GedcomService
                     $lastName = 'Unknown';
                 }
                 $maxLength = 120;
-                if (strlen($firstName) > $maxLength) {
-                    $firstName = substr($firstName, 0, $maxLength) . '...';
+                if (mb_strlen($firstName) > $maxLength) {
+                    $firstName = mb_substr($firstName, 0, $maxLength).'...';
                 }
-                if (strlen($lastName) > $maxLength) {
-                    $lastName = substr($lastName, 0, $maxLength) . '...';
+                if (mb_strlen($lastName) > $maxLength) {
+                    $lastName = mb_substr($lastName, 0, $maxLength).'...';
                 }
                 // --- Date handling ---
                 $birthDateRaw = $indi['birth']['date'] ?? null;
@@ -386,11 +369,11 @@ class GedcomService
                 $birthYear = null;
                 if ($birthDateRaw) {
                     if (preg_match('/^\d{4}$/', $birthDateRaw)) {
-                        $birthYear = (int)$birthDateRaw;
+                        $birthYear = (int) $birthDateRaw;
                         $birthDate = null;
                     } elseif (strtotime($birthDateRaw)) {
                         $birthDate = date('Y-m-d', strtotime($birthDateRaw));
-                        $birthYear = (int)date('Y', strtotime($birthDateRaw));
+                        $birthYear = (int) date('Y', strtotime($birthDateRaw));
                     } else {
                         $birthDate = null;
                         $birthYear = null;
@@ -401,11 +384,11 @@ class GedcomService
                 $deathYear = null;
                 if ($deathDateRaw) {
                     if (preg_match('/^\d{4}$/', $deathDateRaw)) {
-                        $deathYear = (int)$deathDateRaw;
+                        $deathYear = (int) $deathDateRaw;
                         $deathDate = null;
                     } elseif (strtotime($deathDateRaw)) {
                         $deathDate = date('Y-m-d', strtotime($deathDateRaw));
-                        $deathYear = (int)date('Y', strtotime($deathDateRaw));
+                        $deathYear = (int) date('Y', strtotime($deathDateRaw));
                     } else {
                         $deathDate = null;
                         $deathYear = null;
@@ -424,12 +407,13 @@ class GedcomService
                     'death_date_raw' => $deathDateRaw,
                 ]);
                 $xrefToIndividualId[$xref] = $individual->id;
-            } catch (\Exception $e) {
-                Log::warning("Failed to import individual {$xref}: " . $e->getMessage(), [
+            } catch (Exception $e) {
+                Log::warning("Failed to import individual {$xref}: ".$e->getMessage(), [
                     'xref' => $xref,
                     'name' => $indi['name'] ?? 'Unknown',
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
+
                 continue;
             }
         }
@@ -466,13 +450,14 @@ class GedcomService
                         $this->addParentChildRelationshipNeo4j($motherId, $childId);
                     }
                 }
-                
-            } catch (\Exception $e) {
+
+            } catch (Exception $e) {
                 // Log the error but continue processing other families
-                Log::warning("Failed to import family {$xref}: " . $e->getMessage(), [
+                Log::warning("Failed to import family {$xref}: ".$e->getMessage(), [
                     'xref' => $xref,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
+
                 continue;
             }
         }
@@ -504,7 +489,7 @@ class GedcomService
                 return null;
             }
 
-            return strtoupper(date('j M Y', $timestamp));
+            return mb_strtoupper(date('j M Y', $timestamp));
         };
 
         // Generate GEDCOM for each individual
@@ -585,6 +570,111 @@ class GedcomService
         return $output;
     }
 
+    /**
+     * Remove user-defined tags from GEDCOM content
+     * User-defined tags start with underscore (_) and are not part of the standard GEDCOM specification
+     *
+     * @param  string  $gedcomContent  Raw GEDCOM content
+     * @return string Cleaned GEDCOM content with user-defined tags removed
+     */
+    private function removeUserDefinedTags(string $gedcomContent): string
+    {
+        $lines = preg_split('/\r?\n/', $gedcomContent);
+        if ($lines === false) {
+            return $gedcomContent;
+        }
+
+        $cleanedLines = [];
+        $skipUntilLevel = null;
+        $removedTags = [];
+
+        foreach ($lines as $line) {
+            $trimmedLine = mb_trim($line);
+
+            // Skip empty lines
+            if (empty($trimmedLine)) {
+                $cleanedLines[] = $line;
+
+                continue;
+            }
+
+            // Parse the line to get level and tag
+            if (preg_match('/^(\d+)\s+(@[^@]+@)?\s*(\w+)\s*(.*)$/', $trimmedLine, $matches)) {
+                $level = (int) $matches[1];
+                $tag = $matches[3];
+                $value = mb_trim($matches[4]);
+
+                // Check if this is a user-defined tag (starts with underscore)
+                if (str_starts_with($tag, '_')) {
+                    $removedTags[] = $tag;
+                    $skipUntilLevel = $level;
+
+                    continue; // Skip this line
+                }
+
+                // Clean dates if this is a DATE tag
+                if ($tag === 'DATE' && ! empty($value)) {
+                    $cleanedDate = $this->cleanGedcomDate($value);
+                    if ($cleanedDate !== $value) {
+                        $line = $matches[1].' '.($matches[2] ?? '').' '.$matches[3].' '.$cleanedDate;
+                    }
+                }
+
+                // Check if we're currently skipping lines due to a user-defined tag
+                if ($skipUntilLevel !== null) {
+                    // If we encounter a line with the same or lower level, stop skipping
+                    if ($level <= $skipUntilLevel) {
+                        $skipUntilLevel = null;
+                        // Don't continue here, process this line normally
+                    } else {
+                        // Skip this line (it's a sub-tag of the user-defined tag)
+                        continue;
+                    }
+                }
+            }
+
+            // Add the line if we're not skipping
+            if ($skipUntilLevel === null) {
+                $cleanedLines[] = $line;
+            }
+        }
+
+        // Log removed tags for debugging
+        if (! empty($removedTags)) {
+            $uniqueRemovedTags = array_unique($removedTags);
+            Log::info('Removed user-defined tags from GEDCOM', [
+                'removed_tags' => $uniqueRemovedTags,
+                'total_removed' => count($removedTags),
+            ]);
+        }
+
+        return implode("\n", $cleanedLines);
+    }
+
+    /**
+     * Store cleaned GEDCOM content to a file
+     *
+     * @param  string  $cleanedContent  The cleaned GEDCOM content
+     * @return string The path to the stored file
+     */
+    private function storeCleanedGedcomContent(string $cleanedContent): string
+    {
+        $timestamp = now()->format('Y-m-d_H-i-s');
+        $filename = "cleaned_gedcom_{$timestamp}.ged";
+        $filePath = storage_path("app/gedcom/cleaned/{$filename}");
+
+        // Ensure directory exists
+        $directory = dirname($filePath);
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        // Store the cleaned content
+        file_put_contents($filePath, $cleanedContent);
+
+        return $filePath;
+    }
+
     // --- Helper methods for name parsing ---
 
     private function gedcomGivenName(?string $name): ?string
@@ -594,7 +684,7 @@ class GedcomService
         }
         // GEDCOM: Given /Surname/
         if (preg_match('/^([^\\/]+)\\s*\\//', $name, $m)) {
-            return trim($m[1]);
+            return mb_trim($m[1]);
         }
 
         return $name;
@@ -606,7 +696,7 @@ class GedcomService
             return null;
         }
         if (preg_match('/\\/([^\\/]+)\\//', $name, $m)) {
-            return trim($m[1]);
+            return mb_trim($m[1]);
         }
 
         return null;
@@ -619,7 +709,7 @@ class GedcomService
         if (! $husbandId || ! $wifeId) {
             return;
         }
-        app(\App\Services\Neo4jIndividualService::class)->createSpouseRelationship($husbandId, $wifeId);
+        app(Neo4jIndividualService::class)->createSpouseRelationship($husbandId, $wifeId);
     }
 
     private function addParentChildRelationshipNeo4j(?int $parentId, ?int $childId): void
@@ -627,6 +717,6 @@ class GedcomService
         if (! $parentId || ! $childId) {
             return;
         }
-        app(\App\Services\Neo4jIndividualService::class)->createParentChildRelationship($parentId, $childId);
+        app(Neo4jIndividualService::class)->createParentChildRelationship($parentId, $childId);
     }
 }

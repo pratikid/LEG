@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\View\View;
 
-class ResetPasswordController extends Controller
+final class ResetPasswordController extends Controller
 {
     public function showResetForm(Request $request, ?string $token = null): View
     {

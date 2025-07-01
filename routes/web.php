@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -16,6 +18,7 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\Neo4jRelationshipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\StoryController;
 use App\Http\Controllers\TimelineEventController;
@@ -32,7 +35,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\SearchController;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -50,22 +52,22 @@ Route::post('/register', [RegisterController::class, 'register'])
 Route::get('/dashboard', function () {
     $user = Auth::user();
     $userTrees = Tree::forUser($user->id)->limit(3)->get();
-    
+
     // Calculate total members across all user's trees
     $totalMembers = $userTrees->sum('individual_count');
-    
+
     // Calculate total generations across all user's trees
     $generations = $userTrees->sum('generation_count');
-    
+
     // Calculate total photos (using timeline events as placeholder)
     $totalPhotos = TimelineEvent::where('user_id', $user->id)->count();
-    
+
     $activities = ActivityLog::with('user')
         ->where('user_id', $user->id)
         ->orderByDesc('created_at')
         ->limit(3)
         ->get();
-    
+
     // Get recent individuals from user's trees
     $recentIndividuals = Individual::whereIn('tree_id', $userTrees->pluck('id'))
         ->orderByDesc('created_at')
@@ -180,7 +182,7 @@ Route::get('/trees/{tree}/visualization', [TreeController::class, 'visualization
     ->middleware(['auth'])
     ->name('trees.visualization');
 
-Route::get('/trees/{id}/export-gedcom', [\App\Http\Controllers\TreeController::class, 'exportGedcom'])->name('trees.export-gedcom');
+Route::get('/trees/{id}/export-gedcom', [TreeController::class, 'exportGedcom'])->name('trees.export-gedcom');
 
 Route::resource('groups', GroupController::class)->middleware(['auth']);
 Route::resource('individuals', IndividualController::class)->middleware(['auth']);

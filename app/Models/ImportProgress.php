@@ -18,27 +18,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $error_message
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
- * @property-read \App\Models\User $user
- * @property-read \App\Models\Tree $tree
+ * @property-read User $user
+ * @property-read Tree $tree
  */
-class ImportProgress extends Model
+final class ImportProgress extends Model
 {
     use HasFactory;
-
-    protected $fillable = [
-        'user_id',
-        'tree_id',
-        'status',
-        'total_records',
-        'processed_records',
-        'error_message',
-        'status_message'
-    ];
-
-    protected $casts = [
-        'total_records' => 'integer',
-        'processed_records' => 'integer',
-    ];
 
     public const STATUS_PENDING = 'pending';
 
@@ -47,6 +32,21 @@ class ImportProgress extends Model
     public const STATUS_COMPLETED = 'completed';
 
     public const STATUS_FAILED = 'failed';
+
+    protected $fillable = [
+        'user_id',
+        'tree_id',
+        'status',
+        'total_records',
+        'processed_records',
+        'error_message',
+        'status_message',
+    ];
+
+    protected $casts = [
+        'total_records' => 'integer',
+        'processed_records' => 'integer',
+    ];
 
     /**
      * Get the user that owns the import progress.

@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\View\View;
 
-class HelpController extends Controller
+final class HelpController extends Controller
 {
     public function userGuide(): View
     {

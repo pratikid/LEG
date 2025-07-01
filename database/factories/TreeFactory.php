@@ -7,12 +7,13 @@ namespace Database\Factories;
 use App\Models\Tree;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Override;
 
-class TreeFactory extends Factory
+final class TreeFactory extends Factory
 {
     protected $model = Tree::class;
 
-    #[\Override]
+    #[Override]
     public function definition(): array
     {
         return [

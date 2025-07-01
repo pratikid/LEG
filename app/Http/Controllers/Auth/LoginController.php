@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
-class LoginController extends Controller
+final class LoginController extends Controller
 {
     public function showLoginForm(): View
     {
@@ -31,7 +32,7 @@ class LoginController extends Controller
                     function (
                         string $attribute,
                         mixed $value,
-                        \Closure $fail
+                        Closure $fail
                     ): void {
                         if ($value === 'admin@admin.com') {
                             return;

@@ -21,11 +21,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $user_id
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
- * @property-read \App\Models\User $user
+ * @property-read User $user
  *
  * @method static \Database\Factories\TimelineEventFactory factory()
  */
-class TimelineEvent extends Model
+final class TimelineEvent extends Model
 {
     use HasFactory;
     use LogsActivity;

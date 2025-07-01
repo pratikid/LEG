@@ -15,11 +15,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $tree_id
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
- * @property-read \App\Models\Tree $tree
+ * @property-read Tree $tree
  *
  * @method static \Database\Factories\GroupFactory factory()
  */
-class Group extends Model
+final class Group extends Model
 {
     use HasFactory;
 

@@ -12,9 +12,9 @@ use Illuminate\Contracts\Cache\Repository as CacheRepository;
 /**
  * @template TCacheValue
  */
-class CacheService
+final class CacheService
 {
-    protected CacheRepository $cache;
+    private CacheRepository $cache;
 
     public function __construct(CacheRepository $cache)
     {

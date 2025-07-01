@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 if (! function_exists('activityIcon')) {
     /**
      * Get the appropriate icon for an activity action.

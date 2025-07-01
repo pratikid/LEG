@@ -7,7 +7,7 @@ namespace App\Console\Commands;
 use App\Services\GedcomService;
 use Illuminate\Console\Command;
 
-class TestGedcomDateCleaning extends Command
+final class TestGedcomDateCleaning extends Command
 {
     /**
      * The name and signature of the console command.
@@ -31,9 +31,9 @@ class TestGedcomDateCleaning extends Command
     public function handle(): int
     {
         $this->info('Testing GEDCOM date cleaning...');
-        
+
         $gedcomService = new GedcomService();
-        
+
         $testDates = [
             '1293' => 'year_only',
             '1383' => 'year_only',
@@ -60,14 +60,14 @@ class TestGedcomDateCleaning extends Command
             'null' => 'null_date',
             '' => 'empty_date',
         ];
-        
+
         $this->info('Testing date cleaning:');
         $this->line('');
-        
+
         foreach ($testDates as $originalDate => $expectedType) {
             $cleanedDate = $gedcomService->cleanGedcomDate($originalDate);
             $status = $cleanedDate !== $originalDate ? '✓ CLEANED' : '○ UNCHANGED';
-            
+
             $this->line(sprintf(
                 '%-20s → %-20s [%s] (%s)',
                 $originalDate,
@@ -76,10 +76,10 @@ class TestGedcomDateCleaning extends Command
                 $expectedType
             ));
         }
-        
+
         $this->line('');
         $this->info('Date cleaning test completed!');
-        
+
         return 0;
     }
 
@@ -97,37 +97,37 @@ class TestGedcomDateCleaning extends Command
             '1850' => '1850',
             '9999' => '9999', // Invalid year
             '500' => '500',   // Invalid year
-            
+
             // Approximate dates
             'ABT 1850' => 'ABT 1850',
             'EST 1900' => 'EST 1900',
             'ABOUT 1800' => 'ABT 1800',
             'APPROXIMATELY 1950' => 'APPROX 1950',
-            
+
             // Year ranges
             '1980-1990' => '1980-1990',
             'ABT 1850-1860' => 'ABT 1850-1860',
             '1900-1890' => '1900-1890', // Invalid range
-            
+
             // Between dates
             'BET 1980 AND 1990' => 'BET 1980 AND 1990',
             'BET 1900 AND 1890' => 'BET 1900 AND 1890', // Invalid range
-            
+
             // Full dates
             '15 Jan 1980' => '15 JAN 1980',
             '20 February 1850' => '20 FEB 1850',
             '1 March 1900' => '1 MAR 1900',
-            
+
             // Before/After dates
             'BEF 1980' => 'BEF 1980',
             'AFT 1850' => 'AFT 1850',
             'BEF ABT 1900' => 'BEF ABT 1900',
-            
+
             // Unknown dates
             'UNKNOWN' => 'UNKNOWN',
             'UNK' => 'UNKNOWN',
             '?' => 'UNKNOWN',
-            
+
             // Edge cases
             '' => '',
             'null' => '',
@@ -139,11 +139,11 @@ class TestGedcomDateCleaning extends Command
             collect($testCases)->map(function ($expected, $original) use ($service) {
                 $cleaned = $service->cleanGedcomDate($original);
                 $status = $cleaned === $expected ? '✅ PASS' : '❌ FAIL';
-                
+
                 return [
                     $original,
                     $cleaned,
-                    $status
+                    $status,
                 ];
             })->toArray()
         );
@@ -157,8 +157,9 @@ class TestGedcomDateCleaning extends Command
      */
     private function testFileDates(GedcomService $service, string $filePath): void
     {
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             $this->error("File not found: {$filePath}");
+
             return;
         }
 
@@ -168,6 +169,7 @@ class TestGedcomDateCleaning extends Command
         $content = file_get_contents($filePath);
         if ($content === false) {
             $this->error("Failed to read file: {$filePath}");
+
             return;
         }
 
@@ -177,26 +179,27 @@ class TestGedcomDateCleaning extends Command
         $cleanedLines = [];
 
         foreach ($lines as $line) {
-            if (preg_match('/^(\d+)\s+(@[^@]+@)?\s*DATE\s+(.+)$/', trim($line), $matches)) {
+            if (preg_match('/^(\d+)\s+(@[^@]+@)?\s*DATE\s+(.+)$/', mb_trim($line), $matches)) {
                 $level = $matches[1];
                 $xref = $matches[2] ?? '';
-                $originalDate = trim($matches[3]);
+                $originalDate = mb_trim($matches[3]);
                 $cleanedDate = $service->cleanGedcomDate($originalDate);
-                
+
                 $dateLines[] = [
                     'Level' => $level,
                     'XRef' => $xref,
                     'Original Date' => $originalDate,
                     'Cleaned Date' => $cleanedDate,
-                    'Changed' => $originalDate !== $cleanedDate ? 'Yes' : 'No'
+                    'Changed' => $originalDate !== $cleanedDate ? 'Yes' : 'No',
                 ];
-                
+
                 $cleanedLines[] = "{$level} {$xref} DATE {$cleanedDate}";
             }
         }
 
         if (empty($dateLines)) {
             $this->warn('No DATE lines found in the file.');
+
             return;
         }
 
@@ -205,20 +208,20 @@ class TestGedcomDateCleaning extends Command
             $dateLines
         );
 
-        $changedCount = count(array_filter($dateLines, fn($line) => $line['Changed'] === 'Yes'));
+        $changedCount = count(array_filter($dateLines, fn ($line) => $line['Changed'] === 'Yes'));
         $totalCount = count($dateLines);
 
         $this->line('');
-        $this->info("Summary:");
+        $this->info('Summary:');
         $this->line("- Total DATE lines: {$totalCount}");
         $this->line("- Modified lines: {$changedCount}");
-        $this->line("- Unchanged lines: " . ($totalCount - $changedCount));
+        $this->line('- Unchanged lines: '.($totalCount - $changedCount));
 
         // Save cleaned version
-        $cleanedFilePath = $filePath . '.cleaned';
+        $cleanedFilePath = $filePath.'.cleaned';
         $cleanedContent = $this->replaceDateLines($content, $cleanedLines);
         file_put_contents($cleanedFilePath, $cleanedContent);
-        
+
         $this->line("- Cleaned file saved: {$cleanedFilePath}");
     }
 
@@ -229,16 +232,16 @@ class TestGedcomDateCleaning extends Command
     {
         $lines = explode("\n", $content);
         $cleanedIndex = 0;
-        
+
         for ($i = 0; $i < count($lines); $i++) {
-            if (preg_match('/^(\d+)\s+(@[^@]+@)?\s*DATE\s+(.+)$/', trim($lines[$i]), $matches)) {
+            if (preg_match('/^(\d+)\s+(@[^@]+@)?\s*DATE\s+(.+)$/', mb_trim($lines[$i]), $matches)) {
                 if (isset($cleanedLines[$cleanedIndex])) {
                     $lines[$i] = $cleanedLines[$cleanedIndex];
                     $cleanedIndex++;
                 }
             }
         }
-        
+
         return implode("\n", $lines);
     }
-} 
+}

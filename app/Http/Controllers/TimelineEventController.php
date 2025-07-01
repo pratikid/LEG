@@ -9,7 +9,7 @@ use App\Models\TimelineEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class TimelineEventController extends Controller
+final class TimelineEventController extends Controller
 {
     public function __construct()
     {

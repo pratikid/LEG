@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
 use App\Models\ActivityLog;
@@ -7,14 +9,9 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class ActivityLogTest extends TestCase
+final class ActivityLogTest extends TestCase
 {
     use RefreshDatabase;
-
-    protected function adminUser()
-    {
-        return User::factory()->create(['is_admin' => true]);
-    }
 
     public function test_admin_can_view_activity_logs_index()
     {
@@ -47,5 +44,10 @@ class ActivityLogTest extends TestCase
         $this->actingAs($user);
         $response = $this->get('/admin/activity-logs');
         $response->assertForbidden();
+    }
+
+    protected function adminUser()
+    {
+        return User::factory()->create(['is_admin' => true]);
     }
 }

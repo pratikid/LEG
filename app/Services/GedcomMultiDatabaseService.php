@@ -4,37 +4,37 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\Individual;
 use App\Models\Family;
+use App\Models\Individual;
 use App\Models\Source;
-use App\Models\Repository;
-use App\Models\Media;
 use App\Models\Tree;
+use Exception;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
-use MongoDB\Client as MongoClient;
 use Laudis\Neo4j\Client as Neo4jClient;
-use Laudis\Neo4j\Contracts\TransactionInterface;
 use MongoDB\BSON\UTCDateTime;
+use MongoDB\Client as MongoClient;
 
 /**
  * Multi-database GEDCOM import service
  * Distributes GEDCOM data across PostgreSQL, MongoDB, and Neo4j
  */
-class GedcomMultiDatabaseService
+final class GedcomMultiDatabaseService
 {
-    protected MongoClient $mongoClient;
-    protected Neo4jClient $neo4jClient;
-    protected Neo4jIndividualService $neo4jService;
+    private MongoClient $mongoClient;
+
+    private Neo4jClient $neo4jClient;
+
+    private Neo4jIndividualService $neo4jService;
 
     public function __construct(Neo4jIndividualService $neo4jService)
     {
         $this->neo4jService = $neo4jService;
-        
+
         // Initialize MongoDB client
         $this->mongoClient = new MongoClient(config('database.connections.mongodb.uri'));
-        
+
         // Neo4j client is handled by Neo4jIndividualService
         $this->neo4jClient = $this->neo4jService->getClient();
     }
@@ -45,98 +45,235 @@ class GedcomMultiDatabaseService
     public function importGedcomData(string $gedcomContent, int $treeId): array
     {
         $startTime = microtime(true);
-        
+
         try {
             // 1. Remove user-defined tags from GEDCOM content
             $cleanedGedcomContent = $this->removeUserDefinedTags($gedcomContent);
-            
+
             // 2. Store cleaned content to file
             $cleanedFilePath = $this->storeCleanedGedcomContent($cleanedGedcomContent, $treeId);
-            
+
             Log::info('Stored cleaned GEDCOM content for import', [
                 'tree_id' => $treeId,
                 'cleaned_file_path' => $cleanedFilePath,
-                'original_size' => strlen($gedcomContent),
-                'cleaned_size' => strlen($cleanedGedcomContent)
+                'original_size' => mb_strlen($gedcomContent),
+                'cleaned_size' => mb_strlen($cleanedGedcomContent),
             ]);
-            
+
             // 3. Parse GEDCOM content
             $parsed = $this->parseGedcom($cleanedGedcomContent);
-            
+
             // 4. Begin transaction for PostgreSQL
             DB::beginTransaction();
-            
+
             // 5. Import to PostgreSQL (core entities)
             $postgresqlResults = $this->importToPostgresql($parsed, $treeId);
-            
+
             // 6. Import to MongoDB (documents)
             $mongodbResults = $this->importToMongodb($parsed, $treeId);
-            
+
             // 7. Import to Neo4j (relationships)
             $neo4jResults = $this->importToNeo4j($parsed, $treeId);
-            
+
             // 8. Commit PostgreSQL transaction
             DB::commit();
-            
+
             // 9. Create cross-references and validate consistency
             $this->createCrossReferences($treeId);
-            
+
             $endTime = microtime(true);
             $duration = round($endTime - $startTime, 2);
-            
+
             Log::info('GEDCOM import completed successfully', [
                 'tree_id' => $treeId,
                 'duration_seconds' => $duration,
                 'cleaned_file_path' => $cleanedFilePath,
                 'postgresql_count' => $postgresqlResults,
                 'mongodb_count' => $mongodbResults,
-                'neo4j_count' => $neo4jResults
+                'neo4j_count' => $neo4jResults,
             ]);
-            
+
             return [
                 'success' => true,
                 'duration' => $duration,
                 'cleaned_file_path' => $cleanedFilePath,
                 'postgresql' => $postgresqlResults,
                 'mongodb' => $mongodbResults,
-                'neo4j' => $neo4jResults
+                'neo4j' => $neo4jResults,
             ];
-            
-        } catch (\Exception $e) {
+
+        } catch (Exception $e) {
             DB::rollBack();
-            
+
             Log::error('GEDCOM import failed', [
                 'tree_id' => $treeId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'cleaned_file_path' => $cleanedFilePath ?? null
+                'cleaned_file_path' => $cleanedFilePath ?? null,
             ]);
-            
+
             // Clean up the cleaned file if it exists and import failed
             if (isset($cleanedFilePath) && file_exists($cleanedFilePath)) {
                 try {
                     unlink($cleanedFilePath);
                     Log::info('Cleaned up failed import file', ['file_path' => $cleanedFilePath]);
-                } catch (\Exception $cleanupException) {
+                } catch (Exception $cleanupException) {
                     Log::warning('Failed to cleanup cleaned file', [
                         'file_path' => $cleanedFilePath,
-                        'error' => $cleanupException->getMessage()
+                        'error' => $cleanupException->getMessage(),
                     ]);
                 }
             }
-            
+
             throw $e;
         }
     }
 
     /**
+     * Clean and standardize GEDCOM date formats
+     * Handles various date formats including yyyy-only dates
+     *
+     * @param  string  $dateString  The date string to clean
+     * @return string Cleaned and standardized date string
+     */
+    public function cleanGedcomDate(string $dateString): string
+    {
+        $originalDate = $dateString;
+        $dateString = mb_trim($dateString);
+
+        // Strip leading 'on', 'On', 'ON', etc.
+        $dateString = preg_replace('/^on\s+/i', '', $dateString);
+
+        // Handle empty or null dates
+        if ($dateString === '' || mb_strtolower($dateString) === 'null') {
+            return '';
+        }
+
+        // Normalize common prefixes (case-insensitive, with/without period)
+        $prefixMap = [
+            'ABT' => ['ABT', 'ABT.', 'ABOUT', 'APPROX', 'APPROX.', 'APPROXIMATELY', 'CIR', 'CIR.', 'CIRC', 'CIRC.', 'CA', 'CA.', 'CAL', 'CAL.'],
+            'EST' => ['EST', 'EST.', 'ESTIMATED'],
+            'BEF' => ['BEF', 'BEF.', 'BEFORE'],
+            'AFT' => ['AFT', 'AFT.', 'AFTER'],
+        ];
+        $prefix = '';
+        foreach ($prefixMap as $norm => $variants) {
+            foreach ($variants as $variant) {
+                if (preg_match('/^'.preg_quote($variant, '/').'\s+/i', $dateString)) {
+                    $prefix = $norm;
+                    $dateString = preg_replace('/^'.preg_quote($variant, '/').'\s+/i', '', $dateString);
+                    break 2;
+                }
+            }
+        }
+
+        // Handle year-only dates (1–current year+10)
+        if (preg_match('/^(\d{1,4})$/', $dateString, $matches)) {
+            $year = (int) $matches[1];
+            if ($year >= 1 && $year <= date('Y') + 10) {
+                $cleanedDate = $prefix ? "$prefix $year" : (string) $year;
+
+                return $cleanedDate;
+            }
+        }
+
+        // Handle year ranges (e.g., 463-465)
+        if (preg_match('/^(\d{1,4})\s*-\s*(\d{1,4})$/', $dateString, $matches)) {
+            $startYear = (int) $matches[1];
+            $endYear = (int) $matches[2];
+            if ($startYear >= 1 && $endYear >= 1 && $startYear <= $endYear && $endYear <= date('Y') + 10) {
+                $cleanedDate = $prefix ? "$prefix $startYear-$endYear" : "$startYear-$endYear";
+
+                return $cleanedDate;
+            }
+        }
+
+        // Handle BET/BETWEEN (e.g., BET 463 AND 465)
+        if (preg_match('/^BET(?:WEEN)?\s+(\d{1,4})\s+AND\s+(\d{1,4})$/i', $dateString, $matches)) {
+            $startYear = (int) $matches[1];
+            $endYear = (int) $matches[2];
+            if ($startYear >= 1 && $endYear >= 1 && $startYear <= $endYear && $endYear <= date('Y') + 10) {
+                $cleanedDate = "BET $startYear AND $endYear";
+
+                return $cleanedDate;
+            }
+        }
+
+        // Handle full dates (DD MMM YYYY)
+        if (preg_match('/^(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{1,4})$/i', $dateString, $matches)) {
+            $day = (int) $matches[1];
+            $month = ucfirst(mb_strtolower($matches[2]));
+            $year = (int) $matches[3];
+
+            if ($day >= 1 && $day <= 31 && $year >= 1 && $year <= date('Y') + 10) {
+                $cleanedDate = $prefix ? "$prefix $day $month $year" : "$day $month $year";
+
+                return $cleanedDate;
+            }
+        }
+
+        // Handle month-year dates (MMM YYYY)
+        if (preg_match('/^([A-Za-z]{3,})\s+(\d{1,4})$/i', $dateString, $matches)) {
+            $month = ucfirst(mb_strtolower($matches[1]));
+            $year = (int) $matches[2];
+
+            if ($year >= 1 && $year <= date('Y') + 10) {
+                $cleanedDate = $prefix ? "$prefix $month $year" : "$month $year";
+
+                return $cleanedDate;
+            }
+        }
+
+        // Handle day-month dates (DD MMM) - add current year
+        if (preg_match('/^(\d{1,2})\s+([A-Za-z]{3,})$/i', $dateString, $matches)) {
+            $day = (int) $matches[1];
+            $month = ucfirst(mb_strtolower($matches[2]));
+
+            if ($day >= 1 && $day <= 31) {
+                $cleanedDate = $prefix ? "$prefix $day $month" : "$day $month";
+
+                return $cleanedDate;
+            }
+        }
+
+        // Handle month-only dates (MMM) - add current year
+        if (preg_match('/^([A-Za-z]{3,})$/i', $dateString, $matches)) {
+            $month = ucfirst(mb_strtolower($matches[1]));
+            $cleanedDate = $prefix ? "$prefix $month" : $month;
+
+            return $cleanedDate;
+        }
+
+        // If we can't parse the date, return the original but log it less frequently
+        static $unrecognizedDates = [];
+        $dateKey = md5($originalDate);
+
+        if (! isset($unrecognizedDates[$dateKey])) {
+            $unrecognizedDates[$dateKey] = 0;
+        }
+
+        // Only log every 10th occurrence of the same date format to reduce log spam
+        if ($unrecognizedDates[$dateKey] % 10 === 0) {
+            Log::warning('Unrecognized date format', [
+                'originalDate' => $originalDate,
+                'dateString' => $dateString,
+                'occurrence_count' => $unrecognizedDates[$dateKey] + 1,
+            ]);
+        }
+
+        $unrecognizedDates[$dateKey]++;
+
+        return $originalDate;
+    }
+
+    /**
      * Remove user-defined tags from GEDCOM content
      * User-defined tags start with underscore (_) and are not part of the standard GEDCOM specification
-     * 
-     * @param string $gedcomContent Raw GEDCOM content
+     *
+     * @param  string  $gedcomContent  Raw GEDCOM content
      * @return string Cleaned GEDCOM content with user-defined tags removed
      */
-    protected function removeUserDefinedTags(string $gedcomContent): string
+    private function removeUserDefinedTags(string $gedcomContent): string
     {
         $lines = preg_split('/\r?\n/', $gedcomContent);
         if ($lines === false) {
@@ -148,11 +285,12 @@ class GedcomMultiDatabaseService
         $removedTags = [];
 
         foreach ($lines as $line) {
-            $trimmedLine = trim($line);
-            
+            $trimmedLine = mb_trim($line);
+
             // Skip empty lines
             if (empty($trimmedLine)) {
                 $cleanedLines[] = $line;
+
                 continue;
             }
 
@@ -160,23 +298,24 @@ class GedcomMultiDatabaseService
             if (preg_match('/^(\d+)\s+(@[^@]+@)?\s*(\w+)\s*(.*)$/', $trimmedLine, $matches)) {
                 $level = (int) $matches[1];
                 $tag = $matches[3];
-                $value = trim($matches[4]);
-                
+                $value = mb_trim($matches[4]);
+
                 // Check if this is a user-defined tag (starts with underscore)
                 if (str_starts_with($tag, '_')) {
                     $removedTags[] = $tag;
                     $skipUntilLevel = $level;
+
                     continue; // Skip this line
                 }
-                
+
                 // Clean dates if this is a DATE tag
-                if ($tag === 'DATE' && !empty($value)) {
+                if ($tag === 'DATE' && ! empty($value)) {
                     $cleanedDate = $this->cleanGedcomDate($value);
                     if ($cleanedDate !== $value) {
-                        $line = $matches[1] . ' ' . ($matches[2] ?? '') . ' ' . $matches[3] . ' ' . $cleanedDate;
+                        $line = $matches[1].' '.($matches[2] ?? '').' '.$matches[3].' '.$cleanedDate;
                     }
                 }
-                
+
                 // Check if we're currently skipping lines due to a user-defined tag
                 if ($skipUntilLevel !== null) {
                     // If we encounter a line with the same or lower level, stop skipping
@@ -197,11 +336,11 @@ class GedcomMultiDatabaseService
         }
 
         // Log removed tags for debugging
-        if (!empty($removedTags)) {
+        if (! empty($removedTags)) {
             $uniqueRemovedTags = array_unique($removedTags);
             Log::info('Removed user-defined tags from GEDCOM', [
                 'removed_tags' => $uniqueRemovedTags,
-                'total_removed' => count($removedTags)
+                'total_removed' => count($removedTags),
             ]);
         }
 
@@ -209,139 +348,9 @@ class GedcomMultiDatabaseService
     }
 
     /**
-     * Clean and standardize GEDCOM date formats
-     * Handles various date formats including yyyy-only dates
-     * 
-     * @param string $dateString The date string to clean
-     * @return string Cleaned and standardized date string
-     */
-    public function cleanGedcomDate(string $dateString): string
-    {
-        $originalDate = $dateString;
-        $dateString = trim($dateString);
-        
-        // Strip leading 'on', 'On', 'ON', etc.
-        $dateString = preg_replace('/^on\s+/i', '', $dateString);
-        
-        // Handle empty or null dates
-        if ($dateString === '' || strtolower($dateString) === 'null') {
-            return '';
-        }
-
-        // Normalize common prefixes (case-insensitive, with/without period)
-        $prefixMap = [
-            'ABT' => ['ABT', 'ABT.', 'ABOUT', 'APPROX', 'APPROX.', 'APPROXIMATELY', 'CIR', 'CIR.', 'CIRC', 'CIRC.', 'CA', 'CA.', 'CAL', 'CAL.'],
-            'EST' => ['EST', 'EST.', 'ESTIMATED'],
-            'BEF' => ['BEF', 'BEF.', 'BEFORE'],
-            'AFT' => ['AFT', 'AFT.', 'AFTER'],
-        ];
-        $prefix = '';
-        foreach ($prefixMap as $norm => $variants) {
-            foreach ($variants as $variant) {
-                if (preg_match('/^' . preg_quote($variant, '/') . '\s+/i', $dateString)) {
-                    $prefix = $norm;
-                    $dateString = preg_replace('/^' . preg_quote($variant, '/') . '\s+/i', '', $dateString);
-                    break 2;
-                }
-            }
-        }
-
-        // Handle year-only dates (1–current year+10)
-        if (preg_match('/^(\d{1,4})$/', $dateString, $matches)) {
-            $year = (int)$matches[1];
-            if ($year >= 1 && $year <= date('Y') + 10) {
-                $cleanedDate = $prefix ? "$prefix $year" : (string)$year;
-                return $cleanedDate;
-            }
-        }
-
-        // Handle year ranges (e.g., 463-465)
-        if (preg_match('/^(\d{1,4})\s*-\s*(\d{1,4})$/', $dateString, $matches)) {
-            $startYear = (int)$matches[1];
-            $endYear = (int)$matches[2];
-            if ($startYear >= 1 && $endYear >= 1 && $startYear <= $endYear && $endYear <= date('Y') + 10) {
-                $cleanedDate = $prefix ? "$prefix $startYear-$endYear" : "$startYear-$endYear";
-                return $cleanedDate;
-            }
-        }
-
-        // Handle BET/BETWEEN (e.g., BET 463 AND 465)
-        if (preg_match('/^BET(?:WEEN)?\s+(\d{1,4})\s+AND\s+(\d{1,4})$/i', $dateString, $matches)) {
-            $startYear = (int)$matches[1];
-            $endYear = (int)$matches[2];
-            if ($startYear >= 1 && $endYear >= 1 && $startYear <= $endYear && $endYear <= date('Y') + 10) {
-                $cleanedDate = "BET $startYear AND $endYear";
-                return $cleanedDate;
-            }
-        }
-
-        // Handle full dates (DD MMM YYYY)
-        if (preg_match('/^(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{1,4})$/i', $dateString, $matches)) {
-            $day = (int)$matches[1];
-            $month = ucfirst(strtolower($matches[2]));
-            $year = (int)$matches[3];
-            
-            if ($day >= 1 && $day <= 31 && $year >= 1 && $year <= date('Y') + 10) {
-                $cleanedDate = $prefix ? "$prefix $day $month $year" : "$day $month $year";
-                return $cleanedDate;
-            }
-        }
-
-        // Handle month-year dates (MMM YYYY)
-        if (preg_match('/^([A-Za-z]{3,})\s+(\d{1,4})$/i', $dateString, $matches)) {
-            $month = ucfirst(strtolower($matches[1]));
-            $year = (int)$matches[2];
-            
-            if ($year >= 1 && $year <= date('Y') + 10) {
-                $cleanedDate = $prefix ? "$prefix $month $year" : "$month $year";
-                return $cleanedDate;
-            }
-        }
-
-        // Handle day-month dates (DD MMM) - add current year
-        if (preg_match('/^(\d{1,2})\s+([A-Za-z]{3,})$/i', $dateString, $matches)) {
-            $day = (int)$matches[1];
-            $month = ucfirst(strtolower($matches[2]));
-            
-            if ($day >= 1 && $day <= 31) {
-                $cleanedDate = $prefix ? "$prefix $day $month" : "$day $month";
-                return $cleanedDate;
-            }
-        }
-
-        // Handle month-only dates (MMM) - add current year
-        if (preg_match('/^([A-Za-z]{3,})$/i', $dateString, $matches)) {
-            $month = ucfirst(strtolower($matches[1]));
-            $cleanedDate = $prefix ? "$prefix $month" : $month;
-            return $cleanedDate;
-        }
-
-        // If we can't parse the date, return the original but log it less frequently
-        static $unrecognizedDates = [];
-        $dateKey = md5($originalDate);
-        
-        if (!isset($unrecognizedDates[$dateKey])) {
-            $unrecognizedDates[$dateKey] = 0;
-        }
-        
-        // Only log every 10th occurrence of the same date format to reduce log spam
-        if ($unrecognizedDates[$dateKey] % 10 === 0) {
-            Log::warning('Unrecognized date format', [
-                'originalDate' => $originalDate,
-                'dateString' => $dateString,
-                'occurrence_count' => $unrecognizedDates[$dateKey] + 1
-            ]);
-        }
-        
-        $unrecognizedDates[$dateKey]++;
-        
-        return $originalDate;
-    }
-
-    /**
      * Parse GEDCOM content into structured data
      */
-    protected function parseGedcom(string $gedcomContent): array
+    private function parseGedcom(string $gedcomContent): array
     {
         $lines = preg_split('/\r?\n/', $gedcomContent);
         if ($lines === false) {
@@ -355,21 +364,23 @@ class GedcomMultiDatabaseService
         $currentContext = [];
 
         foreach ($lines as $line) {
-            if (empty(trim($line))) continue;
+            if (empty(mb_trim($line))) {
+                continue;
+            }
 
             // Parse GEDCOM line
             if (preg_match('/^(\d+)\s+(@[^@]+@)?\s*(\w+)\s*(.*)$/', $line, $matches)) {
                 $level = (int) $matches[1];
                 $xref = $matches[2] ?? null;
                 $tag = $matches[3];
-                $value = trim($matches[4]);
+                $value = mb_trim($matches[4]);
 
                 // New top-level record
                 if ($level === 0 && $xref) {
                     $currentRecord = $tag;
                     $currentXref = $xref;
                     $currentContext = [];
-                    
+
                     // Initialize record structure
                     $this->initializeRecord($parsed, $currentRecord, $currentXref);
                 }
@@ -385,14 +396,14 @@ class GedcomMultiDatabaseService
     /**
      * Import core entities to PostgreSQL
      */
-    protected function importToPostgresql(array $parsed, int $treeId): array
+    private function importToPostgresql(array $parsed, int $treeId): array
     {
         $results = [
             'individuals' => 0,
             'families' => 0,
             'sources' => 0,
             'repositories' => 0,
-            'media' => 0
+            'media' => 0,
         ];
 
         // Bulk import individuals with batch processing
@@ -404,11 +415,11 @@ class GedcomMultiDatabaseService
             $birthYear = null;
             if ($birthDateRaw) {
                 if (preg_match('/^\d{4}$/', $birthDateRaw)) {
-                    $birthYear = (int)$birthDateRaw;
+                    $birthYear = (int) $birthDateRaw;
                     $birthDate = null;
                 } elseif (strtotime($birthDateRaw)) {
                     $birthDate = date('Y-m-d', strtotime($birthDateRaw));
-                    $birthYear = (int)date('Y', strtotime($birthDateRaw));
+                    $birthYear = (int) date('Y', strtotime($birthDateRaw));
                 } else {
                     $birthDate = null;
                     $birthYear = null;
@@ -419,11 +430,11 @@ class GedcomMultiDatabaseService
             $deathYear = null;
             if ($deathDateRaw) {
                 if (preg_match('/^\d{4}$/', $deathDateRaw)) {
-                    $deathYear = (int)$deathDateRaw;
+                    $deathYear = (int) $deathDateRaw;
                     $deathDate = null;
                 } elseif (strtotime($deathDateRaw)) {
                     $deathDate = date('Y-m-d', strtotime($deathDateRaw));
-                    $deathYear = (int)date('Y', strtotime($deathDateRaw));
+                    $deathYear = (int) date('Y', strtotime($deathDateRaw));
                 } else {
                     $deathDate = null;
                     $deathYear = null;
@@ -454,21 +465,21 @@ class GedcomMultiDatabaseService
         }
 
         // Batch insert individuals (500 records per batch to avoid parameter limits)
-        if (!empty($individualData)) {
+        if (! empty($individualData)) {
             $batchSize = 500;
             $batches = array_chunk($individualData, $batchSize);
-            
+
             foreach ($batches as $batch) {
                 Individual::insert($batch);
             }
-            
+
             $results['individuals'] = count($individualData);
-            
+
             // Cache the IDs for cross-references
             $individuals = Individual::where('tree_id', $treeId)
                 ->whereIn('gedcom_xref', array_keys($parsed['individuals']))
                 ->get(['id', 'gedcom_xref']);
-                
+
             foreach ($individuals as $individual) {
                 Cache::put("gedcom_xref:{$individual->gedcom_xref}", $individual->id, 3600);
             }
@@ -479,15 +490,15 @@ class GedcomMultiDatabaseService
         foreach ($parsed['families'] as $xref => $family) {
             $husbandId = null;
             $wifeId = null;
-            
-            if (!empty($family['husband'])) {
+
+            if (! empty($family['husband'])) {
                 $husbandId = $this->getIndividualIdByXref($family['husband']);
             }
-            
-            if (!empty($family['wife'])) {
+
+            if (! empty($family['wife'])) {
                 $wifeId = $this->getIndividualIdByXref($family['wife']);
             }
-            
+
             // Clean and format marriage date
             $marriageDateRaw = $family['marriage']['date'] ?? null;
             $marriageDate = null;
@@ -495,18 +506,18 @@ class GedcomMultiDatabaseService
             if ($marriageDateRaw) {
                 $cleanedMarriageDate = $this->cleanGedcomDate($marriageDateRaw);
                 if (preg_match('/^\d{4}$/', $cleanedMarriageDate)) {
-                    $marriageYear = (int)$cleanedMarriageDate;
+                    $marriageYear = (int) $cleanedMarriageDate;
                     $marriageDate = null;
                 } elseif (strtotime($cleanedMarriageDate)) {
                     $marriageDate = date('Y-m-d', strtotime($cleanedMarriageDate));
-                    $marriageYear = (int)date('Y', strtotime($cleanedMarriageDate));
+                    $marriageYear = (int) date('Y', strtotime($cleanedMarriageDate));
                 } else {
                     // For non-standard dates like "BEF 969", store as null but keep raw value
                     $marriageDate = null;
                     $marriageYear = null;
                 }
             }
-            
+
             // Clean and format divorce date
             $divorceDateRaw = $family['divorce']['date'] ?? null;
             $divorceDate = null;
@@ -514,18 +525,18 @@ class GedcomMultiDatabaseService
             if ($divorceDateRaw) {
                 $cleanedDivorceDate = $this->cleanGedcomDate($divorceDateRaw);
                 if (preg_match('/^\d{4}$/', $cleanedDivorceDate)) {
-                    $divorceYear = (int)$cleanedDivorceDate;
+                    $divorceYear = (int) $cleanedDivorceDate;
                     $divorceDate = null;
                 } elseif (strtotime($cleanedDivorceDate)) {
                     $divorceDate = date('Y-m-d', strtotime($cleanedDivorceDate));
-                    $divorceYear = (int)date('Y', strtotime($cleanedDivorceDate));
+                    $divorceYear = (int) date('Y', strtotime($cleanedDivorceDate));
                 } else {
                     // For non-standard dates like "BEF 969", store as null but keep raw value
                     $divorceDate = null;
                     $divorceYear = null;
                 }
             }
-            
+
             $familyData[] = [
                 'tree_id' => $treeId,
                 'gedcom_xref' => $xref,
@@ -546,21 +557,21 @@ class GedcomMultiDatabaseService
         }
 
         // Batch insert families
-        if (!empty($familyData)) {
+        if (! empty($familyData)) {
             $batchSize = 500;
             $batches = array_chunk($familyData, $batchSize);
-            
+
             foreach ($batches as $batch) {
                 Family::insert($batch);
             }
-            
+
             $results['families'] = count($familyData);
-            
+
             // Cache the IDs for cross-references
             $families = Family::where('tree_id', $treeId)
                 ->whereIn('gedcom_xref', array_keys($parsed['families']))
                 ->get(['id', 'gedcom_xref']);
-                
+
             foreach ($families as $family) {
                 Cache::put("gedcom_xref:{$family->gedcom_xref}", $family->id, 3600);
             }
@@ -584,21 +595,21 @@ class GedcomMultiDatabaseService
         }
 
         // Batch insert sources
-        if (!empty($sourceData)) {
+        if (! empty($sourceData)) {
             $batchSize = 500;
             $batches = array_chunk($sourceData, $batchSize);
-            
+
             foreach ($batches as $batch) {
                 Source::insert($batch);
             }
-            
+
             $results['sources'] = count($sourceData);
-            
+
             // Cache the IDs for cross-references
             $sources = Source::where('tree_id', $treeId)
                 ->whereIn('gedcom_xref', array_keys($parsed['sources']))
                 ->get(['id', 'gedcom_xref']);
-                
+
             foreach ($sources as $source) {
                 Cache::put("gedcom_xref:{$source->gedcom_xref}", $source->id, 3600);
             }
@@ -610,7 +621,7 @@ class GedcomMultiDatabaseService
     /**
      * Import document data to MongoDB
      */
-    protected function importToMongodb(array $parsed, int $treeId): array
+    private function importToMongodb(array $parsed, int $treeId): array
     {
         $database = $this->mongoClient->selectDatabase(config('database.connections.mongodb.database'));
         $results = [
@@ -618,7 +629,7 @@ class GedcomMultiDatabaseService
             'families' => 0,
             'notes' => 0,
             'sources' => 0,
-            'media' => 0
+            'media' => 0,
         ];
 
         // Bulk import individual documents
@@ -626,7 +637,9 @@ class GedcomMultiDatabaseService
         $individualDocuments = [];
         foreach ($parsed['individuals'] as $xref => $individual) {
             $individualId = $this->getIndividualIdByXref($xref);
-            if (!$individualId) continue;
+            if (! $individualId) {
+                continue;
+            }
 
             $individualDocuments[] = [
                 'individual_id' => $individualId,
@@ -638,12 +651,12 @@ class GedcomMultiDatabaseService
                 'metadata' => [
                     'import_source' => 'GEDCOM',
                     'import_date' => new UTCDateTime(),
-                    'version' => 1
-                ]
+                    'version' => 1,
+                ],
             ];
         }
 
-        if (!empty($individualDocuments)) {
+        if (! empty($individualDocuments)) {
             $individualsCollection->insertMany($individualDocuments);
             $results['individuals'] = count($individualDocuments);
         }
@@ -653,7 +666,9 @@ class GedcomMultiDatabaseService
         $familyDocuments = [];
         foreach ($parsed['families'] as $xref => $family) {
             $familyId = $this->getFamilyIdByXref($xref);
-            if (!$familyId) continue;
+            if (! $familyId) {
+                continue;
+            }
 
             $familyDocuments[] = [
                 'family_id' => $familyId,
@@ -666,12 +681,12 @@ class GedcomMultiDatabaseService
                 'metadata' => [
                     'import_source' => 'GEDCOM',
                     'import_date' => new UTCDateTime(),
-                    'version' => 1
-                ]
+                    'version' => 1,
+                ],
             ];
         }
 
-        if (!empty($familyDocuments)) {
+        if (! empty($familyDocuments)) {
             $familiesCollection->insertMany($familyDocuments);
             $results['families'] = count($familyDocuments);
         }
@@ -689,17 +704,17 @@ class GedcomMultiDatabaseService
                 'metadata' => [
                     'import_source' => 'GEDCOM',
                     'import_date' => new UTCDateTime(),
-                    'version' => 1
+                    'version' => 1,
                 ],
                 'formatting' => [
                     'is_html' => false,
                     'has_links' => false,
-                    'word_count' => str_word_count($note['content'] ?? '')
-                ]
+                    'word_count' => str_word_count($note['content'] ?? ''),
+                ],
             ];
         }
 
-        if (!empty($noteDocuments)) {
+        if (! empty($noteDocuments)) {
             $notesCollection->insertMany($noteDocuments);
             $results['notes'] = count($noteDocuments);
         }
@@ -710,12 +725,12 @@ class GedcomMultiDatabaseService
     /**
      * Import relationships to Neo4j
      */
-    protected function importToNeo4j(array $parsed, int $treeId): array
+    private function importToNeo4j(array $parsed, int $treeId): array
     {
         $results = [
             'individuals' => 0,
             'families' => 0,
-            'relationships' => 0
+            'relationships' => 0,
         ];
 
         $transaction = null;
@@ -728,7 +743,9 @@ class GedcomMultiDatabaseService
             // Create individual nodes
             foreach ($parsed['individuals'] as $xref => $individual) {
                 $individualId = $this->getIndividualIdByXref($xref);
-                if (!$individualId) continue;
+                if (! $individualId) {
+                    continue;
+                }
 
                 $this->neo4jService->createIndividualNode([
                     'id' => $individualId,
@@ -747,14 +764,16 @@ class GedcomMultiDatabaseService
             // Create family relationships
             foreach ($parsed['families'] as $xref => $family) {
                 $familyId = $this->getFamilyIdByXref($xref);
-                if (!$familyId) continue;
+                if (! $familyId) {
+                    continue;
+                }
 
                 // Create family node
                 $this->neo4jService->createFamilyNode([
                     'id' => $familyId,
                     'tree_id' => $treeId,
                     'gedcom_xref' => $xref,
-                    'type' => 'Family'
+                    'type' => 'Family',
                 ], $transaction);
 
                 $results['families']++;
@@ -763,7 +782,7 @@ class GedcomMultiDatabaseService
                 if ($family['husband'] && $family['wife']) {
                     $husbandId = $this->getIndividualIdByXref($family['husband']);
                     $wifeId = $this->getIndividualIdByXref($family['wife']);
-                    
+
                     if ($husbandId && $wifeId) {
                         $this->neo4jService->createSpouseRelationship($husbandId, $wifeId, $transaction);
                         $results['relationships']++;
@@ -782,7 +801,9 @@ class GedcomMultiDatabaseService
 
                     foreach ($family['children'] as $childXref) {
                         $childId = $this->getIndividualIdByXref($childXref);
-                        if (!$childId) continue;
+                        if (! $childId) {
+                            continue;
+                        }
 
                         foreach ($parentIds as $parentId) {
                             if ($parentId) {
@@ -798,28 +819,28 @@ class GedcomMultiDatabaseService
                 $transaction->commit();
                 $transactionActive = false;
             }
-            
-        } catch (\Exception $e) {
+
+        } catch (Exception $e) {
             // Only attempt rollback if transaction is still active
             if ($transaction && $transactionActive) {
                 try {
                     $transaction->rollback();
-                } catch (\Exception $rollbackException) {
+                } catch (Exception $rollbackException) {
                     Log::warning('Failed to rollback Neo4j transaction', [
                         'original_error' => $e->getMessage(),
                         'rollback_error' => $rollbackException->getMessage(),
-                        'tree_id' => $treeId
+                        'tree_id' => $treeId,
                     ]);
                 }
                 $transactionActive = false;
             }
-            
+
             Log::error('Neo4j import failed', [
                 'tree_id' => $treeId,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             throw $e;
         }
 
@@ -829,18 +850,18 @@ class GedcomMultiDatabaseService
     /**
      * Create cross-references between databases
      */
-    protected function createCrossReferences(int $treeId): void
+    private function createCrossReferences(int $treeId): void
     {
         // This method ensures data consistency across databases
         // and creates necessary indexes and relationships
-        
+
         Log::info('Creating cross-references for tree', ['tree_id' => $treeId]);
     }
 
     /**
      * Helper methods
      */
-    protected function getEmptyParsedStructure(): array
+    private function getEmptyParsedStructure(): array
     {
         return [
             'individuals' => [],
@@ -850,11 +871,11 @@ class GedcomMultiDatabaseService
             'notes' => [],
             'media' => [],
             'submitters' => [],
-            'header' => []
+            'header' => [],
         ];
     }
 
-    protected function initializeRecord(array &$parsed, string $recordType, string $xref): void
+    private function initializeRecord(array &$parsed, string $recordType, string $xref): void
     {
         switch ($recordType) {
             case 'INDI':
@@ -865,7 +886,7 @@ class GedcomMultiDatabaseService
                     'death' => [],
                     'events' => [],
                     'custom_fields' => [],
-                    'families' => []
+                    'families' => [],
                 ];
                 break;
             case 'FAM':
@@ -875,7 +896,7 @@ class GedcomMultiDatabaseService
                     'children' => [],
                     'marriage' => [],
                     'divorce' => [],
-                    'custom_fields' => []
+                    'custom_fields' => [],
                 ];
                 break;
             case 'SOUR':
@@ -886,14 +907,14 @@ class GedcomMultiDatabaseService
                     'repository' => null,
                     'call_number' => null,
                     'quality' => 0,
-                    'data' => []
+                    'data' => [],
                 ];
                 break;
             case 'NOTE':
                 $parsed['notes'][$xref] = [
                     'content' => '',
                     'type' => 'general',
-                    'relationships' => []
+                    'relationships' => [],
                 ];
                 break;
             case 'OBJE':
@@ -901,15 +922,17 @@ class GedcomMultiDatabaseService
                     'title' => null,
                     'file' => null,
                     'format' => null,
-                    'relationships' => []
+                    'relationships' => [],
                 ];
                 break;
         }
     }
 
-    protected function processGedcomLine(array &$parsed, ?string $currentRecord, ?string $currentXref, int $level, string $tag, string $value, array &$context): void
+    private function processGedcomLine(array &$parsed, ?string $currentRecord, ?string $currentXref, int $level, string $tag, string $value, array &$context): void
     {
-        if (!$currentRecord || !$currentXref) return;
+        if (! $currentRecord || ! $currentXref) {
+            return;
+        }
 
         switch ($currentRecord) {
             case 'INDI':
@@ -930,7 +953,7 @@ class GedcomMultiDatabaseService
         }
     }
 
-    protected function processIndividualLine(array &$parsed, string $xref, int $level, string $tag, string $value, array &$context): void
+    private function processIndividualLine(array &$parsed, string $xref, int $level, string $tag, string $value, array &$context): void
     {
         $individual = &$parsed['individuals'][$xref];
 
@@ -1000,7 +1023,7 @@ class GedcomMultiDatabaseService
         }
     }
 
-    protected function processFamilyLine(array &$parsed, string $xref, int $level, string $tag, string $value, array &$context): void
+    private function processFamilyLine(array &$parsed, string $xref, int $level, string $tag, string $value, array &$context): void
     {
         $family = &$parsed['families'][$xref];
 
@@ -1048,7 +1071,7 @@ class GedcomMultiDatabaseService
         }
     }
 
-    protected function processSourceLine(array &$parsed, string $xref, int $level, string $tag, string $value, array &$context): void
+    private function processSourceLine(array &$parsed, string $xref, int $level, string $tag, string $value, array &$context): void
     {
         $source = &$parsed['sources'][$xref];
 
@@ -1086,14 +1109,14 @@ class GedcomMultiDatabaseService
         }
     }
 
-    protected function processNoteLine(array &$parsed, string $xref, int $level, string $tag, string $value, array &$context): void
+    private function processNoteLine(array &$parsed, string $xref, int $level, string $tag, string $value, array &$context): void
     {
         $note = &$parsed['notes'][$xref];
 
         switch ($tag) {
             case 'CONT':
                 if ($level === 1) {
-                    $note['content'] .= "\n" . $value;
+                    $note['content'] .= "\n".$value;
                 }
                 break;
             case 'CONC':
@@ -1104,7 +1127,7 @@ class GedcomMultiDatabaseService
         }
     }
 
-    protected function processMediaLine(array &$parsed, string $xref, int $level, string $tag, string $value, array &$context): void
+    private function processMediaLine(array &$parsed, string $xref, int $level, string $tag, string $value, array &$context): void
     {
         $media = &$parsed['media'][$xref];
 
@@ -1127,65 +1150,68 @@ class GedcomMultiDatabaseService
         }
     }
 
-    protected function parseNameComponents(array &$name, string $fullName): void
+    private function parseNameComponents(array &$name, string $fullName): void
     {
         // Basic name parsing - can be enhanced with more sophisticated logic
         $parts = explode('/', $fullName);
         if (count($parts) >= 2) {
-            $name['given'] = trim($parts[0]);
-            $name['surname'] = trim($parts[1]);
+            $name['given'] = mb_trim($parts[0]);
+            $name['surname'] = mb_trim($parts[1]);
         } else {
-            $name['given'] = trim($fullName);
+            $name['given'] = mb_trim($fullName);
             $name['surname'] = '';
         }
     }
 
-    protected function getIndividualIdByXref(?string $xref): ?int
+    private function getIndividualIdByXref(?string $xref): ?int
     {
         if (empty($xref)) {
             return null;
         }
+
         return Cache::get("gedcom_xref:{$xref}");
     }
 
-    protected function getFamilyIdByXref(?string $xref): ?int
+    private function getFamilyIdByXref(?string $xref): ?int
     {
         if (empty($xref)) {
             return null;
         }
+
         return Cache::get("gedcom_xref:{$xref}");
     }
 
-    protected function getRepositoryIdByXref(?string $xref): ?int
+    private function getRepositoryIdByXref(?string $xref): ?int
     {
         if (empty($xref)) {
             return null;
         }
+
         return Cache::get("gedcom_xref:{$xref}");
     }
 
     /**
      * Store cleaned GEDCOM content to a file
-     * 
-     * @param string $cleanedContent The cleaned GEDCOM content
-     * @param int $treeId The tree ID for organizing files
+     *
+     * @param  string  $cleanedContent  The cleaned GEDCOM content
+     * @param  int  $treeId  The tree ID for organizing files
      * @return string The path to the stored file
      */
-    protected function storeCleanedGedcomContent(string $cleanedContent, int $treeId): string
+    private function storeCleanedGedcomContent(string $cleanedContent, int $treeId): string
     {
         $timestamp = now()->format('Y-m-d_H-i-s');
         $filename = "tree_{$treeId}_cleaned_gedcom_{$timestamp}.ged";
         $filePath = storage_path("app/gedcom/cleaned/tree_{$treeId}/{$filename}");
-        
+
         // Ensure directory exists
         $directory = dirname($filePath);
-        if (!is_dir($directory)) {
+        if (! is_dir($directory)) {
             mkdir($directory, 0755, true);
         }
-        
+
         // Store the cleaned content
         file_put_contents($filePath, $cleanedContent);
-        
+
         return $filePath;
     }
-} 
+}

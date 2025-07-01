@@ -9,7 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-class GroupController extends Controller
+final class GroupController extends Controller
 {
     public function index(): View
     {

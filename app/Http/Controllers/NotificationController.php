@@ -7,7 +7,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class NotificationController extends Controller
+final class NotificationController extends Controller
 {
     /**
      * Mark a specific notification as read.

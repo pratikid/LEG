@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Models\Individual;
 use App\Services\Neo4jIndividualService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class Neo4jRelationshipController extends Controller
+final class Neo4jRelationshipController extends Controller
 {
     protected Neo4jIndividualService $neo4j;
 
@@ -30,7 +33,7 @@ class Neo4jRelationshipController extends Controller
 
             // Validate no cycles in parent-child relationship
             if (! $this->neo4j->validateNoCycles($validated['child_id'], $validated['parent_id'], 'PARENT_OF', $transaction)) {
-                throw new \Exception('Cannot create parent-child relationship: would create a cycle in the family tree');
+                throw new Exception('Cannot create parent-child relationship: would create a cycle in the family tree');
             }
 
             // // Validate relationship doesn't already exist
@@ -42,7 +45,7 @@ class Neo4jRelationshipController extends Controller
             unset($transaction);
 
             return response()->json(['message' => 'Parent-child relationship added successfully!']);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to add parent-child relationship', [
                 'parent_id' => $validated['parent_id'],
                 'child_id' => $validated['child_id'],
@@ -89,7 +92,7 @@ class Neo4jRelationshipController extends Controller
                 $spouseB->first_name,
                 $spouseB->last_name
             )]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to add spouse relationship', [
                 'spouse_a_id' => $validated['spouse_a_id'],
                 'spouse_b_id' => $validated['spouse_b_id'],
@@ -113,7 +116,7 @@ class Neo4jRelationshipController extends Controller
                 ->toArray();
 
             return response()->json($children);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get children', [
                 'parent_id' => $parentId,
                 'exception' => $e,
@@ -136,7 +139,7 @@ class Neo4jRelationshipController extends Controller
                 ->toArray();
 
             return response()->json($parents);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get parents', [
                 'child_id' => $childId,
                 'exception' => $e,
@@ -159,7 +162,7 @@ class Neo4jRelationshipController extends Controller
                 ->toArray();
 
             return response()->json($spouses);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get spouses', [
                 'individual_id' => $individualId,
                 'exception' => $e,
@@ -207,7 +210,7 @@ class Neo4jRelationshipController extends Controller
                 ->toArray();
 
             return response()->json($siblings);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get siblings', [
                 'individual_id' => $id,
                 'exception' => $e,
@@ -249,7 +252,7 @@ class Neo4jRelationshipController extends Controller
             unset($transaction);
 
             return response()->json(['message' => 'Sibling relationship added successfully!']);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to add sibling relationship', [
                 'sibling_a_id' => $validated['sibling_a_id'],
                 'sibling_b_id' => $validated['sibling_b_id'],
@@ -275,7 +278,7 @@ class Neo4jRelationshipController extends Controller
             unset($transaction);
 
             return response()->json(['message' => 'Parent-child relationship removed successfully!']);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to remove parent-child relationship', [
                 'parent_id' => $validated['parent_id'],
                 'child_id' => $validated['child_id'],
@@ -301,7 +304,7 @@ class Neo4jRelationshipController extends Controller
             unset($transaction);
 
             return response()->json(['message' => 'Spouse relationship removed successfully!']);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to remove spouse relationship', [
                 'spouse_a_id' => $validated['spouse_a_id'],
                 'spouse_b_id' => $validated['spouse_b_id'],
@@ -327,7 +330,7 @@ class Neo4jRelationshipController extends Controller
             unset($transaction);
 
             return response()->json(['message' => 'Sibling relationship removed successfully!']);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to remove sibling relationship', [
                 'sibling_a_id' => $validated['sibling_a_id'],
                 'sibling_b_id' => $validated['sibling_b_id'],
@@ -350,7 +353,7 @@ class Neo4jRelationshipController extends Controller
             ] : [];
 
             return response()->json($stats);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get relationship stats', [
                 'individual_id' => $individualId,
                 'exception' => $e,

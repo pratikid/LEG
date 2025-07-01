@@ -7,7 +7,7 @@ namespace App\Policies;
 use App\Models\Individual;
 use App\Models\User;
 
-class IndividualPolicy
+final class IndividualPolicy
 {
     /**
      * Determine whether the user can create individuals.

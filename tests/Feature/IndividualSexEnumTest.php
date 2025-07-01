@@ -10,7 +10,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class IndividualSexEnumTest extends TestCase
+final class IndividualSexEnumTest extends TestCase
 {
     use RefreshDatabase;
 

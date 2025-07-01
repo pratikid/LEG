@@ -7,7 +7,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-class SourceController extends Controller
+final class SourceController extends Controller
 {
     public function index(): View
     {

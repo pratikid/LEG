@@ -31,11 +31,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int|null $user_id
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
- * @property-read \App\Models\Tree $tree
- * @property-read \App\Models\User $user
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Family> $familiesAsHusband
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Family> $familiesAsWife
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Family> $familiesAsChild
+ * @property-read Tree $tree
+ * @property-read User $user
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Family> $familiesAsHusband
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Family> $familiesAsWife
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Family> $familiesAsChild
  * @property-read string $full_name
  * @property-read string $display_name
  * @property-read string|null $birth_date_display
@@ -45,11 +45,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  *
  * @method static \Database\Factories\IndividualFactory factory()
  */
-class Individual extends Model
+final class Individual extends Model
 {
     use HasFactory;
     use HasPostgresEnums;
     use LogsActivity;
+
+    /**
+     * Sex constants for better code readability
+     */
+    public const SEX_MALE = 'M';
+
+    public const SEX_FEMALE = 'F';
+
+    public const SEX_UNKNOWN = 'U';
 
     protected $fillable = [
         'tree_id',
@@ -82,20 +91,19 @@ class Individual extends Model
     ];
 
     /**
-     * Sex constants for better code readability
-     */
-    public const SEX_MALE = 'M';
-
-    public const SEX_FEMALE = 'F';
-
-    public const SEX_UNKNOWN = 'U';
-
-    /**
      * Get all possible sex values
      */
     public static function getSexValues(): array
     {
-        return static::getEnumValues('sex');
+        return self::getEnumValues('sex');
+    }
+
+    /**
+     * Check if sex value is valid
+     */
+    public static function isValidSex(string $sex): bool
+    {
+        return self::isValidEnumValue('sex', $sex);
     }
 
     /**
@@ -144,14 +152,6 @@ class Individual extends Model
     public function scopeWhereKnownSex($query)
     {
         return $query->whereSexIn([self::SEX_MALE, self::SEX_FEMALE]);
-    }
-
-    /**
-     * Check if sex value is valid
-     */
-    public static function isValidSex(string $sex): bool
-    {
-        return static::isValidEnumValue('sex', $sex);
     }
 
     /**
@@ -301,8 +301,8 @@ class Individual extends Model
     {
         return $query->where(function ($q) use ($name) {
             $q->where('first_name', 'like', "%{$name}%")
-              ->orWhere('last_name', 'like', "%{$name}%")
-              ->orWhere('nickname', 'like', "%{$name}%");
+                ->orWhere('last_name', 'like', "%{$name}%")
+                ->orWhere('nickname', 'like', "%{$name}%");
         });
     }
 
@@ -320,6 +320,7 @@ class Individual extends Model
         if ($this->birth_date_raw) {
             return $this->birth_date_raw;
         }
+
         return null;
     }
 
@@ -337,6 +338,7 @@ class Individual extends Model
         if ($this->death_date_raw) {
             return $this->death_date_raw;
         }
+
         return null;
     }
 
@@ -345,12 +347,12 @@ class Individual extends Model
      */
     public function getAgeAttribute(): ?int
     {
-        if (!$this->birth_date) {
+        if (! $this->birth_date) {
             return null;
         }
 
         $endDate = $this->death_date ?? now();
-        
+
         return (int) $this->birth_date->diffInYears($endDate);
     }
 
@@ -360,7 +362,7 @@ class Individual extends Model
     public function getAgeDisplayAttribute(): ?string
     {
         $age = $this->age;
-        
+
         if ($age === null) {
             return null;
         }
@@ -374,7 +376,7 @@ class Individual extends Model
 
     protected static function booted(): void
     {
-        static::created(function (Individual $individual) {
+        self::created(function (Individual $individual) {
             app(Neo4jIndividualService::class)->createIndividualNode([
                 'id' => $individual->id,
                 'gedcom_xref' => $individual->gedcom_xref,
@@ -386,7 +388,7 @@ class Individual extends Model
                 'sex' => $individual->sex,
             ]);
         });
-        static::updated(function (Individual $individual) {
+        self::updated(function (Individual $individual) {
             app(Neo4jIndividualService::class)->updateIndividualNode([
                 'id' => $individual->id,
                 'gedcom_xref' => $individual->gedcom_xref,
@@ -398,7 +400,7 @@ class Individual extends Model
                 'sex' => $individual->sex,
             ]);
         });
-        static::deleted(function (Individual $individual) {
+        self::deleted(function (Individual $individual) {
             app(Neo4jIndividualService::class)->deleteIndividualNode($individual->id);
         });
     }

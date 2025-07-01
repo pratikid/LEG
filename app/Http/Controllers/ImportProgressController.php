@@ -8,7 +8,7 @@ use App\Models\ImportProgress;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class ImportProgressController extends Controller
+final class ImportProgressController extends Controller
 {
     /**
      * Get import progress for a specific tree.

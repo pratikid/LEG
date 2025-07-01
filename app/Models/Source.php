@@ -22,13 +22,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $tree_id
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
- * @property-read \App\Models\User $user
- * @property-read \App\Models\Tree $tree
- * @property-read \App\Models\Repository|null $repository
+ * @property-read User $user
+ * @property-read Tree $tree
+ * @property-read Repository|null $repository
  *
  * @method static \Database\Factories\SourceFactory factory()
  */
-class Source extends Model
+final class Source extends Model
 {
     use HasFactory;
 

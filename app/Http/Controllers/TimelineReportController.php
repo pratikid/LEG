@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Models\TimelineEvent;
@@ -7,7 +9,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class TimelineReportController extends Controller
+final class TimelineReportController extends Controller
 {
     public function __construct()
     {
@@ -23,7 +25,7 @@ class TimelineReportController extends Controller
             ->orderBy('event_date', 'desc')
             ->get();
 
-        $pdf = PDF::loadView('timeline.reports.timeline', [
+        $pdf = Pdf::loadView('timeline.reports.timeline', [
             'events' => $events,
             'user' => Auth::user(),
             'generatedAt' => now(),
@@ -38,7 +40,7 @@ class TimelineReportController extends Controller
             abort(403);
         }
 
-        $pdf = PDF::loadView('timeline.reports.event', [
+        $pdf = Pdf::loadView('timeline.reports.event', [
             'event' => $timelineEvent,
             'user' => Auth::user(),
             'generatedAt' => now(),
@@ -61,7 +63,7 @@ class TimelineReportController extends Controller
             ->orderBy('event_date', 'desc')
             ->get();
 
-        $pdf = PDF::loadView('timeline.reports.type', [
+        $pdf = Pdf::loadView('timeline.reports.type', [
             'events' => $events,
             'type' => $type,
             'user' => Auth::user(),

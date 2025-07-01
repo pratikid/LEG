@@ -1,16 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
 use App\Models\Tree;
 use App\Models\User;
 use App\Services\Neo4jIndividualService;
+use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Mockery;
 use Tests\TestCase;
 
-class TreeControllerTest extends TestCase
+final class TreeControllerTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 
@@ -23,6 +26,12 @@ class TreeControllerTest extends TestCase
         // Mock Neo4j service
         $this->neo4jService = Mockery::mock(Neo4jIndividualService::class);
         $this->app->instance(Neo4jIndividualService::class, $this->neo4jService);
+    }
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
     }
 
     public function test_user_can_create_tree(): void
@@ -100,7 +109,7 @@ class TreeControllerTest extends TestCase
 
         $this->neo4jService->shouldReceive('createTreeNode')
             ->once()
-            ->andThrow(new \Exception('Neo4j error'));
+            ->andThrow(new Exception('Neo4j error'));
 
         $treeData = [
             'name' => 'Test Family Tree',
@@ -117,11 +126,5 @@ class TreeControllerTest extends TestCase
         $this->assertDatabaseMissing('trees', [
             'name' => $treeData['name'],
         ]);
-    }
-
-    protected function tearDown(): void
-    {
-        Mockery::close();
-        parent::tearDown();
     }
 }

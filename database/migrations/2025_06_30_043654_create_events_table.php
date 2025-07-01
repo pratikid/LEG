@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -30,7 +32,7 @@ return new class extends Migration
             $table->string('gedcom_xref')->nullable(); // GEDCOM reference
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
-            
+
             $table->index(['tree_id', 'type']);
             $table->index(['individual_id', 'type']);
             $table->index(['family_id', 'type']);

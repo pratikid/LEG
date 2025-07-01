@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\View\View;
 
-class ToolsController extends Controller
+final class ToolsController extends Controller
 {
     public function templates(): View
     {

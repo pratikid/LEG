@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Override;
 
-class EventServiceProvider extends ServiceProvider
+final class EventServiceProvider extends ServiceProvider
 {
     /**
      * The event listener mappings for the application.
@@ -18,7 +21,7 @@ class EventServiceProvider extends ServiceProvider
     /**
      * Register any events for your application.
      */
-    #[\Override]
+    #[Override]
     public function boot(): void
     {
         //

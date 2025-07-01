@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Models\TimelineEvent;
 use App\Models\User;
 
-class TimelineEventPolicy
+final class TimelineEventPolicy
 {
     /**
      * Determine whether the user can create models.

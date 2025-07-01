@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class TimelinePreferencesController extends Controller
+final class TimelinePreferencesController extends Controller
 {
     public function __construct()
     {

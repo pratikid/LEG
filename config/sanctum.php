@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
         '%s%s',
@@ -12,7 +14,7 @@ return [
     'expiration' => null,
 
     'middleware' => [
-        'verify_csrf_token' => \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
-        'encrypt_cookies' => \Illuminate\Cookie\Middleware\EncryptCookies::class,
+        'verify_csrf_token' => Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
+        'encrypt_cookies' => Illuminate\Cookie\Middleware\EncryptCookies::class,
     ],
 ];

@@ -15,12 +15,12 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $tree_id
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
- * @property-read \App\Models\User $user
- * @property-read \App\Models\Tree $tree
+ * @property-read User $user
+ * @property-read Tree $tree
  *
  * @method static \Database\Factories\StoryFactory factory()
  */
-class Story extends Model
+final class Story extends Model
 {
     use HasFactory;
 

@@ -6,13 +6,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Individual;
 use App\Services\Neo4jIndividualService;
+use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
-class IndividualController extends Controller
+final class IndividualController extends Controller
 {
     protected Neo4jIndividualService $neo4jService;
 
@@ -126,13 +127,13 @@ class IndividualController extends Controller
 
             return redirect()->route('individuals.show', $individual)
                 ->with('success', 'Individual created successfully.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Rollback Neo4j transaction if not committed
             if ($neo4jTransaction && ! $neo4jCommitted) {
                 try {
                     // Neo4j transaction is automatically rolled back when the transaction object is destroyed
                     unset($neo4jTransaction);
-                } catch (\Exception $rollbackError) {
+                } catch (Exception $rollbackError) {
                     Log::error('Failed to handle Neo4j transaction', [
                         'individual_id' => $individual?->id,
                         'exception' => $rollbackError,
@@ -307,13 +308,13 @@ class IndividualController extends Controller
 
             return redirect()->route('individuals.show', $individual)
                 ->with('success', 'Individual updated successfully.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Rollback Neo4j transaction if not committed
             if ($neo4jTransaction && ! $neo4jCommitted) {
                 try {
                     // Neo4j transaction is automatically rolled back when the transaction object is destroyed
                     unset($neo4jTransaction);
-                } catch (\Exception $rollbackError) {
+                } catch (Exception $rollbackError) {
                     Log::error('Failed to handle Neo4j transaction', [
                         'individual_id' => $individual->id,
                         'exception' => $rollbackError,
@@ -364,13 +365,13 @@ class IndividualController extends Controller
 
             return redirect()->route('individuals.index')
                 ->with('success', 'Individual deleted successfully.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Rollback Neo4j transaction if not committed
             if ($neo4jTransaction && ! $neo4jCommitted) {
                 try {
                     // Neo4j transaction is automatically rolled back when the transaction object is destroyed
                     unset($neo4jTransaction);
-                } catch (\Exception $rollbackError) {
+                } catch (Exception $rollbackError) {
                     Log::error('Failed to handle Neo4j transaction', [
                         'individual_id' => $id,
                         'exception' => $rollbackError,
@@ -420,7 +421,7 @@ class IndividualController extends Controller
                 'individual_id' => $individualId,
                 'attempt' => $attempt,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to clean up Neo4j node', [
                 'individual_id' => $individualId,
                 'attempt' => $attempt,

@@ -7,7 +7,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-class StoryController extends Controller
+final class StoryController extends Controller
 {
     public function index(): View
     {

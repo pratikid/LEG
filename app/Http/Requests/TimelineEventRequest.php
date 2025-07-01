@@ -7,7 +7,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
-class TimelineEventRequest extends FormRequest
+final class TimelineEventRequest extends FormRequest
 {
     public function authorize(): bool
     {

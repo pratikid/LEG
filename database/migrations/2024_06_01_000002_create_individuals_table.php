@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -10,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         // Create the PostgreSQL ENUM type first if it doesn't exist
-        if (!DB::select("SELECT 1 FROM pg_type WHERE typname = 'sex_enum'")) {
+        if (! DB::select("SELECT 1 FROM pg_type WHERE typname = 'sex_enum'")) {
             DB::statement("CREATE TYPE sex_enum AS ENUM ('M', 'F', 'U')");
         }
 

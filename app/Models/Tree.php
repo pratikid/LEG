@@ -17,9 +17,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $user_id
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
- * @property-read \App\Models\User $user
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Individual> $individuals
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Group> $groups
+ * @property-read User $user
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Individual> $individuals
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Group> $groups
  * @property-read int $individual_count
  * @property-read int $group_count
  * @property-read int $generation_count
@@ -28,7 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder forUser(int $userId)
  * @method static \Illuminate\Database\Eloquent\Builder byName(string $name)
  */
-class Tree extends Model
+final class Tree extends Model
 {
     use HasFactory;
     use LogsActivity;

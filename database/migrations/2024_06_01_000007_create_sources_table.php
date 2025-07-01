@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -25,7 +27,7 @@ return new class extends Migration
             $table->index(['tree_id'], 'idx_sources_tree');
             $table->index(['gedcom_xref'], 'idx_sources_gedcom_xref');
             $table->index(['repository_id'], 'idx_sources_repository');
-            
+
             // Add foreign key constraint for repository_id
             $table->foreign('repository_id')->references('id')->on('repositories')->onDelete('set null');
         });

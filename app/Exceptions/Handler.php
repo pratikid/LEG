@@ -6,10 +6,11 @@ namespace App\Exceptions;
 
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Override;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Throwable;
 
-class Handler extends ExceptionHandler
+final class Handler extends ExceptionHandler
 {
     /**
      * A list of the exception types that are not reported.
@@ -32,7 +33,7 @@ class Handler extends ExceptionHandler
     /**
      * Register the exception handling callbacks for the application.
      */
-    #[\Override]
+    #[Override]
     public function register(): void
     {
         $this->reportable(function (Throwable $e) {
@@ -40,7 +41,7 @@ class Handler extends ExceptionHandler
         });
     }
 
-    #[\Override]
+    #[Override]
     public function render($request, Throwable $exception): SymfonyResponse
     {
         if ($exception instanceof QueryException) {

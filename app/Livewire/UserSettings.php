@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Livewire\Component;
 
-class UserSettings extends Component
+final class UserSettings extends Component
 {
     public string $name = '';
 

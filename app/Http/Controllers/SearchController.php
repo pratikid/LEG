@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
-class SearchController extends Controller
+final class SearchController extends Controller
 {
     /**
      * Display search results.
@@ -53,11 +53,11 @@ class SearchController extends Controller
 
             $individuals = $individualsQuery->where(function ($q) use ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
-                  ->orWhere('last_name', 'like', "%{$query}%")
-                  ->orWhere('middle_name', 'like', "%{$query}%")
-                  ->orWhere('maiden_name', 'like', "%{$query}%")
-                  ->orWhere('nickname', 'like', "%{$query}%")
-                  ->orWhere('notes', 'like', "%{$query}%");
+                    ->orWhere('last_name', 'like', "%{$query}%")
+                    ->orWhere('middle_name', 'like', "%{$query}%")
+                    ->orWhere('maiden_name', 'like', "%{$query}%")
+                    ->orWhere('nickname', 'like', "%{$query}%")
+                    ->orWhere('notes', 'like', "%{$query}%");
             })->paginate(10);
 
             $results['individuals'] = $individuals;
@@ -76,16 +76,16 @@ class SearchController extends Controller
 
             $families = $familiesQuery->where(function ($q) use ($query) {
                 $q->where('marriage_date', 'like', "%{$query}%")
-                  ->orWhere('marriage_place', 'like', "%{$query}%")
-                  ->orWhere('notes', 'like', "%{$query}%")
-                  ->orWhereHas('husband', function ($hq) use ($query) {
-                      $hq->where('first_name', 'like', "%{$query}%")
-                         ->orWhere('last_name', 'like', "%{$query}%");
-                  })
-                  ->orWhereHas('wife', function ($wq) use ($query) {
-                      $wq->where('first_name', 'like', "%{$query}%")
-                         ->orWhere('last_name', 'like', "%{$query}%");
-                  });
+                    ->orWhere('marriage_place', 'like', "%{$query}%")
+                    ->orWhere('notes', 'like', "%{$query}%")
+                    ->orWhereHas('husband', function ($hq) use ($query) {
+                        $hq->where('first_name', 'like', "%{$query}%")
+                            ->orWhere('last_name', 'like', "%{$query}%");
+                    })
+                    ->orWhereHas('wife', function ($wq) use ($query) {
+                        $wq->where('first_name', 'like', "%{$query}%")
+                            ->orWhere('last_name', 'like', "%{$query}%");
+                    });
             })->paginate(10);
 
             $results['families'] = $families;
@@ -104,11 +104,11 @@ class SearchController extends Controller
 
             $events = $eventsQuery->where(function ($q) use ($query) {
                 $q->where('title', 'like', "%{$query}%")
-                  ->orWhere('description', 'like', "%{$query}%")
-                  ->orWhere('event_place', 'like', "%{$query}%")
-                  ->orWhere('event_city', 'like', "%{$query}%")
-                  ->orWhere('event_state', 'like', "%{$query}%")
-                  ->orWhere('event_country', 'like', "%{$query}%");
+                    ->orWhere('description', 'like', "%{$query}%")
+                    ->orWhere('event_place', 'like', "%{$query}%")
+                    ->orWhere('event_city', 'like', "%{$query}%")
+                    ->orWhere('event_state', 'like', "%{$query}%")
+                    ->orWhere('event_country', 'like', "%{$query}%");
             })->paginate(10);
 
             $results['events'] = $events;
@@ -127,9 +127,9 @@ class SearchController extends Controller
 
             $sources = $sourcesQuery->where(function ($q) use ($query) {
                 $q->where('title', 'like', "%{$query}%")
-                  ->orWhere('author', 'like', "%{$query}%")
-                  ->orWhere('publication_info', 'like', "%{$query}%")
-                  ->orWhere('notes', 'like', "%{$query}%");
+                    ->orWhere('author', 'like', "%{$query}%")
+                    ->orWhere('publication_info', 'like', "%{$query}%")
+                    ->orWhere('notes', 'like', "%{$query}%");
             })->paginate(10);
 
             $results['sources'] = $sources;
@@ -148,8 +148,8 @@ class SearchController extends Controller
 
             $stories = $storiesQuery->where(function ($q) use ($query) {
                 $q->where('title', 'like', "%{$query}%")
-                  ->orWhere('content', 'like', "%{$query}%")
-                  ->orWhere('summary', 'like', "%{$query}%");
+                    ->orWhere('content', 'like', "%{$query}%")
+                    ->orWhere('summary', 'like', "%{$query}%");
             })->paginate(10);
 
             $results['stories'] = $stories;
@@ -162,7 +162,7 @@ class SearchController extends Controller
 
             $trees = $treesQuery->where(function ($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
-                  ->orWhere('description', 'like', "%{$query}%");
+                    ->orWhere('description', 'like', "%{$query}%");
             })->paginate(10);
 
             $results['trees'] = $trees;
@@ -192,8 +192,8 @@ class SearchController extends Controller
     public function suggestions(Request $request)
     {
         $query = $request->get('q', '');
-        
-        if (strlen($query) < 2) {
+
+        if (mb_strlen($query) < 2) {
             return response()->json([]);
         }
 
@@ -203,18 +203,18 @@ class SearchController extends Controller
         $individuals = Individual::whereHas('tree', function ($q) {
             $q->where('user_id', Auth::id());
         })
-        ->where(function ($q) use ($query) {
-            $q->where('first_name', 'like', "%{$query}%")
-              ->orWhere('last_name', 'like', "%{$query}%");
-        })
-        ->limit(5)
-        ->get(['first_name', 'last_name']);
+            ->where(function ($q) use ($query) {
+                $q->where('first_name', 'like', "%{$query}%")
+                    ->orWhere('last_name', 'like', "%{$query}%");
+            })
+            ->limit(5)
+            ->get(['first_name', 'last_name']);
 
         foreach ($individuals as $individual) {
             $suggestions[] = [
                 'type' => 'individual',
-                'text' => $individual->first_name . ' ' . $individual->last_name,
-                'value' => $individual->first_name . ' ' . $individual->last_name,
+                'text' => $individual->first_name.' '.$individual->last_name,
+                'value' => $individual->first_name.' '.$individual->last_name,
             ];
         }
 
@@ -222,9 +222,9 @@ class SearchController extends Controller
         $events = Event::whereHas('tree', function ($q) {
             $q->where('user_id', Auth::id());
         })
-        ->where('title', 'like', "%{$query}%")
-        ->limit(5)
-        ->get(['title']);
+            ->where('title', 'like', "%{$query}%")
+            ->limit(5)
+            ->get(['title']);
 
         foreach ($events as $event) {
             $suggestions[] = [
@@ -238,9 +238,9 @@ class SearchController extends Controller
         $sources = Source::whereHas('tree', function ($q) {
             $q->where('user_id', Auth::id());
         })
-        ->where('title', 'like', "%{$query}%")
-        ->limit(5)
-        ->get(['title']);
+            ->where('title', 'like', "%{$query}%")
+            ->limit(5)
+            ->get(['title']);
 
         foreach ($sources as $source) {
             $suggestions[] = [

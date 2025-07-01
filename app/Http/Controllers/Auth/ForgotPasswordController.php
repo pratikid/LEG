@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\View\View;
 
-class ForgotPasswordController extends Controller
+final class ForgotPasswordController extends Controller
 {
     public function showLinkRequestForm(): View
     {

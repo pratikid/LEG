@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\GedcomImportCompleted;
 use App\Notifications\GedcomImportFailed;
 use App\Services\GedcomMultiDatabaseService;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -17,8 +18,9 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
-class ImportGedcomJob implements ShouldQueue
+final class ImportGedcomJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -71,26 +73,26 @@ class ImportGedcomJob implements ShouldQueue
             $importProgress->update([
                 'processed_records' => 0,
                 'total_records' => 0,
-                'status_message' => 'Reading GEDCOM file...'
+                'status_message' => 'Reading GEDCOM file...',
             ]);
 
             // Read the GEDCOM file
-            if (!Storage::disk('local')->exists($this->filePath)) {
-                throw new \Exception("GEDCOM file not found at path: {$this->filePath}");
+            if (! Storage::disk('local')->exists($this->filePath)) {
+                throw new Exception("GEDCOM file not found at path: {$this->filePath}");
             }
-            
+
             $content = Storage::disk('local')->get($this->filePath);
             if ($content === null || $content === false) {
-                throw new \Exception("Failed to read GEDCOM file content from path: {$this->filePath}");
+                throw new Exception("Failed to read GEDCOM file content from path: {$this->filePath}");
             }
-            
-            if (empty(trim($content))) {
-                throw new \Exception("GEDCOM file is empty at path: {$this->filePath}");
+
+            if (empty(mb_trim($content))) {
+                throw new Exception("GEDCOM file is empty at path: {$this->filePath}");
             }
 
             // Update progress - Processing file
             $importProgress->update([
-                'status_message' => 'Processing GEDCOM data...'
+                'status_message' => 'Processing GEDCOM data...',
             ]);
 
             // Use the multi-database service for import
@@ -103,7 +105,7 @@ class ImportGedcomJob implements ShouldQueue
                 'status' => ImportProgress::STATUS_COMPLETED,
                 'processed_records' => $totalRecords,
                 'total_records' => $totalRecords,
-                'status_message' => 'Import completed successfully'
+                'status_message' => 'Import completed successfully',
             ]);
 
             // Get the tree and user for notification
@@ -115,11 +117,11 @@ class ImportGedcomJob implements ShouldQueue
 
             // Send success notification with cleaned file path
             $user->notify(new GedcomImportCompleted(
-                $tree, 
+                $tree,
                 [
                     'individuals' => $importResults['postgresql']['individuals'],
                     'families' => $importResults['postgresql']['families'],
-                ], 
+                ],
                 $this->originalFileName,
                 $importResults['cleaned_file_path'] ?? null
             ));
@@ -133,7 +135,7 @@ class ImportGedcomJob implements ShouldQueue
                 'duration_seconds' => $importResults['duration'] ?? 0,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('GEDCOM import failed', [
                 'file_path' => $this->filePath,
                 'tree_id' => $this->treeId,
@@ -146,14 +148,14 @@ class ImportGedcomJob implements ShouldQueue
             if ($importProgress) {
                 // Truncate error message to prevent database field overflow
                 $errorMessage = $e->getMessage();
-                if (strlen($errorMessage) > 1000) {
-                    $errorMessage = substr($errorMessage, 0, 997) . '...';
+                if (mb_strlen($errorMessage) > 1000) {
+                    $errorMessage = mb_substr($errorMessage, 0, 997).'...';
                 }
-                
+
                 $importProgress->update([
                     'status' => ImportProgress::STATUS_FAILED,
                     'error_message' => $errorMessage,
-                    'status_message' => 'Import failed: ' . substr($errorMessage, 0, 200)
+                    'status_message' => 'Import failed: '.mb_substr($errorMessage, 0, 200),
                 ]);
             }
 
@@ -175,7 +177,7 @@ class ImportGedcomJob implements ShouldQueue
     /**
      * Handle a job failure.
      */
-    public function failed(\Throwable $exception): void
+    public function failed(Throwable $exception): void
     {
         Log::error('GEDCOM import job failed permanently', [
             'file_path' => $this->filePath,
@@ -186,10 +188,10 @@ class ImportGedcomJob implements ShouldQueue
 
         // Update progress to failed with truncated error message
         $errorMessage = $exception->getMessage();
-        if (strlen($errorMessage) > 1000) {
-            $errorMessage = substr($errorMessage, 0, 997) . '...';
+        if (mb_strlen($errorMessage) > 1000) {
+            $errorMessage = mb_substr($errorMessage, 0, 997).'...';
         }
-        
+
         ImportProgress::where([
             'user_id' => $this->userId,
             'tree_id' => $this->treeId,

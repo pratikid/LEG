@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\View\View;
 
-class AdminController extends Controller
+final class AdminController extends Controller
 {
     public function users(): View
     {

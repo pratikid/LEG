@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class GedcomImportFailed extends Notification implements ShouldQueue
+final class GedcomImportFailed extends Notification implements ShouldQueue
 {
     use Queueable;
 

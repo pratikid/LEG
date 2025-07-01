@@ -22,12 +22,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property string|null $divorce_place
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
- * @property-read \App\Models\Tree $tree
- * @property-read \App\Models\Individual|null $husband
- * @property-read \App\Models\Individual|null $wife
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Individual> $children
+ * @property-read Tree $tree
+ * @property-read Individual|null $husband
+ * @property-read Individual|null $wife
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Individual> $children
  */
-class Family extends Model
+final class Family extends Model
 {
     use HasFactory;
 
@@ -88,15 +88,15 @@ class Family extends Model
     public function spouses(): \Illuminate\Database\Eloquent\Collection
     {
         $spouses = collect();
-        
+
         if ($this->husband) {
             $spouses->push($this->husband);
         }
-        
+
         if ($this->wife) {
             $spouses->push($this->wife);
         }
-        
+
         return $spouses;
     }
 
@@ -132,11 +132,11 @@ class Family extends Model
         if ($this->divorce_date) {
             return 'divorced';
         }
-        
+
         if ($this->marriage_date) {
             return 'married';
         }
-        
+
         return 'unknown';
     }
 
@@ -179,4 +179,4 @@ class Family extends Model
     {
         return $query->where('marriage_place', 'like', "%{$place}%");
     }
-} 
+}

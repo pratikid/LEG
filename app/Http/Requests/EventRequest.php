@@ -9,7 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
-class EventRequest extends FormRequest
+final class EventRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

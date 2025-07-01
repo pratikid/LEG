@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Laudis\Neo4j\Client;
 use Laudis\Neo4j\ClientBuilder;
 use Laudis\Neo4j\Contracts\TransactionInterface;
 use Laudis\Neo4j\Types\Relationship;
 
-class Neo4jIndividualService
+final class Neo4jIndividualService
 {
-    protected Client $client;
+    private Client $client;
 
     public function __construct()
     {
@@ -112,7 +113,7 @@ class Neo4jIndividualService
                     'verify_params' => $verifyParams,
                     'transaction_id' => spl_object_hash($transaction),
                 ]);
-                throw new \Exception('Parent or child node not found');
+                throw new Exception('Parent or child node not found');
             }
 
             // Check for existing relationship
@@ -179,7 +180,7 @@ class Neo4jIndividualService
                 //     'has_child' => $directFirstResult ? $directFirstResult->get('child') !== null : false,
                 //     'has_relationship' => $directFirstResult ? $directFirstResult->get('r') !== null : false,
                 // ]);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error('Direct query execution failed', [
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
@@ -199,7 +200,7 @@ class Neo4jIndividualService
             // ]);
 
             if ($result->count() === 0) {
-                throw new \Exception('Failed to create parent-child relationship');
+                throw new Exception('Failed to create parent-child relationship');
             }
 
             // Verify the relationship was actually created
@@ -219,7 +220,7 @@ class Neo4jIndividualService
             // ]);
 
             if ($verifyRelResult->count() === 0) {
-                throw new \Exception('Relationship verification failed');
+                throw new Exception('Relationship verification failed');
             }
 
             // Explicitly commit the transaction if it's a local one
@@ -237,7 +238,7 @@ class Neo4jIndividualService
             // ]);
 
             return $result;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Rollback the transaction if it's a local one
             if ($localTransaction) {
                 // Log::info('Rolling back local transaction due to error', [
@@ -247,7 +248,7 @@ class Neo4jIndividualService
                 try {
                     $localTransaction->rollback();
                     // Log::info('Local transaction rolled back successfully');
-                } catch (\Exception $rollbackError) {
+                } catch (Exception $rollbackError) {
                     Log::error('Failed to rollback transaction', [
                         'error' => $rollbackError->getMessage(),
                         'transaction_id' => spl_object_hash($transaction),
@@ -317,7 +318,7 @@ class Neo4jIndividualService
                     'verify_params' => $verifyParams,
                     'transaction_id' => spl_object_hash($transaction),
                 ]);
-                throw new \Exception('One or both spouse nodes not found');
+                throw new Exception('One or both spouse nodes not found');
             }
 
             // Check for existing relationship
@@ -384,7 +385,7 @@ class Neo4jIndividualService
                 //     'has_spouse_b' => $directFirstResult ? $directFirstResult->get('b') !== null : false,
                 //     'has_relationship' => $directFirstResult ? $directFirstResult->get('r') !== null : false,
                 // ]);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error('Direct query execution failed', [
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
@@ -404,7 +405,7 @@ class Neo4jIndividualService
             // ]);
 
             if ($result->count() === 0) {
-                throw new \Exception('Failed to create spouse relationship');
+                throw new Exception('Failed to create spouse relationship');
             }
 
             // Verify the relationship was actually created
@@ -424,7 +425,7 @@ class Neo4jIndividualService
             // ]);
 
             if ($verifyRelResult->count() === 0) {
-                throw new \Exception('Relationship verification failed');
+                throw new Exception('Relationship verification failed');
             }
 
             // Explicitly commit the transaction if it's a local one
@@ -442,7 +443,7 @@ class Neo4jIndividualService
             // ]);
 
             return $result;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Rollback the transaction if it's a local one
             if ($localTransaction) {
                 // Log::info('Rolling back local transaction due to error', [
@@ -452,7 +453,7 @@ class Neo4jIndividualService
                 try {
                     $localTransaction->rollback();
                     // Log::info('Local transaction rolled back successfully');
-                } catch (\Exception $rollbackError) {
+                } catch (Exception $rollbackError) {
                     Log::error('Failed to rollback transaction', [
                         'error' => $rollbackError->getMessage(),
                         'transaction_id' => spl_object_hash($transaction),
@@ -522,7 +523,7 @@ class Neo4jIndividualService
                     'verify_params' => $verifyParams,
                     'transaction_id' => spl_object_hash($transaction),
                 ]);
-                throw new \Exception('One or both sibling nodes not found');
+                throw new Exception('One or both sibling nodes not found');
             }
 
             // Check for existing relationship
@@ -589,7 +590,7 @@ class Neo4jIndividualService
                 //     'has_sibling_b' => $directFirstResult ? $directFirstResult->get('b') !== null : false,
                 //     'has_relationship' => $directFirstResult ? $directFirstResult->get('r') !== null : false,
                 // ]);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error('Direct query execution failed', [
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
@@ -609,7 +610,7 @@ class Neo4jIndividualService
             // ]);
 
             if ($result->count() === 0) {
-                throw new \Exception('Failed to create sibling relationship');
+                throw new Exception('Failed to create sibling relationship');
             }
 
             // Verify the relationship was actually created
@@ -629,7 +630,7 @@ class Neo4jIndividualService
             // ]);
 
             if ($verifyRelResult->count() === 0) {
-                throw new \Exception('Relationship verification failed');
+                throw new Exception('Relationship verification failed');
             }
 
             // Explicitly commit the transaction if it's a local one
@@ -647,7 +648,7 @@ class Neo4jIndividualService
             // ]);
 
             return $result;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Rollback the transaction if it's a local one
             if ($localTransaction) {
                 // Log::info('Rolling back local transaction due to error', [
@@ -657,7 +658,7 @@ class Neo4jIndividualService
                 try {
                     $localTransaction->rollback();
                     // Log::info('Local transaction rolled back successfully');
-                } catch (\Exception $rollbackError) {
+                } catch (Exception $rollbackError) {
                     Log::error('Failed to rollback transaction', [
                         'error' => $rollbackError->getMessage(),
                         'transaction_id' => spl_object_hash($transaction),
@@ -766,7 +767,7 @@ class Neo4jIndividualService
                                  : $this->client->run($query, ['individualId' => $individualId, 'limit' => $limit]);
 
             return $result;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get siblings', [
                 'individual_id' => $individualId,
                 'error' => $e->getMessage(),
@@ -1032,6 +1033,7 @@ class Neo4jIndividualService
                               : $this->client->run($query, ['id' => $treeId]);
 
         $firstResult = $this->getFirstResult($result);
+
         return $firstResult ? $firstResult->get('count') > 0 : false;
     }
 
@@ -1075,6 +1077,7 @@ class Neo4jIndividualService
                               : $this->client->run($query, ['fromId' => $fromId, 'toId' => $toId]);
 
         $firstResult = $this->getFirstResult($result);
+
         return $firstResult ? $firstResult->get('count') > 0 : false;
     }
 
@@ -1089,6 +1092,7 @@ class Neo4jIndividualService
                               : $this->client->run($query, ['fromId' => $fromId, 'toId' => $toId]);
 
         $firstResult = $this->getFirstResult($result);
+
         return $firstResult ? $firstResult->get('count') === 0 : true;
     }
 
@@ -1119,7 +1123,7 @@ class Neo4jIndividualService
                                  : $this->client->run($query, ['parentId' => $parentId]);
 
             return $result;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get children', [
                 'parent_id' => $parentId,
                 'error' => $e->getMessage(),
@@ -1139,7 +1143,7 @@ class Neo4jIndividualService
                                  : $this->client->run($query, ['childId' => $childId]);
 
             return $result;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get parents', [
                 'child_id' => $childId,
                 'error' => $e->getMessage(),
@@ -1159,7 +1163,7 @@ class Neo4jIndividualService
                                  : $this->client->run($query, ['individualId' => $individualId]);
 
             return $result;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get spouses', [
                 'individual_id' => $individualId,
                 'error' => $e->getMessage(),

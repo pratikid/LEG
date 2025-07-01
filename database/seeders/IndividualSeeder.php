@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\Individual;
 use App\Models\Tree;
 use Illuminate\Database\Seeder;
 
-class IndividualSeeder extends Seeder
+final class IndividualSeeder extends Seeder
 {
     public function run(): void
     {
