@@ -130,101 +130,22 @@ final class GedcomService
     }
 
     /**
-     * Remove user-defined tags from GEDCOM content
-     * User-defined tags start with underscore (_) and are not part of the standard GEDCOM specification
-     * 
-     * @param string $gedcomContent Raw GEDCOM content
-     * @return string Cleaned GEDCOM content with user-defined tags removed
-     */
-    protected function removeUserDefinedTags(string $gedcomContent): string
-    {
-        $lines = preg_split('/\r?\n/', $gedcomContent);
-        if ($lines === false) {
-            return $gedcomContent;
-        }
-
-        $cleanedLines = [];
-        $skipUntilLevel = null;
-        $removedTags = [];
-
-        foreach ($lines as $line) {
-            $trimmedLine = trim($line);
-            
-            // Skip empty lines
-            if (empty($trimmedLine)) {
-                $cleanedLines[] = $line;
-                continue;
-            }
-
-            // Parse the line to get level and tag
-            if (preg_match('/^(\d+)\s+(@[^@]+@)?\s*(\w+)\s*(.*)$/', $trimmedLine, $matches)) {
-                $level = (int) $matches[1];
-                $tag = $matches[3];
-                $value = trim($matches[4]);
-                
-                // Check if this is a user-defined tag (starts with underscore)
-                if (str_starts_with($tag, '_')) {
-                    $removedTags[] = $tag;
-                    $skipUntilLevel = $level;
-                    continue; // Skip this line
-                }
-                
-                // Clean dates if this is a DATE tag
-                if ($tag === 'DATE' && !empty($value)) {
-                    $cleanedDate = $this->cleanGedcomDate($value);
-                    if ($cleanedDate !== $value) {
-                        $line = $matches[1] . ' ' . ($matches[2] ?? '') . ' ' . $matches[3] . ' ' . $cleanedDate;
-                    }
-                }
-                
-                // Check if we're currently skipping lines due to a user-defined tag
-                if ($skipUntilLevel !== null) {
-                    // If we encounter a line with the same or lower level, stop skipping
-                    if ($level <= $skipUntilLevel) {
-                        $skipUntilLevel = null;
-                        // Don't continue here, process this line normally
-                    } else {
-                        // Skip this line (it's a sub-tag of the user-defined tag)
-                        continue;
-                    }
-                }
-            }
-
-            // Add the line if we're not skipping
-            if ($skipUntilLevel === null) {
-                $cleanedLines[] = $line;
-            }
-        }
-
-        // Log removed tags for debugging
-        if (!empty($removedTags)) {
-            $uniqueRemovedTags = array_unique($removedTags);
-            Log::info('Removed user-defined tags from GEDCOM', [
-                'removed_tags' => $uniqueRemovedTags,
-                'total_removed' => count($removedTags)
-            ]);
-        }
-
-        return implode("\n", $cleanedLines);
-    }
-
-    /**
      * Clean and standardize GEDCOM date formats
      * Handles various date formats including yyyy-only dates
-     * 
-     * @param string $dateString The date string to clean
+     *
+     * @param  string  $dateString  The date string to clean
      * @return string Cleaned and standardized date string
      */
     public function cleanGedcomDate(string $dateString): string
     {
         $originalDate = $dateString;
-        $dateString = trim($dateString);
-        
+        $dateString = mb_trim($dateString);
+
         // Strip leading 'on', 'On', 'ON', etc.
         $dateString = preg_replace('/^on\s+/i', '', $dateString);
-        
+
         // Handle empty or null dates
-        if ($dateString === '' || strtolower($dateString) === 'null') {
+        if ($dateString === '' || mb_strtolower($dateString) === 'null') {
             return '';
         }
 
@@ -568,6 +489,87 @@ final class GedcomService
         $output .= "0 TRLR\n";
 
         return $output;
+    }
+
+    /**
+     * Remove user-defined tags from GEDCOM content
+     * User-defined tags start with underscore (_) and are not part of the standard GEDCOM specification
+     *
+     * @param  string  $gedcomContent  Raw GEDCOM content
+     * @return string Cleaned GEDCOM content with user-defined tags removed
+     */
+    private function removeUserDefinedTags(string $gedcomContent): string
+    {
+        $lines = preg_split('/\r?\n/', $gedcomContent);
+        if ($lines === false) {
+            return $gedcomContent;
+        }
+
+        $cleanedLines = [];
+        $skipUntilLevel = null;
+        $removedTags = [];
+
+        foreach ($lines as $line) {
+            $trimmedLine = mb_trim($line);
+
+            // Skip empty lines
+            if (empty($trimmedLine)) {
+                $cleanedLines[] = $line;
+
+                continue;
+            }
+
+            // Parse the line to get level and tag
+            if (preg_match('/^(\d+)\s+(@[^@]+@)?\s*(\w+)\s*(.*)$/', $trimmedLine, $matches)) {
+                $level = (int) $matches[1];
+                $tag = $matches[3];
+                $value = mb_trim($matches[4]);
+
+                // Check if this is a user-defined tag (starts with underscore)
+                if (str_starts_with($tag, '_')) {
+                    $removedTags[] = $tag;
+                    $skipUntilLevel = $level;
+
+                    continue; // Skip this line
+                }
+
+                // Clean dates if this is a DATE tag
+                if ($tag === 'DATE' && ! empty($value)) {
+                    $cleanedDate = $this->cleanGedcomDate($value);
+                    if ($cleanedDate !== $value) {
+                        $line = $matches[1].' '.($matches[2] ?? '').' '.$matches[3].' '.$cleanedDate;
+                    }
+                }
+
+                // Check if we're currently skipping lines due to a user-defined tag
+                if ($skipUntilLevel !== null) {
+                    // If we encounter a line with the same or lower level, stop skipping
+                    if ($level <= $skipUntilLevel) {
+                        $skipUntilLevel = null;
+                        // Don't continue here, process this line normally
+                    } else {
+                        // Skip this line (it's a sub-tag of the user-defined tag)
+                        continue;
+                    }
+                }
+            }
+
+            // Add the line if we're not skipping
+            if ($skipUntilLevel === null) {
+                $cleanedLines[] = $line;
+            }
+        }
+
+        // Log removed tags for debugging
+        if (! empty($removedTags)) {
+            $uniqueRemovedTags = array_unique($removedTags);
+            Log::info('Removed user-defined tags from GEDCOM', [
+                'removed_tags' => $uniqueRemovedTags,
+                'total_removed' => count($removedTags),
+            ]);
+        }
+
+        return implode("\n", $cleanedLines);
     }
 
     /**

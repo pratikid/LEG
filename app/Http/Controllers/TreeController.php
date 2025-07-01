@@ -236,19 +236,6 @@ final class TreeController extends Controller
         ]);
     }
 
-    /**
-     * Safely get a property from a Neo4j node, returning null if the property doesn't exist
-     */
-    private function getSafeProperty($node, string $propertyName)
-    {
-        try {
-            return $node->getProperty($propertyName);
-        } catch (\Exception $e) {
-            // Property doesn't exist, return null
-            return null;
-        }
-    }
-
     public function visualization(Tree $tree)
     {
         try {
@@ -476,6 +463,19 @@ final class TreeController extends Controller
 
             return redirect()->back()
                 ->withErrors(['error' => 'An unexpected error occurred. Please try again later.']);
+        }
+    }
+
+    /**
+     * Safely get a property from a Neo4j node, returning null if the property doesn't exist
+     */
+    private function getSafeProperty($node, string $propertyName)
+    {
+        try {
+            return $node->getProperty($propertyName);
+        } catch (Exception $e) {
+            // Property doesn't exist, return null
+            return null;
         }
     }
 }
