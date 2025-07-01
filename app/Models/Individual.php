@@ -374,6 +374,16 @@ final class Individual extends Model
         return "Age {$age}";
     }
 
+    /**
+     * Get the parents of the individual (reverse of familiesAsChild)
+     */
+    public function parents(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Family::class, 'family_children', 'child_id', 'family_id')
+            ->withPivot('child_order')
+            ->orderBy('family_children.child_order');
+    }
+
     protected static function booted(): void
     {
         self::created(function (Individual $individual) {

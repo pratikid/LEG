@@ -109,11 +109,11 @@ final class GedcomMultiDatabaseService
                 'tree_id' => $treeId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'cleaned_file_path' => $cleanedFilePath ?? null,
+                'cleaned_file_path' => $cleanedFilePath,
             ]);
 
             // Clean up the cleaned file if it exists and import failed
-            if (isset($cleanedFilePath) && file_exists($cleanedFilePath)) {
+            if (file_exists($cleanedFilePath)) {
                 try {
                     unlink($cleanedFilePath);
                     Log::info('Cleaned up failed import file', ['file_path' => $cleanedFilePath]);

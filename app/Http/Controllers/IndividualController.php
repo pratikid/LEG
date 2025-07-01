@@ -78,11 +78,12 @@ final class IndividualController extends Controller
         ]);
 
         DB::beginTransaction();
-        $neo4jTransaction = $this->neo4jService->beginTransaction();
+        $neo4jTransaction = null;
         $individual = null;
         $neo4jCommitted = false;
 
         try {
+            $neo4jTransaction = $this->neo4jService->beginTransaction();
             // Create SQL record
             /**
              * use Illuminate\Support\Arr;
@@ -222,10 +223,11 @@ final class IndividualController extends Controller
         ]);
 
         DB::beginTransaction();
-        $neo4jTransaction = $this->neo4jService->beginTransaction();
+        $neo4jTransaction = null;
         $neo4jCommitted = false;
 
         try {
+            $neo4jTransaction = $this->neo4jService->beginTransaction();
             // Update SQL record
             $individual->update($validated);
 
@@ -343,10 +345,11 @@ final class IndividualController extends Controller
     public function destroy(int $id): RedirectResponse
     {
         DB::beginTransaction();
-        $neo4jTransaction = $this->neo4jService->beginTransaction();
+        $neo4jTransaction = null;
         $neo4jCommitted = false;
 
         try {
+            $neo4jTransaction = $this->neo4jService->beginTransaction();
             $individual = Individual::findOrFail($id);
 
             // Delete SQL record first

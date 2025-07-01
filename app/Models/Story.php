@@ -30,4 +30,20 @@ final class Story extends Model
         'user_id',
         'tree_id',
     ];
+
+    /**
+     * Get the tree that owns the story.
+     */
+    public function tree(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Tree::class);
+    }
+
+    /**
+     * The individuals that belong to the story.
+     */
+    public function individuals(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Individual::class, 'individual_story', 'story_id', 'individual_id');
+    }
 }
