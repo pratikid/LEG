@@ -24,52 +24,92 @@ export default defineConfig({
     ],
     base: process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:5173/',
     
-    // Build optimizations
+    // Aggressive build optimizations
     build: {
-        // Enable source maps for debugging (disable for production)
-        sourcemap: process.env.NODE_ENV !== 'production',
+        // Disable source maps in production for faster builds
+        sourcemap: false,
         
-        // Optimize chunk size
+        // Use esbuild for faster minification
+        minify: 'esbuild',
+        
+        // Optimize CSS
+        cssMinify: 'esbuild',
+        
+        // Increase chunk size warning limit
+        chunkSizeWarningLimit: 2000,
+        
+        // Enable build cache for faster rebuilds
+        cache: true,
+        
+        // Optimize rollup options
         rollupOptions: {
             output: {
+                // Optimize chunking
                 manualChunks: {
-                    vendor: ['axios', 'alpinejs'],
-                    d3: ['d3'],
+                    vendor: ['axios'],
                 },
+                // Optimize asset naming
+                assetFileNames: (assetInfo) => {
+                    const info = assetInfo.name.split('.');
+                    const ext = info[info.length - 1];
+                    if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
+                        return `assets/images/[name]-[hash][extname]`;
+                    }
+                    return `assets/[name]-[hash][extname]`;
+                },
+                chunkFileNames: 'assets/[name]-[hash].js',
+                entryFileNames: 'assets/[name]-[hash].js',
             },
         },
         
-        // Enable minification
-        minify: 'terser',
+        // Optimize target
+        target: 'es2015',
         
-        // Optimize CSS
-        cssMinify: true,
+        // Optimize CSS code splitting
+        cssCodeSplit: true,
         
-        // Set chunk size warning limit
-        chunkSizeWarningLimit: 1000,
-        
-        // Enable build cache
-        cache: true,
+        // Optimize assets
+        assetsInlineLimit: 4096,
     },
     
     // Optimize dependencies
     optimizeDeps: {
-        include: ['axios', 'alpinejs', 'd3'],
-        exclude: [],
+        include: ['axios'],
+        exclude: ['d3'], // Exclude D3 as it's not used in main bundle
+        // Force pre-bundling for faster builds
+        force: true,
     },
     
     // CSS optimization
     css: {
-        devSourcemap: process.env.NODE_ENV !== 'production',
+        devSourcemap: false,
     },
     
-    // Worker configuration for parallel processing
+    // Optimize esbuild
+    esbuild: {
+        target: 'es2015',
+        // Optimize for speed
+        minifyIdentifiers: false,
+        minifySyntax: true,
+        minifyWhitespace: true,
+    },
+    
+    // Optimize worker
     worker: {
         format: 'es',
+        plugins: () => [],
     },
     
-    // Enable esbuild for faster builds
-    esbuild: {
-        target: 'es2020',
+    // Optimize resolve
+    resolve: {
+        alias: {
+            '@': '/resources/js',
+        },
+    },
+    
+    // Optimize define
+    define: {
+        __VUE_OPTIONS_API__: false,
+        __VUE_PROD_DEVTOOLS__: false,
     },
 });
