@@ -387,7 +387,7 @@ services:
 
   # MongoDB Exporter
   mongodb-exporter:
-    image: bitnami/mongodb-exporter:latest
+    image: percona/mongodb_exporter:0.39
     container_name: leg-mongodb-exporter
     restart: unless-stopped
     ports:
@@ -400,6 +400,7 @@ services:
       - mongodb
     command:
       - '--mongodb.uri=mongodb://leg:password123@mongodb:27017/leg'
+      - '--collect-all'
     deploy:
       resources:
         limits:

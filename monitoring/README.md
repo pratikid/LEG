@@ -40,14 +40,23 @@ This directory contains the configuration for monitoring your Docker containers 
 
 ## Pre-configured Dashboards
 
-### Docker Containers Dashboard
+### LEG Application - Comprehensive Monitoring
 A comprehensive dashboard showing:
-- Container CPU usage
-- Container memory usage
+- Container CPU and memory usage
+- System CPU and memory usage
+- PostgreSQL connections and transactions
+- Redis metrics (clients, memory)
+- MongoDB metrics (connections, operations)
 - Container network I/O
-- Container status
+- Service status (UP/DOWN)
 
-The dashboard is automatically provisioned and available in Grafana.
+### LEG Application - Debug Metrics
+A debug dashboard showing raw metrics to help troubleshoot monitoring issues:
+- All targets status
+- Raw container metrics
+- Raw database metrics
+
+Both dashboards are automatically provisioned and available in Grafana.
 
 ## Key Metrics Available
 
@@ -75,7 +84,10 @@ The dashboard is automatically provisioned and available in Grafana.
 - `prometheus.yml` - Prometheus configuration with all scrape targets
 - `grafana/provisioning/datasources/prometheus.yml` - Grafana datasource config
 - `grafana/provisioning/dashboards/dashboard.yml` - Dashboard provisioning config
-- `grafana/provisioning/dashboards/docker-containers.json` - Main monitoring dashboard
+- `grafana/provisioning/dashboards/comprehensive-monitoring.json` - Main monitoring dashboard
+- `grafana/provisioning/dashboards/debug-metrics.json` - Debug dashboard
+- `verify-metrics.sh` - Linux/Mac verification script
+- `verify-metrics.bat` - Windows verification script
 
 ## Ports Used
 
@@ -105,6 +117,39 @@ The dashboard is automatically provisioned and available in Grafana.
 Resource limits are set in `docker-compose.yml` under each service's `deploy` section.
 
 ## Troubleshooting
+
+### No Data in Dashboards
+If you see "No data" in the Grafana dashboards:
+
+1. **Run the verification script:**
+   ```bash
+   # Linux/Mac
+   ./monitoring/verify-metrics.sh
+   
+   # Windows
+   monitoring\verify-metrics.bat
+   ```
+
+2. **Check if all services are running:**
+   ```bash
+   docker-compose ps
+   ```
+
+3. **Check Prometheus targets:**
+   - Open http://localhost:9090/targets
+   - Ensure all targets show "UP" status
+
+4. **Check individual exporter endpoints:**
+   - cAdvisor: http://localhost:8080/metrics
+   - MongoDB: http://localhost:9216/metrics
+   - Redis: http://localhost:9121/metrics
+   - PostgreSQL: http://localhost:9187/metrics
+   - Node: http://localhost:9100/metrics
+
+5. **Restart monitoring services:**
+   ```bash
+   docker-compose restart prometheus grafana cadvisor mongodb-exporter
+   ```
 
 ### cAdvisor on Windows
 On Windows, cAdvisor might have limited functionality. If you encounter issues:
