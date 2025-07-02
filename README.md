@@ -19,12 +19,92 @@ LEG supports GEDCOM 5.5.5 (industry standard) and 7.0 (latest), with partial com
 
 **A modern, open-source genealogy platform that makes family history accessible to everyone.**
 
+## Platform Overview
+
+```mermaid
+graph TB
+    subgraph "User Interface"
+        UI[Web Interface]
+        M[Mobile Responsive]
+        V[Interactive Visualizations]
+    end
+    
+    subgraph "Core Features"
+        T[Family Trees]
+        S[Search & Discovery]
+        C[Collaboration]
+        M2[Media Management]
+    end
+    
+    subgraph "Data Management"
+        G[GEDCOM Import/Export]
+        P[Privacy Controls]
+        V2[Data Validation]
+        B[Backup & Sync]
+    end
+    
+    subgraph "Technology Stack"
+        L[Laravel Backend]
+        N[Neo4j Graph DB]
+        PG[PostgreSQL]
+        D3[D3.js Visualizations]
+    end
+    
+    UI --> T
+    UI --> S
+    UI --> C
+    UI --> M2
+    T --> G
+    S --> P
+    C --> V2
+    M2 --> B
+    G --> L
+    L --> N
+    L --> PG
+    V --> D3
+```
+
 ## ✨ What Makes LEG Special
 
 - **Interactive Family Trees**: Beautiful D3.js visualizations that bring your family history to life
 - **Collaborative Research**: Work together with family members and researchers
 - **Modern Technology**: Built with Laravel, Neo4j, and cutting-edge web technologies
 - **Privacy First**: Granular controls to protect sensitive family information
+
+## Feature Architecture
+
+```mermaid
+flowchart LR
+    subgraph "Core Features"
+        A[Tree Management]
+        B[Individual Profiles]
+        C[Relationship Mapping]
+        D[Event Timeline]
+    end
+    
+    subgraph "Advanced Features"
+        E[GEDCOM Processing]
+        F[Media Library]
+        G[Source Citation]
+        H[Collaboration Tools]
+    end
+    
+    subgraph "User Experience"
+        I[Search & Filter]
+        J[Privacy Controls]
+        K[Export Options]
+        L[Mobile Access]
+    end
+    
+    A --> E
+    B --> F
+    C --> G
+    D --> H
+    E --> I
+    F --> J
+    G --> K
+    H --> L
+```
 
 ## 🚀 Quick Start
 

@@ -4,6 +4,82 @@
 
 The LEG API provides programmatic access to the family tree data and functionality. This documentation covers all available endpoints, authentication methods, and usage examples.
 
+## API Architecture
+
+```mermaid
+graph TB
+    subgraph "Client Applications"
+        C[Web App]
+        M[Mobile App]
+        T[Third Party]
+    end
+    
+    subgraph "API Gateway"
+        A[Laravel API]
+        R[Rate Limiting]
+        V[Validation]
+    end
+    
+    subgraph "Authentication"
+        TKN[Token Auth]
+        POL[Policies]
+        MID[Middleware]
+    end
+    
+    subgraph "Business Logic"
+        S[Services]
+        M2[Models]
+        C2[Controllers]
+    end
+    
+    subgraph "Data Storage"
+        PG[(PostgreSQL)]
+        N4J[(Neo4j)]
+        R2[Redis]
+    end
+    
+    C --> A
+    M --> A
+    T --> A
+    A --> R
+    A --> V
+    A --> TKN
+    TKN --> POL
+    POL --> MID
+    MID --> C2
+    C2 --> S
+    C2 --> M2
+    S --> PG
+    S --> N4J
+    S --> R2
+    M2 --> PG
+```
+
+## Authentication Flow
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as API
+    participant DB as Database
+    participant T as Token
+    
+    C->>A: POST /login
+    A->>DB: Validate Credentials
+    DB->>A: User Data
+    A->>T: Generate Token
+    A->>C: Return Token
+    
+    Note over C,T: Subsequent Requests
+    C->>A: GET /api/individuals
+    C->>A: Authorization: Bearer <token>
+    A->>T: Validate Token
+    T->>A: Token Valid
+    A->>DB: Query Data
+    DB->>A: Response Data
+    A->>C: JSON Response
+```
+
 ## Base URL
 
 ```
@@ -45,6 +121,32 @@ To obtain a token:
 - Return detailed error messages
 - Log all API errors
 - Implement proper error responses
+
+## Request/Response Pattern
+
+```mermaid
+flowchart LR
+    subgraph "Request"
+        A[Client] --> B[API Gateway]
+        B --> C[Authentication]
+        C --> D[Validation]
+        D --> E[Controller]
+    end
+    
+    subgraph "Processing"
+        E --> F[Service Layer]
+        F --> G[Model Layer]
+        G --> H[Database]
+    end
+    
+    subgraph "Response"
+        H --> I[Data Transformation]
+        I --> J[Response Formatting]
+        J --> K[Client]
+    end
+    
+    E --> I
+```
 
 ## Endpoints
 

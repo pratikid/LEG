@@ -23,6 +23,60 @@
 - `storage/` – User uploads, logs, cache, and compiled views.
 - `vendor/` – Composer-managed PHP dependencies.
 
+## Directory Structure Visualization
+
+```mermaid
+graph TD
+    subgraph "Application Core"
+        A[app/] --> B[Http/Controllers/]
+        A --> C[Livewire/]
+        A --> D[Models/]
+        A --> E[Services/]
+        A --> F[Policies/]
+        A --> G[Providers/]
+        A --> H[Traits/]
+    end
+    
+    subgraph "Frontend Assets"
+        I[resources/] --> J[views/]
+        I --> K[js/]
+        I --> L[css/]
+    end
+    
+    subgraph "Data Layer"
+        M[database/] --> N[migrations/]
+        M --> O[seeders/]
+    end
+    
+    subgraph "Configuration"
+        P[config/]
+        Q[routes/]
+        R[storage/]
+    end
+    
+    subgraph "Documentation"
+        S[docs/]
+        T[prd/]
+    end
+    
+    subgraph "Testing & Build"
+        U[tests/]
+        V[public/]
+        W[vendor/]
+    end
+    
+    B --> D
+    C --> D
+    E --> D
+    J --> B
+    K --> C
+    L --> J
+    N --> D
+    P --> A
+    Q --> B
+    R --> A
+```
+
 ## Key Technologies & Structure Rationale
 
 - **Laravel:** Provides a robust MVC foundation, supporting modular controllers, models, and services.

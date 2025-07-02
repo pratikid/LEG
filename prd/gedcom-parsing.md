@@ -13,6 +13,90 @@ This document describes a robust, extensible approach to parsing GEDCOM files fo
   - Extract and map all standard tags (and easily extend for more).
   - **Note:** Handling of sources and notes is planned for future implementation. The parser structure supports it, but import logic does not yet process or link sources/notes.
 
+## GEDCOM Parsing Flow
+
+```mermaid
+flowchart TD
+    A[GEDCOM File] --> B[Parse Lines]
+    B --> C[Build Hierarchy]
+    C --> D[Flatten Records]
+    D --> E[Extract Data]
+    E --> F[Validate Data]
+    F --> G[Store in Database]
+    
+    subgraph "Parsing Process"
+        B --> B1[Split by Lines]
+        B1 --> B2[Parse Level, Tag, Value]
+        B2 --> B3[Handle XREFs]
+    end
+    
+    subgraph "Hierarchy Building"
+        C --> C1[Track Stack]
+        C1 --> C2[Create Nested Structure]
+        C2 --> C3[Handle Record Types]
+    end
+    
+    subgraph "Data Extraction"
+        E --> E1[Individuals]
+        E --> E2[Families]
+        E --> E3[Sources]
+        E --> E4[Notes]
+    end
+    
+    subgraph "Storage"
+        G --> G1[PostgreSQL]
+        G --> G2[Neo4j]
+        G1 --> G3[Structured Data]
+        G2 --> G4[Relationships]
+    end
+```
+
+## Data Structure Mapping
+
+```mermaid
+erDiagram
+    GEDCOM_FILE ||--o{ INDIVIDUAL : contains
+    GEDCOM_FILE ||--o{ FAMILY : contains
+    GEDCOM_FILE ||--o{ SOURCE : contains
+    GEDCOM_FILE ||--o{ NOTE : contains
+    
+    INDIVIDUAL ||--o{ EVENT : has
+    INDIVIDUAL ||--o{ RELATIONSHIP : participates
+    FAMILY ||--o{ RELATIONSHIP : defines
+    
+    EVENT {
+        string type
+        date date
+        string place
+        string description
+    }
+    
+    INDIVIDUAL {
+        string xref
+        string name
+        string sex
+        date birth_date
+        date death_date
+        string occupation
+    }
+    
+    FAMILY {
+        string xref
+        string husband_ref
+        string wife_ref
+        array children_refs
+        date marriage_date
+    }
+    
+    RELATIONSHIP {
+        string type
+        string from_individual
+        string to_individual
+        date start_date
+        date end_date
+    }
+```
+
 ---
 
 ## Step 1: Parse GEDCOM Lines and Build Hierarchy

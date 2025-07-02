@@ -4,6 +4,89 @@
 
 This document outlines the optimal storage strategy for GEDCOM 7.0 data across our multi-database architecture using PostgreSQL, MongoDB, and Neo4j. The strategy is designed to leverage each database's strengths for specific data types and query patterns.
 
+## Multi-Database Architecture
+
+```mermaid
+graph TB
+    subgraph "GEDCOM Import"
+        G[GEDCOM File] --> P[Parser]
+        P --> V[Validator]
+    end
+    
+    subgraph "Storage Layer"
+        V --> PG[(PostgreSQL)]
+        V --> MG[(MongoDB)]
+        V --> N4J[(Neo4j)]
+    end
+    
+    subgraph "Data Types"
+        PG --> S[Structured Data<br/>Individuals, Families<br/>Headers, Submitters]
+        MG --> D[Document Data<br/>Notes, Sources<br/>Complex Events]
+        N4J --> R[Relationship Data<br/>Family Trees<br/>Ancestry Paths]
+    end
+    
+    subgraph "Query Layer"
+        S --> Q[Application Queries]
+        D --> Q
+        R --> Q
+        Q --> A[API Response]
+    end
+```
+
+## Database Selection Flow
+
+```mermaid
+flowchart TD
+    A[GEDCOM Tag] --> B{Tag Type}
+    B -->|HEAD, SUBM| C[PostgreSQL]
+    B -->|INDI, FAM| D{Data Component}
+    B -->|NOTE, SOUR| E[MongoDB]
+    B -->|RELA| F[Neo4j]
+    
+    D -->|Core Fields| C
+    D -->|Complex Events| E
+    D -->|Relationships| F
+    D -->|Flexible Data| E
+    
+    C --> G[ACID Compliance]
+    E --> H[Schema Flexibility]
+    F --> I[Graph Traversals]
+```
+
+## Data Flow Architecture
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A as App
+    participant P as Parser
+    participant PG as PostgreSQL
+    participant MG as MongoDB
+    participant N4J as Neo4j
+    
+    U->>A: Upload GEDCOM
+    A->>P: Parse File
+    P->>P: Extract Tags
+    
+    par Structured Data
+        P->>PG: Store Individuals
+        P->>PG: Store Families
+        P->>PG: Store Headers
+    and Document Data
+        P->>MG: Store Notes
+        P->>MG: Store Sources
+        P->>MG: Store Events
+    and Relationship Data
+        P->>N4J: Create Nodes
+        P->>N4J: Create Relationships
+    end
+    
+    PG->>A: Import Complete
+    MG->>A: Import Complete
+    N4J->>A: Import Complete
+    A->>U: Success Response
+```
+
 ## Database Architecture
 
 ### PostgreSQL (Primary Relational Data)

@@ -16,6 +16,53 @@ LEG aims to democratize family history research by providing a modern, open, and
 - **Open Source Innovation:** Build a platform that welcomes contributions and adapts to evolving user needs.
 - **Democratize Access:** Lower barriers to entry for genealogy research, making it available to a global audience.
 
+## System Architecture
+
+```mermaid
+graph TB
+    subgraph "Frontend Layer"
+        UI[Laravel Blade Views]
+        LW[Livewire Components]
+        D3[D3.js Visualizations]
+        TW[Tailwind CSS]
+    end
+    
+    subgraph "Application Layer"
+        C[Laravel Controllers]
+        M[Eloquent Models]
+        S[Services]
+        P[Policies]
+    end
+    
+    subgraph "Data Layer"
+        PG[(PostgreSQL)]
+        N4J[(Neo4j Graph DB)]
+        R[Redis Cache]
+        FS[File Storage]
+    end
+    
+    subgraph "External Services"
+        API[External APIs]
+        EMAIL[Email Service]
+        QUEUE[Job Queue]
+    end
+    
+    UI --> LW
+    LW --> C
+    C --> M
+    C --> S
+    M --> PG
+    S --> N4J
+    S --> R
+    S --> FS
+    C --> P
+    S --> API
+    S --> EMAIL
+    S --> QUEUE
+    D3 --> S
+    TW --> UI
+```
+
 ## Audience & Personas
 
 - **Family Historians:** Individuals seeking to document and explore their ancestry.

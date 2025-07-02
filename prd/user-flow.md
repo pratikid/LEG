@@ -46,10 +46,68 @@
 - **Edge Cases:** Large tree exports, custom report templates, export errors.
 - **Value:** Supports offline sharing, documentation, and research output.
 
+## User Journey Flow
+
+```mermaid
+flowchart TD
+    A[User Visits LEG] --> B{Has Account?}
+    B -->|No| C[Register Account]
+    B -->|Yes| D[Login]
+    C --> E[Profile Setup]
+    D --> E
+    E --> F[Choose Action]
+    
+    F --> G[Create New Tree]
+    F --> H[Join Existing Tree]
+    F --> I[Import GEDCOM]
+    F --> J[Browse Community]
+    
+    G --> K[Add Individuals]
+    H --> L[View Tree]
+    I --> M[Parse & Import]
+    J --> N[Find Groups]
+    
+    K --> O[Build Relationships]
+    L --> P[Edit Tree]
+    M --> Q[Review Import]
+    N --> R[Join Group]
+    
+    O --> S[Add Media & Sources]
+    P --> S
+    Q --> T[Resolve Conflicts]
+    R --> U[Collaborate]
+    
+    S --> V[Visualize Tree]
+    T --> V
+    U --> V
+    V --> W[Export/Share]
+    W --> X[Continue Research]
+    X --> F
+```
+
 ## Data Flow & Real-Time Updates
-- All user actions update the database (Eloquent for structured data, Neo4j for relationships).
-- Real-time UI updates via Livewire ensure immediate feedback and collaboration.
-- Visualizations rendered with D3.js for interactive exploration.
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant LW as Livewire
+    participant C as Controller
+    participant M as Model
+    participant PG as PostgreSQL
+    participant N4J as Neo4j
+    participant R as Redis
+    
+    U->>LW: User Action
+    LW->>C: AJAX Request
+    C->>M: Business Logic
+    M->>PG: Data Query/Update
+    M->>N4J: Relationship Query/Update
+    C->>R: Cache Check/Update
+    C->>LW: Response
+    LW->>U: Real-time UI Update
+    
+    Note over U,R: All updates are immediate and collaborative
+```
 
 ## How Flows Support Platform Goals
 - **Engagement:** Intuitive flows and real-time feedback keep users active and invested.

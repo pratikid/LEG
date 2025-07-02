@@ -2,6 +2,65 @@
 
 Welcome to the LEG documentation! This guide will help you find the information you need based on your role and interests.
 
+## Documentation Structure
+
+```mermaid
+graph TB
+    subgraph "Getting Started"
+        GS[Installation Guide]
+        FT[First Tree]
+        ID[Importing Data]
+    end
+    
+    subgraph "User Documentation"
+        UG[User Guide]
+        CT[Creating Trees]
+        MI[Managing Individuals]
+        CO[Collaboration]
+        PS[Privacy Settings]
+    end
+    
+    subgraph "Developer Documentation"
+        DS[Developer Setup]
+        AO[Architecture Overview]
+        CC[Clean Code Guidelines]
+        CG[Commit Guidelines]
+        AR[API Reference]
+    end
+    
+    subgraph "Technical Documentation"
+        GC[GEDCOM Compliance]
+        TI[Tools Integration]
+        TV[Tree View]
+        UX[UI/UX Design]
+        SN[Sidebar Navigation]
+        PD[Project Dictionary]
+    end
+    
+    subgraph "Project Planning"
+        PR[Product Roadmap]
+        FS[Feature Specifications]
+        RE[Requirements]
+    end
+    
+    GS --> UG
+    FT --> CT
+    ID --> MI
+    UG --> CO
+    CT --> PS
+    DS --> AO
+    AO --> CC
+    CC --> CG
+    CG --> AR
+    GC --> TI
+    TI --> TV
+    TV --> UX
+    UX --> SN
+    SN --> PD
+    PR --> FS
+    FS --> RE
+```
+
 ## 👋 New to LEG?
 
 Start here:
