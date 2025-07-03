@@ -23,6 +23,10 @@ return new class extends Migration
             $table->string('location')->nullable();
             $table->boolean('is_public')->default(false);
             $table->timestamps();
+            // Indexes for performance
+            $table->index(['user_id'], 'pref_idx_timeline_events_user_id');
+            $table->index(['event_date'], 'pref_idx_timeline_events_date');
+            $table->index(['event_type'], 'pref_idx_timeline_events_event_type');
         });
     }
 

@@ -27,6 +27,9 @@ return new class extends Migration
             $table->boolean('sms_notifications')->default(false);
             $table->rememberToken();
             $table->timestamps();
+            // Indexes for performance
+            $table->index(['email'], 'pref_idx_users_email');
+            $table->index(['created_at'], 'pref_idx_users_created_at');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

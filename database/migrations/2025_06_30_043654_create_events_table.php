@@ -37,6 +37,11 @@ return new class extends Migration
             $table->index(['individual_id', 'type']);
             $table->index(['family_id', 'type']);
             $table->index('event_date');
+
+            // Indexes for performance
+            $table->index(['tree_id'], 'pref_idx_events_tree_id');
+            $table->index(['event_date'], 'pref_idx_events_date');
+            $table->index(['type'], 'pref_idx_events_type');
         });
     }
 

@@ -36,10 +36,11 @@ return new class extends Migration
             $table->foreign('wife_id')->references('id')->on('individuals')->onDelete('set null');
 
             // Indexes for performance
-            $table->index(['tree_id'], 'idx_families_tree');
-            $table->index(['husband_id'], 'idx_families_husband');
-            $table->index(['wife_id'], 'idx_families_wife');
-            $table->index(['gedcom_xref'], 'idx_families_gedcom_xref');
+            $table->index(['tree_id'], 'pref_idx_families_tree_id');
+            $table->index(['gedcom_xref'], 'pref_idx_families_gedcom_xref');
+            $table->index(['husband_id'], 'pref_idx_families_husband_id');
+            $table->index(['wife_id'], 'pref_idx_families_wife_id');
+            $table->index(['marriage_date'], 'pref_idx_families_marriage_date');
         });
 
         // Create family_children pivot table

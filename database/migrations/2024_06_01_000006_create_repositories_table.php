@@ -31,11 +31,6 @@ return new class extends Migration
 
             // Foreign key constraints
             $table->foreign('tree_id')->references('id')->on('trees')->onDelete('cascade');
-
-            // Indexes for performance
-            $table->index(['tree_id'], 'idx_repositories_tree');
-            $table->index(['name'], 'idx_repositories_name');
-            $table->index(['gedcom_xref'], 'idx_repositories_gedcom_xref');
         });
     }
 

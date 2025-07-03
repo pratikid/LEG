@@ -17,6 +17,9 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('tree_id')->nullable()->constrained()->onDelete('cascade');
             $table->timestamps();
+            // Indexes for performance
+            $table->index(['tree_id'], 'pref_idx_stories_tree_id');
+            $table->index(['title'], 'pref_idx_stories_title');
         });
     }
 

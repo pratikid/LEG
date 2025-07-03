@@ -26,6 +26,11 @@ return new class extends Migration
             $table->index(['user_id', 'created_at']);
             $table->index(['model_type', 'model_id']);
             $table->index('action');
+
+            // Indexes for performance
+            $table->index(['user_id'], 'pref_idx_activity_logs_user_id');
+            $table->index(['action'], 'pref_idx_activity_logs_action');
+            $table->index(['created_at'], 'pref_idx_activity_logs_created_at');
         });
     }
 

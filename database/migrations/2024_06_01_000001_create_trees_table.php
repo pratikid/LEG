@@ -16,6 +16,9 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
+            // Indexes for performance
+            $table->index(['user_id'], 'pref_idx_trees_user_id');
+            $table->index(['name'], 'pref_idx_trees_name');
         });
     }
 

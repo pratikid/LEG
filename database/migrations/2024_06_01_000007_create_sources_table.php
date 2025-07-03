@@ -30,6 +30,11 @@ return new class extends Migration
 
             // Add foreign key constraint for repository_id
             $table->foreign('repository_id')->references('id')->on('repositories')->onDelete('set null');
+
+            // Indexes for performance
+            $table->index(['tree_id'], 'pref_idx_sources_tree_id');
+            $table->index(['gedcom_xref'], 'pref_idx_sources_gedcom_xref');
+            $table->index(['title'], 'pref_idx_sources_title');
         });
     }
 

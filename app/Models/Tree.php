@@ -85,7 +85,7 @@ final class Tree extends Model
     /**
      * Scope to filter trees by user
      */
-    public function scopeForUser($query, int $userId)
+    public function scopeForUser($query, int $userId): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('user_id', $userId);
     }
@@ -93,7 +93,7 @@ final class Tree extends Model
     /**
      * Scope to filter trees by name
      */
-    public function scopeByName($query, string $name)
+    public function scopeByName($query, string $name): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('name', 'like', "%{$name}%");
     }

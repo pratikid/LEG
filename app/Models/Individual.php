@@ -109,7 +109,7 @@ final class Individual extends Model
     /**
      * Scope to filter by sex
      */
-    public function scopeWhereSex($query, string $sex)
+    public function scopeWhereSex($query, string $sex): \Illuminate\Database\Eloquent\Builder
     {
         return $query->whereEnum('sex', $sex);
     }
@@ -117,7 +117,7 @@ final class Individual extends Model
     /**
      * Scope to filter by multiple sex values
      */
-    public function scopeWhereSexIn($query, array $sexes)
+    public function scopeWhereSexIn($query, array $sexes): \Illuminate\Database\Eloquent\Builder
     {
         return $query->whereEnumIn('sex', $sexes);
     }
@@ -125,7 +125,7 @@ final class Individual extends Model
     /**
      * Scope to filter males only
      */
-    public function scopeWhereMale($query)
+    public function scopeWhereMale($query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->whereSex(self::SEX_MALE);
     }
@@ -133,7 +133,7 @@ final class Individual extends Model
     /**
      * Scope to filter females only
      */
-    public function scopeWhereFemale($query)
+    public function scopeWhereFemale($query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->whereSex(self::SEX_FEMALE);
     }
@@ -141,7 +141,7 @@ final class Individual extends Model
     /**
      * Scope to filter unknown sex only
      */
-    public function scopeWhereUnknownSex($query)
+    public function scopeWhereUnknownSex($query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->whereSex(self::SEX_UNKNOWN);
     }
@@ -149,7 +149,7 @@ final class Individual extends Model
     /**
      * Scope to filter known sex (male or female, excluding unknown)
      */
-    public function scopeWhereKnownSex($query)
+    public function scopeWhereKnownSex($query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->whereSexIn([self::SEX_MALE, self::SEX_FEMALE]);
     }
@@ -227,7 +227,7 @@ final class Individual extends Model
     }
 
     /**
-     * @return BelongsTo<Tree, Individual>
+     * Get the tree that owns the individual
      */
     public function tree(): BelongsTo
     {
@@ -235,7 +235,7 @@ final class Individual extends Model
     }
 
     /**
-     * @return BelongsTo<User, Individual>
+     * Get the user that owns the individual
      */
     public function user(): BelongsTo
     {
@@ -247,7 +247,8 @@ final class Individual extends Model
      */
     public function familiesAsHusband(): BelongsToMany
     {
-        return $this->belongsToMany(Family::class, 'families', 'husband_id', 'id');
+        return $this->belongsToMany(Family::class, 'family_individual', 'individual_id', 'family_id')
+            ->wherePivot('role', 'husband');
     }
 
     /**
@@ -255,7 +256,8 @@ final class Individual extends Model
      */
     public function familiesAsWife(): BelongsToMany
     {
-        return $this->belongsToMany(Family::class, 'families', 'wife_id', 'id');
+        return $this->belongsToMany(Family::class, 'family_individual', 'individual_id', 'family_id')
+            ->wherePivot('role', 'wife');
     }
 
     /**
@@ -263,9 +265,8 @@ final class Individual extends Model
      */
     public function familiesAsChild(): BelongsToMany
     {
-        return $this->belongsToMany(Family::class, 'family_children', 'child_id', 'family_id')
-            ->withPivot('child_order')
-            ->orderBy('family_children.child_order');
+        return $this->belongsToMany(Family::class, 'family_individual', 'individual_id', 'family_id')
+            ->wherePivot('role', 'child');
     }
 
     /**
@@ -281,7 +282,7 @@ final class Individual extends Model
     /**
      * Scope to filter by GEDCOM xref
      */
-    public function scopeByGedcomXref($query, string $xref)
+    public function scopeByGedcomXref($query, string $xref): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('gedcom_xref', $xref);
     }
@@ -289,20 +290,20 @@ final class Individual extends Model
     /**
      * Scope to filter by tree
      */
-    public function scopeForTree($query, int $treeId)
+    public function scopeForTree($query, int $treeId): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('tree_id', $treeId);
     }
 
     /**
-     * Scope to filter by name (search in first_name and last_name)
+     * Scope to filter by name (first name or last name)
      */
-    public function scopeByName($query, string $name)
+    public function scopeByName($query, string $name): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where(function ($q) use ($name) {
-            $q->where('first_name', 'like', "%{$name}%")
-                ->orWhere('last_name', 'like', "%{$name}%")
-                ->orWhere('nickname', 'like', "%{$name}%");
+            $q->where('first_name', 'ILIKE', "%{$name}%")
+              ->orWhere('last_name', 'ILIKE', "%{$name}%")
+              ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", ["%{$name}%"]);
         });
     }
 

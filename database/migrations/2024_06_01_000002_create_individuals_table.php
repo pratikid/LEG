@@ -40,10 +40,13 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->timestamps();
 
-            // Add indexes for performance
-            $table->index(['tree_id', 'last_name', 'first_name'], 'idx_individuals_tree_name');
-            $table->index(['birth_date'], 'idx_individuals_birth_date');
-            $table->index(['gedcom_xref'], 'idx_individuals_gedcom_xref');
+            // Indexes for performance
+            $table->index(['tree_id', 'last_name'], 'pref_idx_individuals_tree_last_name');
+            $table->index(['tree_id', 'birth_date'], 'pref_idx_individuals_tree_birth_date');
+            $table->index(['gedcom_xref'], 'pref_idx_individuals_gedcom_xref');
+            $table->index(['sex'], 'pref_idx_individuals_sex');
+            $table->index(['birth_year'], 'pref_idx_individuals_birth_year');
+            $table->index(['death_year'], 'pref_idx_individuals_death_year');
         });
 
         // Alter the column to use the ENUM type

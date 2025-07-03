@@ -23,6 +23,9 @@ return new class extends Migration
 
             $table->index(['user_id', 'status']);
             $table->index(['tree_id', 'status']);
+            $table->index(['tree_id'], 'pref_idx_import_progress_tree_id');
+            $table->index(['status'], 'pref_idx_import_progress_status');
+            $table->index(['created_at'], 'pref_idx_import_progress_created_at');
         });
     }
 

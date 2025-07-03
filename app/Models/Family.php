@@ -143,7 +143,7 @@ final class Family extends Model
     /**
      * Scope to filter by tree.
      */
-    public function scopeForTree($query, int $treeId)
+    public function scopeForTree($query, int $treeId): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('tree_id', $treeId);
     }
@@ -151,7 +151,7 @@ final class Family extends Model
     /**
      * Scope to filter families with children.
      */
-    public function scopeWithChildren($query)
+    public function scopeWithChildren($query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->whereHas('children');
     }
@@ -159,7 +159,7 @@ final class Family extends Model
     /**
      * Scope to filter families without children.
      */
-    public function scopeWithoutChildren($query)
+    public function scopeWithoutChildren($query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->whereDoesntHave('children');
     }
@@ -167,7 +167,7 @@ final class Family extends Model
     /**
      * Scope to filter by marriage date range.
      */
-    public function scopeMarriedBetween($query, string $startDate, string $endDate)
+    public function scopeMarriedBetween($query, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Builder
     {
         return $query->whereBetween('marriage_date', [$startDate, $endDate]);
     }
@@ -175,7 +175,7 @@ final class Family extends Model
     /**
      * Scope to filter by marriage place.
      */
-    public function scopeMarriedAt($query, string $place)
+    public function scopeMarriedAt($query, string $place): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('marriage_place', 'like', "%{$place}%");
     }
