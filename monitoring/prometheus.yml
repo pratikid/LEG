@@ -43,3 +43,12 @@ scrape_configs:
       - targets: ['mongodb-exporter:9216']
     scrape_interval: 15s
     metrics_path: /metrics
+
+  # Neo4j metrics (scraped directly from Neo4j)
+  - job_name: 'neo4j'
+    static_configs:
+      - targets: ['neo4j:2004']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+

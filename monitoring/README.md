@@ -14,6 +14,7 @@ This directory contains the configuration for monitoring your Docker containers 
 - **PostgreSQL Exporter** (Port 9187) - PostgreSQL database metrics
 - **Redis Exporter** (Port 9121) - Redis cache metrics
 - **MongoDB Exporter** (Port 9216) - MongoDB database metrics
+- **Neo4j Metrics** (Port 2004) - Neo4j graph database metrics
 
 ## Quick Start
 
@@ -78,6 +79,7 @@ Both dashboards are automatically provisioned and available in Grafana.
 - **PostgreSQL**: Connection counts, query performance, cache hits
 - **Redis**: Memory usage, commands/sec, keyspace info
 - **MongoDB**: Operations/sec, connections, memory usage
+- **Neo4j**: Graph operations, relationship counts, query performance
 
 ## Configuration Files
 
@@ -100,6 +102,7 @@ Both dashboards are automatically provisioned and available in Grafana.
 | PostgreSQL Exporter | 9187 | PostgreSQL metrics endpoint |
 | Redis Exporter | 9121 | Redis metrics endpoint |
 | MongoDB Exporter | 9216 | MongoDB metrics endpoint |
+| Neo4j Metrics | 2004 | Neo4j metrics endpoint |
 
 ## Customization
 
@@ -144,6 +147,7 @@ If you see "No data" in the Grafana dashboards:
    - MongoDB: http://localhost:9216/metrics
    - Redis: http://localhost:9121/metrics
    - PostgreSQL: http://localhost:9187/metrics
+   - Neo4j: http://localhost:2004/metrics
    - Node: http://localhost:9100/metrics
 
 5. **Restart monitoring services:**

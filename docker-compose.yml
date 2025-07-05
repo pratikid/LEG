@@ -103,17 +103,28 @@ services:
 
   # Neo4j Graph Database
   neo4j:
-    image: neo4j:5
+    image: neo4j:5-enterprise
     container_name: leg-neo4j
     restart: unless-stopped
     ports:
       - "7474:7474" # HTTP
-      - "7687:7687" # Bolt
+      - "7687:7687" # Bolt  
+      - "2004:2004" # Prometheus metrics
     environment:
+      NEO4J_ACCEPT_LICENSE_AGREEMENT: "yes"
       NEO4J_AUTH: neo4j/password123
       NEO4J_apoc_export_file_enabled: "true"
       NEO4J_apoc_import_file_enabled: "true"
       NEO4J_apoc_import_file_use__neo4j__config: "true"
+      NEO4J_server_metrics_prometheus_enabled: "true"
+      NEO4J_server_metrics_prometheus_endpoint: ":2004"
+      NEO4J_server_config_strict__validation_enabled: "false"
+      # Memory configuration (adjusted for container limits)
+      NEO4J_server_memory_heap_initial__size: "512m"
+      NEO4J_server_memory_heap_max__size: "1024m"
+      NEO4J_server_memory_pagecache_size: "512m"
+      # JVM options for ByteBuf leak prevention
+      NEO4J_server_jvm_additional: "-XX:+UseG1GC -XX:+UseStringDeduplication -Dio.netty.leakDetection.level=disabled -Dio.netty.recycler.maxCapacity=32 -Dio.netty.allocator.numDirectArenas=2 -Dio.netty.allocator.maxOrder=9 -Dio.netty.allocator.tinyCacheSize=512 -Dio.netty.allocator.smallCacheSize=256 -Dio.netty.allocator.normalCacheSize=64 -Dio.netty.allocator.maxCachedBufferCapacity=32 -Dio.netty.allocator.cacheTrimInterval=8192 -Dio.netty.allocator.cacheThreadLocal=true -Dio.netty.allocator.useCacheForAllThreads=true"
     volumes:
       - neo4j-data:/data
       - neo4j-logs:/logs
@@ -127,9 +138,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 0.75G
+          memory: 2G
         reservations:
-          memory: 0.25G
+          memory: 1G
 
   # MongoDB Document Database
   mongodb:
