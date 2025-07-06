@@ -226,6 +226,7 @@ Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users
 Route::get('/admin/logs', [AdminController::class, 'logs'])->name('admin.logs')->middleware(['auth', 'admin']);
 Route::get('/admin/settings', [AdminController::class, 'settings'])->name('admin.settings')->middleware(['auth', 'admin']);
 Route::get('/admin/notifications', [AdminController::class, 'notifications'])->name('admin.notifications')->middleware(['auth', 'admin']);
+Route::get('/admin/import-metrics', [AdminController::class, 'importMetrics'])->name('admin.import-metrics')->middleware(['auth', 'admin']);
 
 // Search Routes
 Route::get('/search', [SearchController::class, 'index'])->name('search')->middleware(['auth']);

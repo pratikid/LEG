@@ -803,6 +803,62 @@ class DataQualityService
 - MongoDB: Replica set backups
 - Neo4j: Graph database backups
 
+## Import Method Integration
+
+### Dual Import Strategy
+
+The storage strategy now supports two distinct import methods:
+
+#### Standard Import (Multi-Database)
+- **Service**: `GedcomMultiDatabaseService`
+- **Architecture**: Sequential processing with ACID compliance
+- **Use Case**: Critical data requiring maximum data integrity
+- **Performance**: Reliable but slower for large files
+
+#### Optimized Import (Parallel Processing)
+- **Service**: `GedcomImportOptimizer`
+- **Architecture**: Parallel processing with memory optimization
+- **Use Case**: Large files requiring enhanced throughput
+- **Performance**: Faster processing with optimized memory usage
+
+### Import Method Selection
+
+Users can choose their preferred import method:
+
+```html
+<select name="import_method" id="import_method" class="form-select">
+    <option value="standard">Standard Import (Multi-Database)</option>
+    <option value="optimized">Optimized Import (Parallel Processing)</option>
+</select>
+```
+
+### Performance Tracking
+
+Both import methods include comprehensive performance tracking:
+
+```php
+// Performance metrics collection
+$performanceTracker = app(ImportPerformanceTracker::class);
+$performanceTracker->trackImportMetrics(
+    $importMethod,
+    $treeId,
+    $userId,
+    $importResults,
+    $duration,
+    $fileSize,
+    $totalRecords
+);
+```
+
+### Admin Dashboard
+
+Access performance metrics at `/admin/import-metrics`:
+
+- Real-time import performance
+- Method comparison analytics
+- Success rate tracking
+- Memory usage monitoring
+
 ## Conclusion
 
 This multi-database strategy provides:
@@ -811,5 +867,6 @@ This multi-database strategy provides:
 - **Flexibility**: Schema evolution without downtime
 - **Data Integrity**: ACID compliance where needed
 - **Advanced Features**: Full-text search, graph analytics, document storage
+- **Import Optimization**: Dual import methods with performance tracking
 
-The implementation prioritizes data consistency while leveraging each database's unique capabilities for genealogical data management. 
+The implementation prioritizes data consistency while leveraging each database's unique capabilities for genealogical data management, with enhanced import performance and monitoring capabilities. 

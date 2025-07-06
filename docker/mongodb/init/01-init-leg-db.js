@@ -29,14 +29,4 @@ db.sources.createIndex({ "tree_id": 1 });
 db.media.createIndex({ "gedcom_xref": 1 });
 db.media.createIndex({ "tree_id": 1 });
 
-// Create a user for the leg database with appropriate permissions
-db.createUser({
-    user: "leg_user",
-    pwd: "password123",
-    roles: [
-        { role: "readWrite", db: "leg" },
-        { role: "dbAdmin", db: "leg" }
-    ]
-});
-
 print("LEG database initialized successfully"); 

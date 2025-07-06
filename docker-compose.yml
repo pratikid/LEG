@@ -62,6 +62,12 @@ services:
       - SESSION_DRIVER=redis
       - PERMISSIONS_USER=www-data
       - RUN_MIGRATIONS=true
+      - MONGO_DB_HOST=mongodb
+      - MONGO_DB_PORT=27017
+      - MONGO_DB_DATABASE=leg
+      - MONGO_DB_USERNAME=leg
+      - MONGO_DB_PASSWORD=password123
+      - MONGO_DB_URI=mongodb://leg:password123@mongodb:27017/leg?authSource=admin
     healthcheck:
       test: ["CMD", "php", "-v"]
       interval: 10s
@@ -71,8 +77,10 @@ services:
       resources:
         limits:
           memory: 2G
+          cpus: '3.0'
         reservations:
           memory: 1G
+          cpus: '1.5'
 
   # PostgreSQL Database
   postgres:
@@ -98,8 +106,10 @@ services:
       resources:
         limits:
           memory: 0.75G
+          cpus: '2.5'
         reservations:
           memory: 0.25G
+          cpus: '1.0'
 
   # Neo4j Graph Database
   neo4j:
@@ -139,8 +149,10 @@ services:
       resources:
         limits:
           memory: 2G
+          cpus: '3.5'
         reservations:
           memory: 1G
+          cpus: '2.0'
 
   # MongoDB Document Database
   mongodb:
@@ -159,7 +171,7 @@ services:
     networks:
       - leg-network
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongo mongodb://leg:password123@localhost:27017/leg --quiet
+      test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok", "--quiet", "--host", "localhost:27017", "--username", "leg", "--password", "password123", "--authenticationDatabase", "admin"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -248,13 +260,21 @@ services:
       - QUEUE_CONNECTION=redis
       - SESSION_DRIVER=redis
       - PERMISSIONS_USER=www-data
+      - MONGO_DB_HOST=mongodb
+      - MONGO_DB_PORT=27017
+      - MONGO_DB_DATABASE=leg
+      - MONGO_DB_USERNAME=leg
+      - MONGO_DB_PASSWORD=password123
+      - MONGO_DB_URI=mongodb://leg:password123@mongodb:27017/leg?authSource=admin
     command: php artisan queue:work redis --queue=imports,notifications,default --sleep=1 --tries=3 --max-time=3600 --memory=1024 --timeout=1800
     deploy:
       resources:
         limits:
           memory: 2G
+          cpus: '2.0'
         reservations:
           memory: 1G
+          cpus: '1.0'
 
   # Prometheus - Metrics collection
   prometheus:
@@ -328,8 +348,10 @@ services:
       resources:
         limits:
           memory: 0.25G
+          cpus: '0.1'
         reservations:
           memory: 0.125G
+          cpus: '0.05'
 
   # Node Exporter - System metrics
   node-exporter:
@@ -353,8 +375,10 @@ services:
       resources:
         limits:
           memory: 0.125G
+          cpus: '0.1'
         reservations:
           memory: 0.0625G
+          cpus: '0.05'
 
   # PostgreSQL Exporter
   postgres-exporter:
@@ -373,8 +397,10 @@ services:
       resources:
         limits:
           memory: 0.125G
+          cpus: '0.1'
         reservations:
           memory: 0.0625G
+          cpus: '0.05'
 
   # Redis Exporter
   redis-exporter:
@@ -393,8 +419,10 @@ services:
       resources:
         limits:
           memory: 0.125G
+          cpus: '0.1'
         reservations:
           memory: 0.0625G
+          cpus: '0.05'
 
   # MongoDB Exporter
   mongodb-exporter:
@@ -406,18 +434,20 @@ services:
     networks:
       - leg-network
     environment:
-      - MONGODB_URI=mongodb://leg:password123@mongodb:27017/leg
+      - MONGODB_URI=mongodb://leg:password123@mongodb:27017/admin?authSource=admin
     depends_on:
       - mongodb
     command:
-      - '--mongodb.uri=mongodb://leg:password123@mongodb:27017/leg'
+      - '--mongodb.uri=mongodb://leg:password123@mongodb:27017/admin?authSource=admin'
       - '--collect-all'
     deploy:
       resources:
         limits:
           memory: 0.125G
+          cpus: '0.1'
         reservations:
           memory: 0.0625G
+          cpus: '0.05'
 
 networks:
   leg-network:

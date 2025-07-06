@@ -27,4 +27,9 @@ final class AdminController extends Controller
     {
         return view('admin.notifications');
     }
+
+    public function importMetrics(): View
+    {
+        return view('admin.import-metrics');
+    }
 }

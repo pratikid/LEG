@@ -119,11 +119,11 @@ return [
             'host' => env('MONGO_DB_HOST', 'mongodb'),
             'port' => env('MONGO_DB_PORT', 27017),
             'database' => env('MONGO_DB_DATABASE', 'leg'),
-            'username' => env('MONGO_DB_USERNAME', 'leg_user'),
+            'username' => env('MONGO_DB_USERNAME', 'leg'),
             'password' => env('MONGO_DB_PASSWORD', 'password123'),
-            'uri' => env('MONGO_DB_URI', 'mongodb://leg_user:password123@mongodb:27017/leg'),
+            'uri' => env('MONGO_DB_URI', 'mongodb://leg:password123@mongodb:27017/leg?authSource=admin'),
             'options' => [
-                'authSource' => 'leg',
+                'authSource' => 'admin',
             ],
         ],
 

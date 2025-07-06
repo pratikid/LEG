@@ -66,6 +66,7 @@ final class TreeController extends Controller
         $request->validate([
             'gedcom' => ['required', 'file', 'mimes:ged,gedcom', 'max:10240'],
             'tree_id' => ['nullable', 'integer', 'exists:trees,id'],
+            'import_method' => ['required', 'string', 'in:standard,optimized'],
         ]);
 
         $file = $request->file('gedcom');
@@ -98,8 +99,11 @@ final class TreeController extends Controller
             ]);
         }
 
-        // Dispatch the background job
-        ImportGedcomJob::dispatch($path, $tree->id, $user->id, $originalFileName);
+        // Get the selected import method
+        $importMethod = $request->input('import_method', 'standard');
+
+        // Dispatch the background job with import method
+        ImportGedcomJob::dispatch($path, $tree->id, $user->id, $originalFileName, $importMethod);
 
         return redirect()->route('trees.index')
             ->with('success', 'GEDCOM file uploaded successfully. Import is processing in the background. You will receive a notification when it completes.');
