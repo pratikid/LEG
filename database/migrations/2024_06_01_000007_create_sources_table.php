@@ -12,7 +12,7 @@ return new class extends Migration
     {
         Schema::create('sources', function (Blueprint $table) {
             $table->id();
-            $table->string('gedcom_xref', 50)->unique()->nullable();
+            $table->string('gedcom_xref', 50)->nullable();
             $table->string('title');
             $table->string('author', 255)->nullable();
             $table->text('publication')->nullable();
@@ -23,6 +23,9 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('tree_id')->nullable()->constrained()->onDelete('cascade');
             $table->timestamps();
+
+            // Composite unique constraint on gedcom_xref and tree_id
+            $table->unique(['gedcom_xref', 'tree_id'], 'sources_gedcom_xref_tree_unique');
 
             $table->index(['tree_id'], 'idx_sources_tree');
             $table->index(['gedcom_xref'], 'idx_sources_gedcom_xref');

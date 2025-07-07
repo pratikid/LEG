@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('families', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('tree_id');
-            $table->string('gedcom_xref', 50)->unique()->nullable();
+            $table->string('gedcom_xref', 50)->nullable();
             $table->unsignedBigInteger('husband_id')->nullable();
             $table->unsignedBigInteger('wife_id')->nullable();
             $table->date('marriage_date')->nullable();
@@ -29,6 +29,9 @@ return new class extends Migration
             $table->text('divorce_date_raw')->nullable();
             $table->string('divorce_place', 255)->nullable();
             $table->timestamps();
+
+            // Composite unique constraint on gedcom_xref and tree_id
+            $table->unique(['gedcom_xref', 'tree_id'], 'families_gedcom_xref_tree_unique');
 
             // Foreign key constraints
             $table->foreign('tree_id')->references('id')->on('trees')->onDelete('cascade');

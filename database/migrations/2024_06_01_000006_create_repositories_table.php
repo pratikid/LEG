@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('repositories', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('tree_id');
-            $table->string('gedcom_xref', 50)->unique()->nullable();
+            $table->string('gedcom_xref', 50)->nullable();
             $table->string('name', 255)->notNull();
             $table->string('address_line1', 255)->nullable();
             $table->string('address_line2', 255)->nullable();
@@ -28,6 +28,9 @@ return new class extends Migration
             $table->string('email', 255)->nullable();
             $table->string('website', 255)->nullable();
             $table->timestamps();
+
+            // Composite unique constraint on gedcom_xref and tree_id
+            $table->unique(['gedcom_xref', 'tree_id'], 'repositories_gedcom_xref_tree_unique');
 
             // Foreign key constraints
             $table->foreign('tree_id')->references('id')->on('trees')->onDelete('cascade');

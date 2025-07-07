@@ -18,7 +18,7 @@ return new class extends Migration
 
         Schema::create('individuals', function (Blueprint $table) {
             $table->id();
-            $table->text('gedcom_xref')->unique()->nullable(); // Original GEDCOM reference
+            $table->text('gedcom_xref')->nullable(); // Original GEDCOM reference
             $table->text('first_name')->nullable(); // First name
             $table->text('last_name')->nullable(); // Last name
             $table->text('name_prefix')->nullable(); // Name prefix (e.g., Dr., Sir)
@@ -39,6 +39,9 @@ return new class extends Migration
             $table->foreignId('tree_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->timestamps();
+
+            // Composite unique constraint on gedcom_xref and tree_id
+            $table->unique(['gedcom_xref', 'tree_id'], 'individuals_gedcom_xref_tree_unique');
 
             // Indexes for performance
             $table->index(['tree_id', 'last_name'], 'pref_idx_individuals_tree_last_name');
