@@ -1,232 +1,331 @@
 # Developer Documentation
 
-## Overview
-This project is a family tree management system built with Laravel and Neo4j. It provides functionality for managing individuals, their relationships, and family trees.
+Welcome to the LEG (Laravel Enhanced Genealogy) developer documentation. This guide provides comprehensive information for developers working on the LEG project.
 
-## Technology Stack
-- **Backend**: Laravel (PHP)
-- **Database**: 
-  - MySQL (for user data and basic information)
-  - Neo4j (for relationship management and graph queries)
-- **Frontend**: Blade templates with Tailwind CSS
-- **Authentication**: Laravel's built-in authentication system
+## Quick Start
+
+### Prerequisites
+- **PHP 8.4+**: Latest PHP version with enhanced performance
+- **Composer**: PHP dependency management
+- **Node.js 18+**: For frontend asset compilation
+- **Docker**: For containerized development environment
+- **Git**: Version control
+
+### Development Environment Setup
+
+#### 1. Clone the Repository
+```bash
+git clone <repository-url>
+cd leg
+```
+
+#### 2. Install Dependencies
+```bash
+# Install PHP dependencies
+composer install
+
+# Install Node.js dependencies
+npm install
+```
+
+#### 3. Environment Configuration
+```bash
+# Copy environment file
+cp .env.example .env
+
+# Generate application key
+php artisan key:generate
+```
+
+#### 4. Database Setup
+```bash
+# Run database migrations
+php artisan migrate
+
+# Seed the database with sample data
+php artisan db:seed
+```
+
+#### 5. Start Development Servers
+```bash
+# Start Laravel development server
+php artisan serve
+
+# Start Vite development server
+npm run dev
+
+# Start queue worker (in separate terminal)
+php artisan queue:work
+```
 
 ## Project Structure
 
-### Key Directories
+### Core Directories
 ```
+leg/
 ├── app/
+│   ├── Console/Commands/     # Artisan commands
+│   ├── Exceptions/           # Exception handlers
+│   ├── Helpers/              # Helper functions
 │   ├── Http/
-│   │   ├── Controllers/    # Application controllers
-│   │   └── Middleware/     # Custom middleware
-│   ├── Models/             # Eloquent models
-│   ├── Services/           # Business logic services
-│   └── Traits/             # Reusable traits
-├── config/                 # Configuration files
+│   │   ├── Controllers/      # Web controllers
+│   │   ├── Middleware/       # Request middleware
+│   │   └── Requests/         # Form request validation
+│   ├── Jobs/                 # Background jobs
+│   ├── Livewire/             # Livewire components
+│   ├── Models/               # Eloquent models
+│   ├── Notifications/        # Notification classes
+│   ├── Policies/             # Authorization policies
+│   ├── Providers/            # Service providers
+│   └── Services/             # Business logic services
+├── config/                   # Configuration files
 ├── database/
-│   ├── migrations/         # Database migrations
-│   └── seeders/           # Database seeders
+│   ├── factories/            # Model factories
+│   ├── migrations/           # Database migrations
+│   └── seeders/              # Database seeders
+├── docs/                     # Documentation
 ├── resources/
-│   └── views/             # Blade templates
-└── routes/
-    └── web.php            # Web routes
+│   ├── css/                  # Stylesheets
+│   ├── js/                   # JavaScript files
+│   └── views/                # Blade templates
+├── routes/                   # Route definitions
+├── storage/                  # File storage
+└── tests/                    # Test files
 ```
 
-### Key Components
+## Technology Stack
 
-#### Models
-- `Individual`: Represents a person in the family tree
-- `Tree`: Represents a family tree
-- `User`: Represents system users
+### Backend
+- **Laravel 12.x**: Modern PHP framework
+- **PHP 8.4+**: Latest PHP version
+- **PostgreSQL**: Primary relational database
+- **MongoDB**: Document storage
+- **Neo4j**: Graph database for relationships
+- **Redis**: Caching and sessions
 
-#### Services
-- `Neo4jIndividualService`: Handles all Neo4j graph operations
-  - Relationship management (parent-child, spouse, sibling)
-  - Graph queries (ancestors, descendants, shortest path)
-  - Tree visualization data
+### Frontend
+- **Laravel Blade**: Server-side templating
+- **Livewire 3.x**: Dynamic components
+- **Tailwind CSS 4.x**: Utility-first CSS
+- **D3.js**: Data visualizations
+- **Vite**: Build tool
 
-#### Controllers
-- `IndividualController`: Manages individual CRUD operations
-- `Neo4jRelationshipController`: Handles relationship operations
-- `TreeController`: Manages family trees
+### Development Tools
+- **Laravel Pint**: Code styling
+- **PHPStan**: Static analysis
+- **Rector**: Automated refactoring
+- **PHPUnit**: Testing framework
+- **Laravel Telescope**: Debugging
 
-## Database Schema
+## Core Features
 
-### MySQL Tables
-- `individuals`: Stores basic individual information
-- `trees`: Stores family tree information
-- `users`: Stores user accounts
-- `activity_logs`: Tracks system activities
+### ✅ Implemented Features
 
-### Neo4j Graph Structure
-- **Nodes**:
-  - `Individual`: Represents a person
-  - `Tree`: Represents a family tree
-- **Relationships**:
-  - `PARENT_OF`: Parent-child relationship
-  - `SPOUSE_OF`: Spouse relationship
-  - `SIBLING_OF`: Sibling relationship
-  - `BELONGS_TO`: Individual's membership in a tree
+#### Authentication & Authorization
+- **User Management**: Complete user registration and login
+- **Role-based Access**: Admin and user roles
+- **Password Reset**: Secure password reset functionality
+- **Session Management**: Secure session handling
 
-## Key Features
+#### Tree Management
+- **Tree Creation**: Create and manage family trees
+- **GEDCOM Import**: Import genealogy data from GEDCOM files
+- **GEDCOM Export**: Export trees to GEDCOM format
+- **Tree Visualization**: D3.js-based tree visualization
+- **Tree Sharing**: Share trees with other users
 
-### Relationship Management
-- Add/remove parent-child relationships
-- Add/remove spouse relationships
-- Add/remove sibling relationships
-- View relationship statistics
+#### Individual Management
+- **CRUD Operations**: Complete individual management
+- **Relationship Management**: Parent-child, spouse, sibling relationships
+- **Advanced Queries**: Neo4j-powered relationship queries
+- **Timeline View**: Individual timeline visualization
+- **Search & Filtering**: Advanced search capabilities
 
-### Tree Management
-- Create and manage family trees
-- Import/export GEDCOM files
-- Tree visualization
-- Tree statistics
+#### Timeline Events
+- **Event Creation**: Create timeline events
+- **Public Sharing**: Share events publicly
+- **Event Types**: Various event type support
+- **Report Generation**: Timeline reports and analytics
 
-### Individual Management
-- Create and edit individual profiles
-- View relationship networks
-- Track life events
-- Manage media attachments
+#### Import System
+- **Dual Import Methods**: Standard and optimized import
+- **Performance Tracking**: Real-time import metrics
+- **Progress Monitoring**: Import progress tracking
+- **Error Handling**: Comprehensive error handling
 
-## Development Setup
+#### Admin Features
+- **Activity Logs**: Comprehensive activity monitoring
+- **Import Metrics**: Performance dashboard
+- **User Management**: Admin user management
+- **System Monitoring**: Health monitoring
 
-### Prerequisites
-- PHP 8.1 or higher
-- Composer
-- MySQL 8.0 or higher
-- Neo4j 4.4 or higher
-- Node.js and NPM
+### 🔄 In Progress Features
 
-### Installation
-1. Clone the repository
-2. Install PHP dependencies:
-   ```bash
-   composer install
-   ```
-3. Install JavaScript dependencies:
-   ```bash
-   npm install
-   ```
-4. Copy `.env.example` to `.env` and configure:
-   - Database credentials
-   - Neo4j connection details
-   - Application settings
-5. Generate application key:
-   ```bash
-   php artisan key:generate
-   ```
-6. Run migrations:
-   ```bash
-   php artisan migrate
-   ```
-7. Start the development server:
-   ```bash
-   php artisan serve
-   ```
+#### Advanced Visualizations
+- **Enhanced D3.js**: Improved tree visualizations
+- **Multiple Layouts**: Various tree layout options
+- **Interactive Features**: Enhanced interactivity
 
-### Docker Setup
-Alternatively, use Docker:
-```bash
-docker-compose up -d
-```
+#### Performance Optimization
+- **Query Optimization**: Database query improvements
+- **Caching Strategy**: Enhanced caching implementation
+- **API Enhancement**: REST API improvements
 
-## API Documentation
+### 📋 Planned Features
 
-### Relationship Endpoints
+#### Advanced Features
+- **DNA Integration**: DNA result linking
+- **Advanced Privacy**: Granular privacy controls
+- **Multimedia Support**: Enhanced media integration
+- **Geographic Mapping**: Migration pattern visualization
 
-#### Add Relationships
-- `POST /relationships/parent-child`: Add parent-child relationship
-- `POST /relationships/spouse`: Add spouse relationship
-- `POST /relationships/sibling`: Add sibling relationship
+#### Internationalization
+- **Multi-language Support**: Internationalization
+- **Localization**: Regional adaptations
+- **Accessibility**: Comprehensive accessibility
 
-#### Get Relationships
-- `GET /relationships/{id}/parents`: Get individual's parents
-- `GET /relationships/{id}/children`: Get individual's children
-- `GET /relationships/{id}/spouses`: Get individual's spouses
-- `GET /relationships/{id}/siblings`: Get individual's siblings
+## Development Guidelines
 
-#### Remove Relationships
-- `DELETE /relationships/parent-child`: Remove parent-child relationship
-- `DELETE /relationships/spouse`: Remove spouse relationship
-- `DELETE /relationships/sibling`: Remove sibling relationship
+### Code Standards
+- **PSR-12**: PHP coding standards
+- **Laravel Conventions**: Laravel best practices
+- **Type Declarations**: Strict typing throughout
+- **Documentation**: Comprehensive code documentation
 
-### Tree Endpoints
-- `GET /trees/{id}/visualization`: Get tree visualization data
-- `POST /trees/import`: Import GEDCOM file
-- `GET /trees/{id}/export-gedcom`: Export tree as GEDCOM
+### Testing Strategy
+- **Unit Tests**: Model and service testing
+- **Feature Tests**: Controller and integration testing
+- **Browser Tests**: End-to-end testing
+- **Performance Tests**: Import and query performance
 
-## Testing
-```bash
-# Run all tests
-php artisan test
+### Security Practices
+- **Input Validation**: Comprehensive request validation
+- **SQL Injection Prevention**: Parameterized queries
+- **XSS Protection**: Output sanitization
+- **CSRF Protection**: Cross-site request forgery protection
 
-# Run specific test suite
-php artisan test --testsuite=Feature
-```
+## API Development
+
+### REST API
+- **Individual API**: Complete CRUD operations
+- **Import Metrics API**: Performance tracking
+- **Authentication**: Token-based authentication
+- **Rate Limiting**: API rate limiting
+
+### API Documentation
+- **OpenAPI/Swagger**: API documentation
+- **Postman Collections**: API testing collections
+- **Example Requests**: Comprehensive examples
+
+## Database Management
+
+### Multi-Database Strategy
+- **PostgreSQL**: Core genealogy data
+- **MongoDB**: Flexible document storage
+- **Neo4j**: Graph relationships
+- **Redis**: Caching and sessions
+
+### Migration Strategy
+- **Version Control**: Database schema versioning
+- **Rollback Support**: Migration rollback capabilities
+- **Data Integrity**: ACID compliance
+
+## Performance Optimization
+
+### Caching Strategy
+- **Redis Caching**: Session and data caching
+- **Query Caching**: Database query results
+- **Page Caching**: Static page content
+
+### Database Optimization
+- **Indexing**: Strategic database indexing
+- **Query Optimization**: Optimized database queries
+- **Connection Pooling**: Database connection management
+
+## Monitoring & Debugging
+
+### Development Tools
+- **Laravel Telescope**: Debugging and monitoring
+- **Laravel Horizon**: Queue monitoring
+- **Log Management**: Comprehensive logging
+
+### Performance Monitoring
+- **Import Metrics**: Real-time import tracking
+- **Query Performance**: Database query monitoring
+- **Memory Usage**: Memory consumption tracking
 
 ## Deployment
-1. Set up production environment variables
-2. Run migrations
-3. Optimize for production:
-   ```bash
-   php artisan optimize
-   php artisan view:cache
-   php artisan config:cache
-   ```
-4. Set up web server (Nginx/Apache)
-5. Configure SSL certificates
-6. Set up monitoring and logging
+
+### Containerization
+- **Docker**: Containerized application
+- **Docker Compose**: Multi-service orchestration
+- **Environment Configuration**: Environment-specific configs
+
+### CI/CD Pipeline
+- **Automated Testing**: Continuous integration
+- **Code Quality**: Automated code quality checks
+- **Deployment**: Automated deployment pipeline
 
 ## Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Write/update tests
-5. Submit a pull request
 
-## Security
-- All user input is validated
-- CSRF protection enabled
-- Authentication required for all operations
-- Role-based access control
-- Secure password hashing
-- Input sanitization
+### Development Workflow
+1. **Feature Branch**: Create feature branch from main
+2. **Development**: Implement feature with tests
+3. **Code Review**: Submit pull request for review
+4. **Testing**: Ensure all tests pass
+5. **Documentation**: Update relevant documentation
+6. **Merge**: Merge after approval
 
-## Performance Considerations
-- Neo4j queries are optimized for graph traversal
-- Caching implemented for frequently accessed data
-- Lazy loading for relationship data
-- Pagination for large datasets
+### Code Review Process
+- **Automated Checks**: CI/CD pipeline validation
+- **Manual Review**: Peer code review
+- **Testing**: Comprehensive testing requirements
+- **Documentation**: Documentation updates
 
 ## Troubleshooting
 
 ### Common Issues
-1. Neo4j Connection Issues
-   - Check connection settings in `.env`
-   - Verify Neo4j server is running
-   - Check network connectivity
 
-2. Relationship Loading Failures
-   - Verify individual IDs exist
-   - Check Neo4j query logs
-   - Validate relationship constraints
+#### Import Problems
+- **Memory Issues**: Use optimized import method
+- **File Size**: Split large files
+- **Format Issues**: Validate GEDCOM format
 
-3. Tree Visualization Issues
-   - Check browser console for errors
-   - Verify data format
-   - Check Neo4j query results
+#### Performance Issues
+- **Slow Queries**: Check database indexing
+- **Memory Usage**: Monitor memory consumption
+- **Cache Issues**: Clear application cache
 
-### Logging
-- Application logs: `storage/logs/laravel.log`
-- Neo4j logs: Check Neo4j server logs
-- Error tracking: Configure error reporting service
+#### Development Issues
+- **Dependency Issues**: Clear composer cache
+- **Asset Issues**: Rebuild frontend assets
+- **Database Issues**: Reset database migrations
 
-## Support
-For technical support:
-1. Check existing documentation
-2. Review issue tracker
-3. Contact development team
-4. Submit bug reports with detailed information
+### Debug Information
+- **Log Files**: Check Laravel logs
+- **Telescope**: Use Laravel Telescope for debugging
+- **Database Logs**: Check database logs
+- **Queue Logs**: Monitor queue processing
 
-## License
-This project is licensed under the MIT License - see the LICENSE file for details. 
+## Resources
+
+### Documentation
+- [API Reference](api-reference.md): Complete API documentation
+- [Architecture Overview](architecture.md): System architecture
+- [Best Practices](best-practices.md): Development guidelines
+- [Clean Code](clean-code.md): Code quality standards
+
+### External Resources
+- [Laravel Documentation](https://laravel.com/docs)
+- [Neo4j Documentation](https://neo4j.com/docs/)
+- [D3.js Documentation](https://d3js.org/)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+
+### Community
+- [GitHub Issues](https://github.com/leg/issues): Bug reports and feature requests
+- [Discussions](https://github.com/leg/discussions): Community discussions
+- [Contributing Guide](CONTRIBUTING.md): How to contribute
+
+---
+
+*This documentation is regularly updated. Last updated: January 2025* 

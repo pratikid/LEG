@@ -16,9 +16,11 @@ All responses are in JSON format with the following structure:
 }
 ```
 
-## Individual Management
+## Core API Endpoints
 
-### Get Individual Details
+### Individual Management
+
+#### Get Individual Details
 ```http
 GET /individuals/{id}
 ```
@@ -38,7 +40,7 @@ GET /individuals/{id}
 }
 ```
 
-### Create Individual
+#### Create Individual
 ```http
 POST /individuals
 ```
@@ -67,7 +69,7 @@ POST /individuals
 }
 ```
 
-### Update Individual
+#### Update Individual
 ```http
 PUT /individuals/{id}
 ```
@@ -83,14 +85,74 @@ PUT /individuals/{id}
 }
 ```
 
-### Delete Individual
+#### Delete Individual
 ```http
 DELETE /individuals/{id}
 ```
 
-## Relationship Management
+#### Get Individual Timeline
+```http
+GET /individuals/timeline
+```
 
-### Add Parent-Child Relationship
+### Tree Management
+
+#### Get Tree Details
+```http
+GET /trees/{id}
+```
+
+**Response**
+```json
+{
+    "data": {
+        "id": 1,
+        "name": "Doe Family Tree",
+        "description": "Family tree of the Doe family",
+        "user_id": 1,
+        "created_at": "2024-01-01T00:00:00Z",
+        "updated_at": "2024-01-01T00:00:00Z"
+    }
+}
+```
+
+#### Create Tree
+```http
+POST /trees
+```
+
+**Request Body**
+```json
+{
+    "name": "My Family Tree",
+    "description": "Family history research"
+}
+```
+
+#### Import GEDCOM File
+```http
+POST /trees/import
+```
+
+**Request Body** (multipart/form-data)
+```
+file: <gedcom_file>
+import_method: "standard" | "optimized"
+```
+
+#### Export GEDCOM File
+```http
+GET /trees/{id}/export-gedcom
+```
+
+#### Tree Visualization
+```http
+GET /trees/{tree}/visualization
+```
+
+### Relationship Management
+
+#### Add Parent-Child Relationship
 ```http
 POST /relationships/parent-child
 ```
@@ -110,7 +172,7 @@ POST /relationships/parent-child
 }
 ```
 
-### Add Spouse Relationship
+#### Add Spouse Relationship
 ```http
 POST /relationships/spouse
 ```
@@ -130,7 +192,7 @@ POST /relationships/spouse
 }
 ```
 
-### Add Sibling Relationship
+#### Add Sibling Relationship
 ```http
 POST /relationships/sibling
 ```
@@ -150,7 +212,7 @@ POST /relationships/sibling
 }
 ```
 
-### Get Parents
+#### Get Parents
 ```http
 GET /relationships/{id}/parents
 ```
@@ -179,7 +241,7 @@ GET /relationships/{id}/parents
 }
 ```
 
-### Get Children
+#### Get Children
 ```http
 GET /relationships/{id}/children
 ```
@@ -200,49 +262,42 @@ GET /relationships/{id}/children
 }
 ```
 
-### Get Spouses
+#### Get Spouses
 ```http
 GET /relationships/{id}/spouses
 ```
 
-**Response**
-```json
-{
-    "data": [
-        {
-            "id": 4,
-            "first_name": "Spouse",
-            "last_name": "Doe",
-            "birth_date": "1990-01-01",
-            "death_date": null,
-            "sex": "F"
-        }
-    ]
-}
+#### Advanced Relationship Queries
+
+##### Get Ancestors
+```http
+GET /relationships/{id}/ancestors
 ```
 
-### Get Siblings
+**Query Parameters**
+- `generations`: Number of generations to retrieve (default: 5)
+
+##### Get Descendants
+```http
+GET /relationships/{id}/descendants
+```
+
+**Query Parameters**
+- `generations`: Number of generations to retrieve (default: 5)
+
+##### Get Siblings
 ```http
 GET /relationships/{id}/siblings
 ```
 
-**Response**
-```json
-{
-    "data": [
-        {
-            "id": 5,
-            "first_name": "Sibling",
-            "last_name": "Doe",
-            "birth_date": "1992-01-01",
-            "death_date": null,
-            "sex": "M"
-        }
-    ]
-}
+##### Get Shortest Path
+```http
+GET /relationships/{fromId}/shortest-path/{toId}
 ```
 
-### Remove Parent-Child Relationship
+#### Remove Relationships
+
+##### Remove Parent-Child
 ```http
 DELETE /relationships/parent-child
 ```
@@ -255,7 +310,7 @@ DELETE /relationships/parent-child
 }
 ```
 
-### Remove Spouse Relationship
+##### Remove Spouse
 ```http
 DELETE /relationships/spouse
 ```
@@ -268,7 +323,7 @@ DELETE /relationships/spouse
 }
 ```
 
-### Remove Sibling Relationship
+##### Remove Sibling
 ```http
 DELETE /relationships/sibling
 ```
@@ -281,124 +336,160 @@ DELETE /relationships/sibling
 }
 ```
 
-## Tree Management
+### Timeline Events
 
-### Get Tree Details
+#### Get Timeline Events
 ```http
-GET /trees/{id}
+GET /timeline
 ```
 
-**Response**
-```json
-{
-    "data": {
-        "id": 1,
-        "name": "Doe Family Tree",
-        "description": "Family tree of the Doe family",
-        "user_id": 1,
-        "created_at": "2024-01-01T00:00:00Z",
-        "updated_at": "2024-01-01T00:00:00Z"
-    }
-}
-```
-
-### Create Tree
+#### Create Timeline Event
 ```http
-POST /trees
+POST /timeline
 ```
 
 **Request Body**
 ```json
 {
-    "name": "Doe Family Tree",
-    "description": "Family tree of the Doe family"
+    "title": "Wedding Anniversary",
+    "description": "Celebrating 25 years of marriage",
+    "event_date": "2024-06-15",
+    "event_type": "anniversary",
+    "individual_id": 1
 }
 ```
 
-### Update Tree
+#### Update Timeline Event
 ```http
-PUT /trees/{id}
+PUT /timeline/{id}
 ```
 
-**Request Body**
-```json
-{
-    "name": "Updated Tree Name",
-    "description": "Updated description"
-}
-```
-
-### Delete Tree
+#### Delete Timeline Event
 ```http
-DELETE /trees/{id}
+DELETE /timeline/{id}
 ```
 
-### Get Tree Visualization Data
+#### Public Timeline Event
 ```http
-GET /trees/{id}/visualization
+GET /timeline/{timelineEvent}
 ```
 
-**Response**
-```json
-{
-    "data": {
-        "nodes": [
-            {
-                "id": 1,
-                "label": "John Doe",
-                "type": "Individual"
-            }
-        ],
-        "edges": [
-            {
-                "from": 1,
-                "to": 2,
-                "type": "PARENT_OF"
-            }
-        ]
-    }
-}
-```
+### Timeline Reports
 
-### Import GEDCOM
+#### Generate Timeline Report
 ```http
-POST /trees/import
+GET /timeline-reports/generate
 ```
 
-**Request Body**
-```multipart/form-data
-file: <gedcom_file>
-tree_id: <tree_id> (optional)
-import_method: standard|optimized (required)
-```
-
-**Request Parameters**
-- `file` (required): GEDCOM file to import
-- `tree_id` (optional): Target tree ID (creates new tree if not provided)
-- `import_method` (required): Import method to use
-  - `standard`: Multi-database import with ACID compliance
-  - `optimized`: Parallel processing with memory optimization
-
-**Response**
-```json
-{
-    "message": "GEDCOM file uploaded successfully. Import is processing in the background. You will receive a notification when it completes.",
-    "data": {
-        "tree_id": 1,
-        "import_method": "optimized",
-        "file_name": "family_tree.ged"
-    }
-}
-```
-
-### Export GEDCOM
+#### Generate Event Report
 ```http
-GET /trees/{id}/export-gedcom
+GET /timeline-reports/event/{timelineEvent}
 ```
 
-## Import Performance Metrics
+#### Generate Type Report
+```http
+GET /timeline-reports/type/{type}
+```
 
-### Get Import Metrics Summary
+### Search
+
+#### Search Individuals
+```http
+GET /search
+```
+
+**Query Parameters**
+- `q`: Search query
+- `type`: Search type (name, date, location)
+- `tree_id`: Filter by tree
+
+#### Get Search Suggestions
+```http
+GET /search/suggestions
+```
+
+### Import Progress
+
+#### Get Import Progress
+```http
+GET /import-progress/{treeId}
+```
+
+#### Get All Import Progress
+```http
+GET /import-progress
+```
+
+### Notifications
+
+#### Mark Notification as Read
+```http
+POST /notifications/{id}/mark-as-read
+```
+
+#### Mark All Notifications as Read
+```http
+POST /notifications/mark-all-as-read
+```
+
+#### Get Unread Count
+```http
+GET /notifications/unread-count
+```
+
+### Profile Management
+
+#### Get Profile
+```http
+GET /profile
+```
+
+#### Update Profile
+```http
+PUT /profile
+```
+
+#### Update Password
+```http
+PUT /profile/password
+```
+
+#### Update Notifications
+```http
+POST /profile/notifications
+```
+
+#### Delete Profile
+```http
+DELETE /profile
+```
+
+### Timeline Preferences
+
+#### Update Timeline Preferences
+```http
+PUT /timeline/preferences
+```
+
+## REST API (v1)
+
+### Base URL
+```
+/api/v1
+```
+
+### Individual API
+```http
+GET /api/v1/individuals
+GET /api/v1/individuals/{id}
+POST /api/v1/individuals
+PUT /api/v1/individuals/{id}
+DELETE /api/v1/individuals/{id}
+```
+
+### Import Metrics API
+
+#### Get Performance Summary
 ```http
 GET /api/v1/import-metrics/summary
 ```
@@ -419,258 +510,180 @@ GET /api/v1/import-metrics/summary
         "performance_improvements": {
             "duration": -25.5,
             "throughput": 34.2
-        },
-        "average_metrics": {
-            "standard": {
-                "duration": 45.2,
-                "throughput": 22.1,
-                "memory": 125.5
-            },
-            "optimized": {
-                "duration": 33.7,
-                "throughput": 29.7,
-                "memory": 98.3
-            }
         }
     }
 }
 ```
 
-### Get Import Method Comparison
+#### Get Method Comparison
 ```http
 GET /api/v1/import-metrics/comparison
 ```
 
-**Response**
-```json
-{
-    "success": true,
-    "data": {
-        "method_comparison": {
-            "standard": {
-                "total_imports": 150,
-                "success_rate": 98.5,
-                "avg_duration": 45.2,
-                "avg_throughput": 22.1,
-                "avg_memory": 125.5
-            },
-            "optimized": {
-                "total_imports": 75,
-                "success_rate": 99.2,
-                "avg_duration": 33.7,
-                "avg_throughput": 29.7,
-                "avg_memory": 98.3
-            }
-        },
-        "performance_gains": {
-            "duration_improvement": -25.5,
-            "throughput_improvement": 34.2,
-            "memory_improvement": -21.7
-        }
-    }
-}
-```
-
-### Get Recent Import Metrics
+#### Get Recent Metrics
 ```http
 GET /api/v1/import-metrics/recent
 ```
 
-**Query Parameters**
-- `limit` (optional): Number of recent imports to return (default: 10)
-- `method` (optional): Filter by import method (standard/optimized)
-
-**Response**
-```json
-{
-    "success": true,
-    "data": [
-        {
-            "id": 1,
-            "import_method": "optimized",
-            "tree_id": 1,
-            "user_id": 1,
-            "duration": 33.7,
-            "memory_used_mb": 98.3,
-            "file_size_bytes": 1048576,
-            "records_processed": 1500,
-            "success": true,
-            "created_at": "2024-01-01T10:00:00Z"
-        }
-    ]
-}
-```
-
-### Get Method-Specific Metrics
+#### Get Method-Specific Metrics
 ```http
 GET /api/v1/import-metrics/method
 ```
 
-**Query Parameters**
-- `method` (required): Import method (standard/optimized)
-- `timeframe` (optional): Time range (1h, 24h, 7d, 30d)
-
-**Response**
-```json
-{
-    "success": true,
-    "data": {
-        "method": "optimized",
-        "timeframe": "24h",
-        "total_imports": 25,
-        "success_rate": 99.2,
-        "avg_duration": 33.7,
-        "avg_throughput": 29.7,
-        "avg_memory": 98.3,
-        "performance_trend": {
-            "duration": [-2.1, -1.5, -0.8],
-            "throughput": [1.2, 2.1, 1.8],
-            "memory": [-5.2, -3.1, -2.8]
-        }
-    }
-}
-```
-
-### Get Grafana-Compatible Time Series
+#### Get Aggregated Metrics (Grafana Compatible)
 ```http
 GET /api/v1/import-metrics/aggregated
 ```
 
-**Query Parameters**
-- `metric` (required): Metric type (duration, throughput, memory, success_rate)
-- `method` (optional): Import method filter
-- `from` (optional): Start timestamp (ISO 8601)
-- `to` (optional): End timestamp (ISO 8601)
+## Admin API Endpoints
 
-**Response**
-```json
-{
-    "success": true,
-    "data": {
-        "metric": "duration",
-        "method": "optimized",
-        "time_series": [
-            {
-                "timestamp": "2024-01-01T10:00:00Z",
-                "value": 33.7
-            },
-            {
-                "timestamp": "2024-01-01T11:00:00Z",
-                "value": 32.1
-            }
-        ]
-    }
-}
-```
+### Activity Logs
 
-## Advanced Queries
-
-### Get Ancestors
+#### Get Activity Logs
 ```http
-GET /relationships/{id}/ancestors
+GET /admin/activity-logs
 ```
 
-**Query Parameters**
-- `maxDepth` (optional): Maximum depth to traverse (default: 5)
-- `limit` (optional): Maximum number of results (default: 20)
-
-**Response**
-```json
-{
-    "data": [
-        {
-            "id": 1,
-            "first_name": "Ancestor",
-            "last_name": "Doe",
-            "birth_date": "1900-01-01",
-            "death_date": "1980-01-01",
-            "sex": "M",
-            "depth": 1
-        }
-    ]
-}
-```
-
-### Get Descendants
+#### Get Activity Log Details
 ```http
-GET /relationships/{id}/descendants
+GET /admin/activity-logs/{log}
 ```
 
-**Query Parameters**
-- `maxDepth` (optional): Maximum depth to traverse (default: 5)
-- `limit` (optional): Maximum number of results (default: 20)
-
-### Get Shortest Path
+#### Export Activity Logs
 ```http
-GET /relationships/{fromId}/shortest-path/{toId}
+GET /admin/activity-logs/export
 ```
 
-**Query Parameters**
-- `maxDepth` (optional): Maximum depth to traverse (default: 10)
+### Admin Dashboard
 
-**Response**
+#### Get Users
+```http
+GET /admin/users
+```
+
+#### Get System Logs
+```http
+GET /admin/logs
+```
+
+#### Get System Settings
+```http
+GET /admin/settings
+```
+
+#### Get Notifications
+```http
+GET /admin/notifications
+```
+
+#### Get Import Metrics
+```http
+GET /admin/import-metrics
+```
+
+## Error Handling
+
+### Standard Error Response
 ```json
 {
-    "data": {
-        "path": [
-            {
-                "id": 1,
-                "first_name": "John",
-                "last_name": "Doe"
-            },
-            {
-                "id": 2,
-                "first_name": "Jane",
-                "last_name": "Doe"
-            }
-        ],
-        "distance": 1
+    "error": "Error message",
+    "code": "ERROR_CODE",
+    "details": {}
+}
+```
+
+### Common Error Codes
+- `VALIDATION_ERROR`: Input validation failed
+- `NOT_FOUND`: Resource not found
+- `UNAUTHORIZED`: Authentication required
+- `FORBIDDEN`: Insufficient permissions
+- `INTERNAL_ERROR`: Server error
+
+### Example Error Response
+```json
+{
+    "error": "Individual not found",
+    "code": "NOT_FOUND",
+    "details": {
+        "id": 123
     }
-}
-```
-
-## Error Responses
-
-### Validation Error
-```json
-{
-    "error": "Validation failed",
-    "errors": {
-        "first_name": ["The first name field is required."],
-        "last_name": ["The last name field is required."]
-    }
-}
-```
-
-### Not Found Error
-```json
-{
-    "error": "Individual not found"
-}
-```
-
-### Relationship Error
-```json
-{
-    "error": "Cannot create parent-child relationship: would create a cycle in the family tree"
-}
-```
-
-### Authentication Error
-```json
-{
-    "error": "Unauthenticated"
 }
 ```
 
 ## Rate Limiting
-- 60 requests per minute per IP address
-- Rate limit headers included in response:
-  - `X-RateLimit-Limit`
-  - `X-RateLimit-Remaining`
-  - `X-RateLimit-Reset`
 
-## Versioning
-- Current API version: v1
-- Version included in URL: `/api/v1/...`
-- Version deprecation notices will be provided 6 months in advance 
+API endpoints are rate-limited to prevent abuse:
+- **Standard endpoints**: 60 requests per minute
+- **Import endpoints**: 10 requests per minute
+- **Admin endpoints**: 30 requests per minute
+
+Rate limit headers are included in responses:
+```http
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 45
+X-RateLimit-Reset: 1640995200
+```
+
+## Pagination
+
+List endpoints support pagination:
+```http
+GET /individuals?page=1&per_page=20
+```
+
+**Response**
+```json
+{
+    "data": [...],
+    "meta": {
+        "current_page": 1,
+        "per_page": 20,
+        "total": 150,
+        "last_page": 8
+    }
+}
+```
+
+## Filtering and Sorting
+
+### Filtering
+```http
+GET /individuals?tree_id=1&sex=M&birth_year=1990
+```
+
+### Sorting
+```http
+GET /individuals?sort=first_name&order=asc
+```
+
+## Webhooks (Planned)
+
+Future implementation will include webhook support for:
+- Individual creation/update
+- Relationship changes
+- Import completion
+- Timeline event creation
+
+## SDKs and Libraries
+
+### PHP SDK (Planned)
+```php
+use Leg\Api\Client;
+
+$client = new Client('your-api-key');
+$individual = $client->individuals()->create([
+    'first_name' => 'John',
+    'last_name' => 'Doe'
+]);
+```
+
+### JavaScript SDK (Planned)
+```javascript
+import { LegClient } from '@leg/api';
+
+const client = new LegClient('your-api-key');
+const individual = await client.individuals.create({
+    firstName: 'John',
+    lastName: 'Doe'
+});
+``` 

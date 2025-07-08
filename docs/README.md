@@ -80,7 +80,7 @@ Jump to:
 ## 🔧 Contributing?
 
 Begin with:
-- [Developer Setup](developer/setup.md) → Set up your development environment
+- [Developer Setup](developer/README.md) → Set up your development environment
 - [Architecture Overview](developer/architecture.md) → Understand LEG's architecture
 - [Clean Code Guidelines](developer/clean-code.md) → Follow our coding standards
 - [Commit Guidelines](developer/commit-guidelines.md) → Learn our commit message format
@@ -95,20 +95,47 @@ Review:
 ## 🔍 Technical Details
 
 Explore:
-- [GEDCOM Compliance](technical/gedcom-compliance.md) → GEDCOM 5.5.5 support
-- [Tools Integration](technical/tools-integration.md) → Monitoring and profiling
-- [Tree View](technical/tree-view.md) → Family tree visualization
-- [UI/UX Design](technical/ui-ux.md) → Interface design principles
-- [Sidebar Navigation](technical/sidebar-navigation.md) → Navigation structure
-- [Project Dictionary](technical/dictionary.md) → Terms and conventions
+- [GEDCOM Compliance](developer/gedcom-compliance.md) → GEDCOM 5.5.5 support
+- [Tools Integration](developer/tools-integration.md) → Monitoring and profiling
+- [Tree View](developer/tree-view.md) → Family tree visualization
+- [UI/UX Design](developer/ui-ux.md) → Interface design principles
+- [Sidebar Navigation](developer/sidebar-navigation.md) → Navigation structure
+- [Project Dictionary](developer/dictionary.md) → Terms and conventions
 
 ## 📚 Additional Resources
 
 - [API Reference](developer/api-reference.md) → Complete API documentation
 - [Troubleshooting Guide](user-guide/troubleshooting.md) → Common issues and solutions
 - [Best Practices](developer/best-practices.md) → Development guidelines
-- [Security Guide](technical/security.md) → Security considerations
+- [Security Guide](developer/security.md) → Security considerations
+
+## 🚀 Current Implementation Status
+
+### ✅ Implemented Features
+- **Authentication & Authorization**: Complete user management with roles
+- **Tree Management**: Create, edit, import, export trees with GEDCOM support
+- **Individual Management**: Full CRUD operations with relationship management
+- **Timeline Events**: Create and manage timeline events with public sharing
+- **Neo4j Integration**: Advanced relationship queries and graph operations
+- **Import Optimization**: Dual import methods with performance tracking
+- **Admin Dashboard**: Activity logs, import metrics, user management
+- **Search & Filtering**: Advanced search capabilities
+- **Media Management**: File uploads and media organization
+- **Community Features**: Groups, collaboration tools
+- **Reporting**: Timeline reports and export functionality
+
+### 🔄 In Progress
+- **Advanced Tree Visualization**: Enhanced D3.js implementations
+- **Performance Optimization**: Ongoing improvements to import and query performance
+- **API Enhancement**: Expanding REST API capabilities
+
+### 📋 Planned Features
+- **DNA Integration**: Link DNA results to family trees
+- **Advanced Privacy Controls**: Granular privacy settings
+- **Multimedia Storytelling**: Enhanced media integration
+- **Geographic Mapping**: Migration patterns and historical maps
+- **Internationalization**: Multi-language support
 
 ---
 
-*This documentation is regularly updated. Last updated: May 2025* 
+*This documentation is regularly updated. Last updated: January 2025* 
