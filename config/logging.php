@@ -63,15 +63,15 @@ return [
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_LEVEL', 'warning'),
             'replace_placeholders' => true,
         ],
 
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
-            'days' => env('LOG_DAILY_DAYS', 14),
+            'level' => env('LOG_LEVEL', 'warning'),
+            'days' => env('LOG_DAILY_DAYS', 7),
             'replace_placeholders' => true,
         ],
 

@@ -141,6 +141,8 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\ContentSecurityPolicyServiceProvider::class,
+        App\Providers\AssetServiceProvider::class,
+        App\Providers\PerformanceServiceProvider::class,
     ])->toArray(),
 
 ];

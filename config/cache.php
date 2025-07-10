@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'database'),
+    'default' => env('CACHE_STORE', 'redis'),
 
     /*
     |--------------------------------------------------------------------------
@@ -77,6 +77,8 @@ return [
             'driver' => 'redis',
             'connection' => env('REDIS_CACHE_CONNECTION', 'cache'),
             'lock_connection' => env('REDIS_CACHE_LOCK_CONNECTION', 'default'),
+            'serialize' => true,
+            'compression' => true,
         ],
 
         'dynamodb' => [

@@ -23,3 +23,76 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Cache policy for static assets (following Chrome Lighthouse recommendations)
+
+# JavaScript files - 1 year cache (immutable)
+<FilesMatch "\.(js)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 1 year"
+    Header set Cache-Control "public, immutable"
+    Header set X-Content-Type-Options "nosniff"
+</FilesMatch>
+
+# CSS files - 1 year cache (immutable)
+<FilesMatch "\.(css)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 1 year"
+    Header set Cache-Control "public, immutable"
+    Header set X-Content-Type-Options "nosniff"
+</FilesMatch>
+
+# Images - 1 year cache (immutable)
+<FilesMatch "\.(jpg|jpeg|png|gif|ico|svg|webp|avif)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 1 year"
+    Header set Cache-Control "public, immutable"
+</FilesMatch>
+
+# Fonts - 1 year cache (immutable)
+<FilesMatch "\.(woff|woff2|ttf|eot|otf)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 1 year"
+    Header set Cache-Control "public, immutable"
+    Header set Access-Control-Allow-Origin "*"
+</FilesMatch>
+
+# JSON files (manifests, etc.) - 1 year cache (immutable)
+<FilesMatch "\.(json)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 1 year"
+    Header set Cache-Control "public, immutable"
+    Header set X-Content-Type-Options "nosniff"
+</FilesMatch>
+
+# HTML files - no cache (always fresh)
+<FilesMatch "\.(html|htm)$">
+    ExpiresActive On
+    ExpiresDefault "access"
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</FilesMatch>
+
+# XML files - 1 month cache
+<FilesMatch "\.(xml)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+    Header set Cache-Control "public"
+</FilesMatch>
+
+# Text files - 1 month cache
+<FilesMatch "\.(txt|md)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+    Header set Cache-Control "public"
+</FilesMatch>
+
+# PHP files - no cache
+<FilesMatch "\.(php)$">
+    ExpiresActive On
+    ExpiresDefault "access"
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</FilesMatch>

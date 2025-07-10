@@ -97,6 +97,11 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => 'prefer',
+            'options' => [
+                PDO::ATTR_PERSISTENT => true,
+                PDO::ATTR_EMULATE_PREPARES => false,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ],
         ],
 
         'sqlsrv' => [
@@ -156,14 +161,16 @@ return [
     |
     */
 
-    'redis' => [
+            'redis' => [
 
         'client' => env('REDIS_CLIENT', 'phpredis'),
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
             'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
-            'persistent' => env('REDIS_PERSISTENT', false),
+            'persistent' => env('REDIS_PERSISTENT', true),
+            'timeout' => 5,
+            'read_timeout' => 60,
         ],
 
         'default' => [
