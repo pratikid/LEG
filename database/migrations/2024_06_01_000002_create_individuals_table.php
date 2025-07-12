@@ -41,7 +41,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Composite unique constraint on gedcom_xref and tree_id
-            $table->unique(['gedcom_xref', 'tree_id'], 'individuals_gedcom_xref_tree_unique');
+            // $table->unique(['gedcom_xref', 'tree_id'], 'individuals_gedcom_xref_tree_unique');
 
             // Indexes for performance
             $table->index(['tree_id', 'last_name'], 'pref_idx_individuals_tree_last_name');

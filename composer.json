@@ -75,7 +75,14 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
-        "lint": "pint --test"
+        "lint": "pint --test",
+        "analyse": "vendor/bin/phpstan analyse --memory-limit=2G",
+        "test:coverage": "@php artisan test --coverage --min=80",
+        "ci": [
+            "@composer lint",
+            "@composer analyse",
+            "@composer test:coverage"
+        ]
     },
     "extra": {
         "laravel": {

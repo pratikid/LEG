@@ -1,0 +1,326 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: leg_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+          
+      mongodb:
+        image: mongo:7
+        env:
+          MONGO_INITDB_ROOT_USERNAME: leg
+          MONGO_INITDB_ROOT_PASSWORD: password123
+          MONGO_INITDB_DATABASE: leg_test
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand(\"ping\").ok' --quiet --host localhost:27017 --username leg --password password123 --authenticationDatabase admin"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 27017:27017
+          
+      neo4j:
+        image: neo4j:5-enterprise
+        env:
+          NEO4J_ACCEPT_LICENSE_AGREEMENT: "yes"
+          NEO4J_AUTH: neo4j/password123
+          NEO4J_apoc_export_file_enabled: "true"
+          NEO4J_apoc_import_file_enabled: "true"
+          NEO4J_server_metrics_prometheus_enabled: "true"
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p password123 'RETURN 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 7474:7474
+          - 7687:7687
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.4'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_pgsql, pdo_sqlite, redis, zip, mongodb
+        coverage: xdebug
+        tools: composer:v2
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Copy .env
+      run: cp .env.example .env
+      
+    - name: Install dependencies
+      run: |
+        composer install --prefer-dist --no-interaction --no-progress
+        npm ci
+        
+    - name: Generate key
+      run: php artisan key:generate
+      
+    - name: Directory permissions
+      run: chmod -R 777 storage bootstrap/cache
+      
+    - name: Create database
+      run: |
+        php artisan migrate --force
+        php artisan db:seed --force
+      env:
+        DB_CONNECTION: pgsql
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_DATABASE: leg_test
+        DB_USERNAME: postgres
+        DB_PASSWORD: postgres
+        MONGO_DB_HOST: localhost
+        MONGO_DB_PORT: 27017
+        MONGO_DB_DATABASE: leg_test
+        MONGO_DB_USERNAME: leg
+        MONGO_DB_PASSWORD: password123
+        NEO4J_HOST: localhost
+        NEO4J_PORT: 7687
+        NEO4J_USERNAME: neo4j
+        NEO4J_PASSWORD: password123
+        
+    - name: Execute tests (Unit and Feature)
+      run: vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-html=coverage-html
+      env:
+        DB_CONNECTION: pgsql
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_DATABASE: leg_test
+        DB_USERNAME: postgres
+        DB_PASSWORD: postgres
+        MONGO_DB_HOST: localhost
+        MONGO_DB_PORT: 27017
+        MONGO_DB_DATABASE: leg_test
+        MONGO_DB_USERNAME: leg
+        MONGO_DB_PASSWORD: password123
+        NEO4J_HOST: localhost
+        NEO4J_PORT: 7687
+        NEO4J_USERNAME: neo4j
+        NEO4J_PASSWORD: password123
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+        
+    - name: Upload coverage HTML
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage-html/
+        retention-days: 30
+        
+    - name: Run PHPStan
+      run: composer analyse
+      
+    - name: Run Laravel Pint
+      run: composer lint
+      
+    - name: Build assets
+      run: npm run build
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-assets
+        path: public/build/
+        retention-days: 30
+      
+  security:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.4'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_pgsql, pdo_sqlite, redis, zip, mongodb
+        tools: composer:v2
+        
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-interaction --no-progress
+      
+    - name: Run Enlightn security checks
+      run: php artisan enlightn --report=security
+      
+    - name: Run dependency vulnerability scan
+      run: composer audit
+      
+    - name: Run PHP Security Checker
+      uses: fabpot/local-php-security-checker@v1
+      with:
+        args: --format=json --path=.
+        
+    - name: Run OWASP ZAP Security Scan
+      uses: zaproxy/action-full-scan@v0.8.0
+      with:
+        target: 'http://localhost:8000'
+        rules_file_name: '.zap/rules.tsv'
+        cmd_options: '-a'
+        
+  performance:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.4'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_pgsql, pdo_sqlite, redis, zip, mongodb
+        tools: composer:v2
+        
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-interaction --no-progress
+      
+    - name: Run Enlightn performance checks
+      run: php artisan enlightn --report=performance
+      
+    - name: Run Lighthouse CI
+      uses: treosh/lighthouse-ci-action@v10
+      with:
+        urls: |
+          http://localhost:8000
+        uploadArtifacts: true
+        temporaryPublicStorage: true
+        
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build and test Docker image
+      run: |
+        docker build -f docker/app/Dockerfile -t leg-app .
+        docker run --rm leg-app php artisan --version
+        
+    - name: Test Docker Compose
+      run: |
+        docker-compose config
+        docker-compose build --no-cache
+        
+    - name: Test Docker services
+      run: |
+        docker-compose up -d
+        sleep 30
+        docker-compose ps
+        docker-compose logs --tail=50
+        docker-compose down
+        
+    - name: Upload Docker logs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: docker-logs
+        path: |
+          docker-compose.log
+        retention-days: 7
+        
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [test, security, performance, docker]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Add your staging deployment logic here
+        # Example: docker-compose -f docker-compose.staging.yml up -d
+        
+    - name: Run smoke tests
+      run: |
+        echo "Running smoke tests on staging..."
+        # Add smoke test logic here
+        
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [test, security, performance, docker]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production environment..."
+        # Add your production deployment logic here
+        # Example: docker-compose -f docker-compose.prod.yml up -d
+        
+    - name: Run health checks
+      run: |
+        echo "Running health checks on production..."
+        # Add health check logic here
+        
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    
+    steps:
+    - name: Notify on success
+      if: success()
+      run: |
+        echo "All CI/CD stages completed successfully!"
+        # Add notification logic (Slack, email, etc.)
+        
+    - name: Notify on failure
+      if: failure()
+      run: |
+        echo "CI/CD pipeline failed!"
+        # Add failure notification logic 

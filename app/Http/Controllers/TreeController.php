@@ -203,6 +203,10 @@ final class TreeController extends Controller
         $treeData = $this->neo4jService->getTreeIndividuals($tree->id);
         $treeStats = $this->neo4jService->getTreeStats($tree->id);
 
+        Log::info('Tree Data:', [
+            'treeData' => $treeData,
+        ]);
+
         // Convert Neo4j results to array format for D3.js
         $treeDataArray = [
             'name' => $tree->name,

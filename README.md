@@ -1,5 +1,8 @@
 [![License](https://img.shields.io/github/license/pratikid/LEG)](LICENSE)
-<!-- [![Build Status](https://img.shields.io/github/actions/workflow/status/pratikid/LEG/ci.yml?branch=main)](link-to-ci) -->
+[![Build Status](https://img.shields.io/github/actions/workflow/status/pratikid/LEG/ci.yml?branch=main)](https://github.com/pratikid/LEG/actions)
+[![Code Coverage](https://img.shields.io/codecov/c/github/pratikid/LEG)](https://codecov.io/gh/pratikid/LEG)
+[![PHPStan](https://img.shields.io/badge/PHPStan-Level%208-brightgreen)](https://phpstan.org/)
+[![Laravel Pint](https://img.shields.io/badge/Laravel%20Pint-PSR--12%20Compliant-brightgreen)](https://laravel.com/docs/pint)
 ![PHP](https://img.shields.io/badge/php-%3E%3D8.4-blue)
 ![Laravel](https://img.shields.io/badge/Laravel-12.x-red)
 ![Docker](https://img.shields.io/badge/Docker-ready-blue)
@@ -7,7 +10,7 @@
 ![Open Source Love](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)
 [![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
 ![Family History Explorer](https://img.shields.io/badge/Family%20History-Explorer-blueviolet)
-[![GEDCOM 5.5.5 | Partial Sources/Notes](https://img.shields.io/badge/GEDCOM-5.5.5%20%7C%20Partial%20Sources%2FNotes-blue)](docs/GEDCOM_COMPLIANCE.md)
+[![GEDCOM 5.5.5 | Partial Sources/Notes](https://img.shields.io/badge/GEDCOM-5.5.5%20%7C%20Partial%20Sources%2FNotes-blue)](docs/developer/gedcom-compliance.md)
 
 <!--
 Dynamic badges (build status, tests, coverage, code quality, contributors, etc.) will be added in the future when CI/CD and integrations are set up.

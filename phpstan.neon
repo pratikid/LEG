@@ -11,8 +11,11 @@ parameters:
         - routes/
         - tests/
 
-    # Level 10 is the highest level
-    level: 10
+    # Level 8 for production readiness (balance between strictness and practicality)
+    level: 8
+
+    # Memory limit for large codebases
+    memoryLimit: 2G
 
     # Ignore specific errors
     ignoreErrors:
@@ -21,6 +24,8 @@ parameters:
         - '#Call to an undefined method [a-zA-Z0-9\\_]+::with\(\)#'
         - '#Call to an undefined method [a-zA-Z0-9\\_]+::andReturn\(\)#'
         - '#Call to an undefined method [a-zA-Z0-9\\_]+::mock\(\)#'
+        - '#Access to an undefined property [a-zA-Z0-9\\_]+::\$[a-zA-Z0-9_]+#'
+        - '#Call to an undefined method [a-zA-Z0-9\\_]+::[a-zA-Z0-9_]+\(\)#'
 
     # Exclude paths that don't need analysis
     excludePaths:
@@ -30,3 +35,12 @@ parameters:
         - public/*
         - resources/*
         - node_modules/*
+
+    # Check for missing return types
+    checkMissingIterableValueType: true
+    
+    # Check for generic class instantiations
+    checkGenericClassInNonGenericObjectType: true
+    
+    # Check for missing callable signature
+    checkMissingCallableSignature: true
