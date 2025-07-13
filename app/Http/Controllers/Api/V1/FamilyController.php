@@ -18,21 +18,21 @@ final class FamilyController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Family::query();
-        
+
         if ($request->has('tree_id')) {
             $query->where('tree_id', $request->integer('tree_id'));
         }
-        
+
         if ($request->has('husband_id')) {
             $query->where('husband_id', $request->integer('husband_id'));
         }
-        
+
         if ($request->has('wife_id')) {
             $query->where('wife_id', $request->integer('wife_id'));
         }
-        
+
         $families = $query->with(['husband', 'wife', 'children'])->paginate($request->integer('per_page', 15));
-        
+
         return response()->json([
             'data' => $families->items(),
             'meta' => [
@@ -122,4 +122,4 @@ final class FamilyController extends Controller
             'message' => 'Family deleted successfully',
         ]);
     }
-} 
+}

@@ -18,21 +18,21 @@ final class TreeController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Tree::query();
-        
+
         if ($request->has('user_id')) {
             $query->where('user_id', $request->integer('user_id'));
         }
-        
+
         if ($request->has('search')) {
             $search = $request->string('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('description', 'ilike', "%{$search}%");
+                    ->orWhere('description', 'ilike', "%{$search}%");
             });
         }
-        
+
         $trees = $query->paginate($request->integer('per_page', 15));
-        
+
         return response()->json([
             'data' => $trees->items(),
             'meta' => [
@@ -116,4 +116,4 @@ final class TreeController extends Controller
             'message' => 'Tree deleted successfully',
         ]);
     }
-} 
+}

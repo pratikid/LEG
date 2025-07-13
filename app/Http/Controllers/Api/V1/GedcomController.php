@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Tree;
 use App\Services\GedcomService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -31,7 +32,7 @@ final class GedcomController extends Controller
 
             $file = $request->file('file');
             $gedcomContent = file_get_contents($file->getPathname());
-            
+
             if ($gedcomContent === false) {
                 return response()->json([
                     'message' => 'Failed to read GEDCOM file',
@@ -54,7 +55,7 @@ final class GedcomController extends Controller
                 'message' => 'Validation failed',
                 'errors' => $e->errors(),
             ], 422);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'message' => 'Import failed',
                 'error' => $e->getMessage(),
@@ -77,7 +78,7 @@ final class GedcomController extends Controller
                     'tree_id' => $tree->id,
                 ],
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'message' => 'Export failed',
                 'error' => $e->getMessage(),
@@ -97,7 +98,7 @@ final class GedcomController extends Controller
 
             $file = $request->file('file');
             $gedcomContent = file_get_contents($file->getPathname());
-            
+
             if ($gedcomContent === false) {
                 return response()->json([
                     'message' => 'Failed to read GEDCOM file',
@@ -121,11 +122,11 @@ final class GedcomController extends Controller
                 'message' => 'Validation failed',
                 'errors' => $e->errors(),
             ], 422);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'message' => 'GEDCOM validation failed',
                 'error' => $e->getMessage(),
             ], 500);
         }
     }
-} 
+}

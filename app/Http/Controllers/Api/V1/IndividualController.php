@@ -18,26 +18,26 @@ final class IndividualController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Individual::query();
-        
+
         // Apply filters
         if ($request->has('tree_id')) {
             $query->where('tree_id', $request->integer('tree_id'));
         }
-        
+
         if ($request->has('sex')) {
             $query->where('sex', $request->string('sex'));
         }
-        
+
         if ($request->has('search')) {
             $search = $request->string('search');
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'ilike', "%{$search}%")
-                  ->orWhere('last_name', 'ilike', "%{$search}%");
+                    ->orWhere('last_name', 'ilike', "%{$search}%");
             });
         }
-        
+
         $individuals = $query->paginate($request->integer('per_page', 15));
-        
+
         return response()->json([
             'data' => $individuals->items(),
             'meta' => [
