@@ -8,9 +8,9 @@ use App\Models\ActivityLog;
 use App\Models\Individual;
 use App\Models\Tree;
 use App\Models\User;
+use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
 /**
@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Redis;
 final class MonitoringService
 {
     private const CACHE_TTL = 300; // 5 minutes
+
     private const METRICS_PREFIX = 'leg:metrics:';
 
     /**
@@ -68,6 +69,75 @@ final class MonitoringService
     }
 
     /**
+     * Record request metrics
+     */
+    public function recordRequest(float $responseTime, bool $isError = false): void
+    {
+        $currentMinute = now()->format('Y-m-d H:i');
+
+        // Record response time
+        $responseTimesKey = self::METRICS_PREFIX.'response_times';
+        $responseTimes = Cache::get($responseTimesKey, []);
+        $responseTimes[] = $responseTime;
+
+        // Keep only last 100 response times
+        if (count($responseTimes) > 100) {
+            $responseTimes = array_slice($responseTimes, -100);
+        }
+
+        Cache::put($responseTimesKey, $responseTimes, self::CACHE_TTL);
+
+        // Record request count
+        $requestsKey = self::METRICS_PREFIX.'requests:'.$currentMinute;
+        Cache::increment($requestsKey);
+        Cache::expire($requestsKey, 120); // 2 minutes
+
+        // Record error count
+        if ($isError) {
+            $errorsKey = self::METRICS_PREFIX.'errors:'.$currentMinute;
+            Cache::increment($errorsKey);
+            Cache::expire($errorsKey, 120); // 2 minutes
+        }
+    }
+
+    /**
+     * Record database query
+     */
+    public function recordDatabaseQuery(float $queryTime): void
+    {
+        Cache::increment(self::METRICS_PREFIX.'db_queries');
+
+        // Record slow queries
+        if ($queryTime > 1000) { // > 1 second
+            $slowQueriesKey = self::METRICS_PREFIX.'slow_queries';
+            $slowQueries = Cache::get($slowQueriesKey, []);
+            $slowQueries[] = [
+                'time' => $queryTime,
+                'timestamp' => now()->toISOString(),
+            ];
+
+            // Keep only last 50 slow queries
+            if (count($slowQueries) > 50) {
+                $slowQueries = array_slice($slowQueries, -50);
+            }
+
+            Cache::put($slowQueriesKey, $slowQueries, self::CACHE_TTL);
+        }
+    }
+
+    /**
+     * Record cache hit/miss
+     */
+    public function recordCacheAccess(bool $isHit): void
+    {
+        if ($isHit) {
+            Cache::increment(self::METRICS_PREFIX.'cache_hits');
+        } else {
+            Cache::increment(self::METRICS_PREFIX.'cache_misses');
+        }
+    }
+
+    /**
      * Check database health
      */
     private function checkDatabaseHealth(): array
@@ -83,7 +153,7 @@ final class MonitoringService
                 'connections' => $this->getDatabaseConnections(),
                 'slow_queries' => $this->getSlowQueries(),
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [
                 'status' => 'unhealthy',
                 'error' => $e->getMessage(),
@@ -107,7 +177,7 @@ final class MonitoringService
                 'memory_usage' => $this->getRedisMemoryUsage(),
                 'connected_clients' => $this->getRedisConnectedClients(),
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [
                 'status' => 'unhealthy',
                 'error' => $e->getMessage(),
@@ -131,7 +201,7 @@ final class MonitoringService
                 'node_count' => $this->getNeo4jNodeCount(),
                 'relationship_count' => $this->getNeo4jRelationshipCount(),
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [
                 'status' => 'unhealthy',
                 'error' => $e->getMessage(),
@@ -155,7 +225,7 @@ final class MonitoringService
                 'document_count' => $this->getMongoDocumentCount(),
                 'collection_count' => $this->getMongoCollectionCount(),
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [
                 'status' => 'unhealthy',
                 'error' => $e->getMessage(),
@@ -204,7 +274,7 @@ final class MonitoringService
     private function getUptime(): array
     {
         $startTime = Cache::get('leg:start_time');
-        if (!$startTime) {
+        if (! $startTime) {
             $startTime = now();
             Cache::put('leg:start_time', $startTime, 86400); // 24 hours
         }
@@ -224,7 +294,7 @@ final class MonitoringService
      */
     private function getAverageResponseTime(): float
     {
-        $key = self::METRICS_PREFIX . 'response_times';
+        $key = self::METRICS_PREFIX.'response_times';
         $responseTimes = Cache::get($key, []);
 
         if (empty($responseTimes)) {
@@ -240,7 +310,7 @@ final class MonitoringService
     private function getRequestThroughput(): array
     {
         $currentMinute = now()->format('Y-m-d H:i');
-        $key = self::METRICS_PREFIX . 'requests:' . $currentMinute;
+        $key = self::METRICS_PREFIX.'requests:'.$currentMinute;
         $requests = Cache::get($key, 0);
 
         return [
@@ -256,8 +326,8 @@ final class MonitoringService
     private function getErrorRate(): array
     {
         $currentMinute = now()->format('Y-m-d H:i');
-        $totalKey = self::METRICS_PREFIX . 'requests:' . $currentMinute;
-        $errorKey = self::METRICS_PREFIX . 'errors:' . $currentMinute;
+        $totalKey = self::METRICS_PREFIX.'requests:'.$currentMinute;
+        $errorKey = self::METRICS_PREFIX.'errors:'.$currentMinute;
 
         $totalRequests = Cache::get($totalKey, 0);
         $totalErrors = Cache::get($errorKey, 0);
@@ -292,7 +362,7 @@ final class MonitoringService
     private function getDatabaseQueryMetrics(): array
     {
         $slowQueries = $this->getSlowQueries();
-        $totalQueries = Cache::get(self::METRICS_PREFIX . 'db_queries', 0);
+        $totalQueries = Cache::get(self::METRICS_PREFIX.'db_queries', 0);
 
         return [
             'total_queries' => $totalQueries,
@@ -306,8 +376,8 @@ final class MonitoringService
      */
     private function getCacheHitRate(): array
     {
-        $hits = Cache::get(self::METRICS_PREFIX . 'cache_hits', 0);
-        $misses = Cache::get(self::METRICS_PREFIX . 'cache_misses', 0);
+        $hits = Cache::get(self::METRICS_PREFIX.'cache_hits', 0);
+        $misses = Cache::get(self::METRICS_PREFIX.'cache_misses', 0);
         $total = $hits + $misses;
 
         $hitRate = $total > 0 ? ($hits / $total) * 100 : 0;
@@ -407,80 +477,11 @@ final class MonitoringService
     }
 
     /**
-     * Record request metrics
-     */
-    public function recordRequest(float $responseTime, bool $isError = false): void
-    {
-        $currentMinute = now()->format('Y-m-d H:i');
-        
-        // Record response time
-        $responseTimesKey = self::METRICS_PREFIX . 'response_times';
-        $responseTimes = Cache::get($responseTimesKey, []);
-        $responseTimes[] = $responseTime;
-        
-        // Keep only last 100 response times
-        if (count($responseTimes) > 100) {
-            $responseTimes = array_slice($responseTimes, -100);
-        }
-        
-        Cache::put($responseTimesKey, $responseTimes, self::CACHE_TTL);
-        
-        // Record request count
-        $requestsKey = self::METRICS_PREFIX . 'requests:' . $currentMinute;
-        Cache::increment($requestsKey);
-        Cache::expire($requestsKey, 120); // 2 minutes
-        
-        // Record error count
-        if ($isError) {
-            $errorsKey = self::METRICS_PREFIX . 'errors:' . $currentMinute;
-            Cache::increment($errorsKey);
-            Cache::expire($errorsKey, 120); // 2 minutes
-        }
-    }
-
-    /**
-     * Record database query
-     */
-    public function recordDatabaseQuery(float $queryTime): void
-    {
-        Cache::increment(self::METRICS_PREFIX . 'db_queries');
-        
-        // Record slow queries
-        if ($queryTime > 1000) { // > 1 second
-            $slowQueriesKey = self::METRICS_PREFIX . 'slow_queries';
-            $slowQueries = Cache::get($slowQueriesKey, []);
-            $slowQueries[] = [
-                'time' => $queryTime,
-                'timestamp' => now()->toISOString(),
-            ];
-            
-            // Keep only last 50 slow queries
-            if (count($slowQueries) > 50) {
-                $slowQueries = array_slice($slowQueries, -50);
-            }
-            
-            Cache::put($slowQueriesKey, $slowQueries, self::CACHE_TTL);
-        }
-    }
-
-    /**
-     * Record cache hit/miss
-     */
-    public function recordCacheAccess(bool $isHit): void
-    {
-        if ($isHit) {
-            Cache::increment(self::METRICS_PREFIX . 'cache_hits');
-        } else {
-            Cache::increment(self::METRICS_PREFIX . 'cache_misses');
-        }
-    }
-
-    /**
      * Get slow queries
      */
     private function getSlowQueries(): array
     {
-        return Cache::get(self::METRICS_PREFIX . 'slow_queries', []);
+        return Cache::get(self::METRICS_PREFIX.'slow_queries', []);
     }
 
     /**
@@ -499,11 +500,12 @@ final class MonitoringService
     {
         try {
             $info = Redis::info('memory');
+
             return [
                 'used_memory_mb' => round($info['used_memory'] / 1024 / 1024, 2),
                 'used_memory_peak_mb' => round($info['used_memory_peak'] / 1024 / 1024, 2),
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }
     }
@@ -515,8 +517,9 @@ final class MonitoringService
     {
         try {
             $info = Redis::info('clients');
+
             return $info['connected_clients'] ?? 0;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return 0;
         }
     }
@@ -563,8 +566,8 @@ final class MonitoringService
     private function parseMemoryLimit(string $limit): int
     {
         $value = (int) $limit;
-        $unit = strtolower(substr($limit, -1));
-        
+        $unit = mb_strtolower(mb_substr($limit, -1));
+
         switch ($unit) {
             case 'g':
                 return $value * 1024 * 1024 * 1024;
@@ -583,7 +586,8 @@ final class MonitoringService
     private function getRequestsPerHour(): int
     {
         $currentHour = now()->format('Y-m-d H');
-        $key = self::METRICS_PREFIX . 'requests:' . $currentHour;
+        $key = self::METRICS_PREFIX.'requests:'.$currentHour;
+
         return Cache::get($key, 0);
     }
 
@@ -593,7 +597,8 @@ final class MonitoringService
     private function getRequestsPerDay(): int
     {
         $currentDay = now()->format('Y-m-d');
-        $key = self::METRICS_PREFIX . 'requests:' . $currentDay;
+        $key = self::METRICS_PREFIX.'requests:'.$currentDay;
+
         return Cache::get($key, 0);
     }
 
@@ -603,12 +608,13 @@ final class MonitoringService
     private function getAverageQueryTime(): float
     {
         $slowQueries = $this->getSlowQueries();
-        
+
         if (empty($slowQueries)) {
             return 0.0;
         }
-        
+
         $times = array_column($slowQueries, 'time');
+
         return round(array_sum($times) / count($times), 2);
     }
 
@@ -629,4 +635,4 @@ final class MonitoringService
         // This would need to be implemented based on your session tracking
         return 0.0;
     }
-} 
+}

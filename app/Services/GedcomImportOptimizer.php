@@ -7,11 +7,9 @@ namespace App\Services;
 use App\Models\Family;
 use App\Models\Individual;
 use App\Models\Source;
-use App\Models\Tree;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Queue;
 use Laudis\Neo4j\Client as Neo4jClient;
 use MongoDB\Client as MongoClient;
 
@@ -20,11 +18,15 @@ use MongoDB\Client as MongoClient;
  */
 final class GedcomImportOptimizer
 {
-    private MongoClient $mongoClient;
-    private Neo4jClient $neo4jClient;
-    private Neo4jIndividualService $neo4jService;
     private const BATCH_SIZE = 100;
+
     private const MAX_MEMORY_USAGE = 512 * 1024 * 1024; // 512MB
+
+    private MongoClient $mongoClient;
+
+    private Neo4jClient $neo4jClient;
+
+    private Neo4jIndividualService $neo4jService;
 
     public function __construct(Neo4jIndividualService $neo4jService)
     {
@@ -44,16 +46,16 @@ final class GedcomImportOptimizer
         try {
             // 1. Clean and validate GEDCOM content
             $cleanedContent = $this->cleanGedcomContent($gedcomContent);
-            
+
             // 2. Parse GEDCOM in chunks to manage memory
             $parsedData = $this->parseGedcomInChunks($cleanedContent);
-            
+
             // 3. Import data in parallel batches
             $results = $this->importInParallelBatches($parsedData, $treeId);
-            
+
             // 4. Create cross-references
             $this->createCrossReferences($treeId);
-            
+
             $endTime = microtime(true);
             $duration = round($endTime - $startTime, 2);
             $memoryUsed = memory_get_usage() - $initialMemory;
@@ -90,17 +92,17 @@ final class GedcomImportOptimizer
     {
         // Remove BOM if present
         $gedcomContent = str_replace("\xEF\xBB\xBF", '', $gedcomContent);
-        
+
         // Normalize line endings
         $gedcomContent = str_replace(["\r\n", "\r"], "\n", $gedcomContent);
-        
+
         // Remove empty lines
         $lines = array_filter(explode("\n", $gedcomContent), 'trim');
-        
+
         // Validate basic GEDCOM structure
         $hasHeader = false;
         $hasTrailer = false;
-        
+
         foreach ($lines as $line) {
             if (str_starts_with($line, '0 HEAD')) {
                 $hasHeader = true;
@@ -109,11 +111,11 @@ final class GedcomImportOptimizer
                 $hasTrailer = true;
             }
         }
-        
-        if (!$hasHeader || !$hasTrailer) {
+
+        if (! $hasHeader || ! $hasTrailer) {
             throw new Exception('Invalid GEDCOM format: Missing HEAD or TRLR');
         }
-        
+
         return implode("\n", $lines);
     }
 
@@ -131,13 +133,13 @@ final class GedcomImportOptimizer
 
         foreach ($lines as $line) {
             $lineCount++;
-            
+
             // Check memory usage and process in batches
             if ($lineCount % self::BATCH_SIZE === 0) {
                 $this->checkMemoryUsage();
             }
-            
-            $line = trim($line);
+
+            $line = mb_trim($line);
             if (empty($line)) {
                 continue;
             }
@@ -145,9 +147,9 @@ final class GedcomImportOptimizer
             // Parse GEDCOM line
             if (preg_match('/^(\d+)\s+(@[^@]+@\s+)?(\w+)(\s+(.+))?$/', $line, $matches)) {
                 $level = (int) $matches[1];
-                $xref = isset($matches[2]) ? trim($matches[2]) : null;
+                $xref = isset($matches[2]) ? mb_trim($matches[2]) : null;
                 $tag = $matches[3];
-                $value = isset($matches[5]) ? trim($matches[5]) : '';
+                $value = isset($matches[5]) ? mb_trim($matches[5]) : '';
 
                 if ($level === 0) {
                     $currentRecord = $tag;
@@ -176,7 +178,7 @@ final class GedcomImportOptimizer
         ];
 
         // Import individuals in batches
-        if (!empty($parsedData['individuals'])) {
+        if (! empty($parsedData['individuals'])) {
             $individualBatches = array_chunk($parsedData['individuals'], self::BATCH_SIZE);
             foreach ($individualBatches as $batch) {
                 $results['individuals'] += $this->importIndividualsBatch($batch, $treeId);
@@ -184,7 +186,7 @@ final class GedcomImportOptimizer
         }
 
         // Import families in batches
-        if (!empty($parsedData['families'])) {
+        if (! empty($parsedData['families'])) {
             $familyBatches = array_chunk($parsedData['families'], self::BATCH_SIZE);
             foreach ($familyBatches as $batch) {
                 $results['families'] += $this->importFamiliesBatch($batch, $treeId);
@@ -192,7 +194,7 @@ final class GedcomImportOptimizer
         }
 
         // Import sources in batches
-        if (!empty($parsedData['sources'])) {
+        if (! empty($parsedData['sources'])) {
             $sourceBatches = array_chunk($parsedData['sources'], self::BATCH_SIZE);
             foreach ($sourceBatches as $batch) {
                 $results['sources'] += $this->importSourcesBatch($batch, $treeId);
@@ -200,11 +202,11 @@ final class GedcomImportOptimizer
         }
 
         // Import notes and media to MongoDB
-        if (!empty($parsedData['notes'])) {
+        if (! empty($parsedData['notes'])) {
             $results['notes'] = $this->importNotesToMongo($parsedData['notes'], $treeId);
         }
 
-        if (!empty($parsedData['media'])) {
+        if (! empty($parsedData['media'])) {
             $results['media'] = $this->importMediaToMongo($parsedData['media'], $treeId);
         }
 
@@ -244,7 +246,7 @@ final class GedcomImportOptimizer
             ];
         }
 
-        if (!empty($data)) {
+        if (! empty($data)) {
             DB::table('individuals')->insert($data);
         }
 
@@ -271,7 +273,7 @@ final class GedcomImportOptimizer
             ];
         }
 
-        if (!empty($data)) {
+        if (! empty($data)) {
             DB::table('families')->insert($data);
         }
 
@@ -299,7 +301,7 @@ final class GedcomImportOptimizer
             ];
         }
 
-        if (!empty($data)) {
+        if (! empty($data)) {
             DB::table('sources')->insert($data);
         }
 
@@ -323,7 +325,7 @@ final class GedcomImportOptimizer
             ];
         }
 
-        if (!empty($data)) {
+        if (! empty($data)) {
             $collection->insertMany($data);
         }
 
@@ -349,7 +351,7 @@ final class GedcomImportOptimizer
             ];
         }
 
-        if (!empty($data)) {
+        if (! empty($data)) {
             $collection->insertMany($data);
         }
 
@@ -400,7 +402,7 @@ final class GedcomImportOptimizer
     private function checkMemoryUsage(): void
     {
         $memoryUsage = memory_get_usage();
-        
+
         if ($memoryUsage > self::MAX_MEMORY_USAGE) {
             gc_collect_cycles();
             Log::warning('Memory usage high during GEDCOM import', [
@@ -421,7 +423,7 @@ final class GedcomImportOptimizer
 
         // Basic date parsing - can be enhanced with more complex logic
         if (preg_match('/^\d{4}$/', $dateString)) {
-            return $dateString . '-01-01';
+            return $dateString.'-01-01';
         }
 
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateString)) {
@@ -436,7 +438,7 @@ final class GedcomImportOptimizer
      */
     private function getIndividualIdByXref(?string $xref): ?int
     {
-        if (!$xref) {
+        if (! $xref) {
             return null;
         }
 
@@ -515,7 +517,7 @@ final class GedcomImportOptimizer
      */
     private function processGedcomLine(array &$parsed, ?string $currentRecord, ?string $currentXref, int $level, string $tag, string $value, array &$context): void
     {
-        if (!$currentRecord || !$currentXref) {
+        if (! $currentRecord || ! $currentXref) {
             return;
         }
 
@@ -633,7 +635,7 @@ final class GedcomImportOptimizer
     {
         switch ($tag) {
             case 'CONT':
-                $parsed['notes'][$xref]['content'] .= $value . "\n";
+                $parsed['notes'][$xref]['content'] .= $value."\n";
                 break;
         }
     }
@@ -663,11 +665,11 @@ final class GedcomImportOptimizer
     {
         // Basic name parsing - can be enhanced
         if (preg_match('/^([^\/]+)\s*\/([^\/]+)\/$/', $fullName, $matches)) {
-            $name['first'] = trim($matches[1]);
-            $name['last'] = trim($matches[2]);
+            $name['first'] = mb_trim($matches[1]);
+            $name['last'] = mb_trim($matches[2]);
         } else {
-            $name['first'] = trim($fullName);
+            $name['first'] = mb_trim($fullName);
             $name['last'] = '';
         }
     }
-} 
+}

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\ServiceProvider;
+use PDO;
 
-class PerformanceServiceProvider extends ServiceProvider
+final class PerformanceServiceProvider extends ServiceProvider
 {
     /**
      * Register services.
@@ -56,9 +56,9 @@ class PerformanceServiceProvider extends ServiceProvider
         // Set persistent connections for better performance
         config([
             'database.connections.pgsql.options' => [
-                \PDO::ATTR_PERSISTENT => true,
-                \PDO::ATTR_EMULATE_PREPARES => false,
-                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+                PDO::ATTR_PERSISTENT => true,
+                PDO::ATTR_EMULATE_PREPARES => false,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             ],
         ]);
 
@@ -103,4 +103,4 @@ class PerformanceServiceProvider extends ServiceProvider
             'logging.channels.daily.days' => config('performance.logging.max_log_files', 7),
         ]);
     }
-} 
+}

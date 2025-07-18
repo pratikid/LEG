@@ -63,39 +63,39 @@ final class SecurityHeaders
         $policies = [
             // Default source - only allow same origin
             "default-src 'self'",
-            
+
             // Script sources - allow same origin and trusted CDNs
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com",
-            
+
             // Style sources - allow same origin and trusted CDNs
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
-            
+
             // Font sources - allow same origin and Google Fonts
             "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net",
-            
+
             // Image sources - allow same origin and data URIs
             "img-src 'self' data: https: blob:",
-            
+
             // Connect sources - allow same origin and API endpoints
             "connect-src 'self' https://api.example.com wss://localhost:*",
-            
+
             // Media sources - allow same origin and blob URLs
             "media-src 'self' blob:",
-            
+
             // Object sources - block all
             "object-src 'none'",
-            
+
             // Base URI - restrict to same origin
             "base-uri 'self'",
-            
+
             // Form action - restrict to same origin
             "form-action 'self'",
-            
+
             // Frame ancestors - block all (prevents embedding)
             "frame-ancestors 'none'",
-            
+
             // Upgrade insecure requests - upgrade HTTP to HTTPS
-            "upgrade-insecure-requests",
+            'upgrade-insecure-requests',
         ];
 
         return implode('; ', $policies);
@@ -125,4 +125,4 @@ final class SecurityHeaders
 
         return false;
     }
-} 
+}

@@ -17,15 +17,16 @@ final class ImportMethodComparisonTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Tree $tree;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->user = User::factory()->create();
         $this->tree = Tree::factory()->create(['user_id' => $this->user->id]);
-        
+
         Queue::fake();
     }
 
@@ -39,7 +40,7 @@ final class ImportMethodComparisonTest extends TestCase
             ]);
 
         $response->assertRedirect(route('trees.index'));
-        
+
         Queue::assertPushed(ImportGedcomJob::class, function ($job) {
             return $job->importMethod === 'standard';
         });
@@ -55,7 +56,7 @@ final class ImportMethodComparisonTest extends TestCase
             ]);
 
         $response->assertRedirect(route('trees.index'));
-        
+
         Queue::assertPushed(ImportGedcomJob::class, function ($job) {
             return $job->importMethod === 'optimized';
         });
@@ -87,7 +88,7 @@ final class ImportMethodComparisonTest extends TestCase
     public function test_validation_accepts_valid_import_methods(): void
     {
         $validMethods = ['standard', 'optimized'];
-        
+
         foreach ($validMethods as $method) {
             $response = $this->actingAs($this->user)
                 ->post(route('trees.import'), [
@@ -116,7 +117,7 @@ final class ImportMethodComparisonTest extends TestCase
     public function test_performance_tracker_can_track_metrics(): void
     {
         $tracker = app(ImportPerformanceTracker::class);
-        
+
         $metrics = [
             'import_method' => 'standard',
             'tree_id' => $this->tree->id,
@@ -133,7 +134,7 @@ final class ImportMethodComparisonTest extends TestCase
             'timestamp' => now()->toISOString(),
             'success' => true,
         ];
-        
+
         // This should not throw an exception
         $tracker->trackImportMetrics(
             $metrics['import_method'],
@@ -144,14 +145,14 @@ final class ImportMethodComparisonTest extends TestCase
             $metrics['file_size_bytes'],
             $metrics['total_records']
         );
-        
+
         $this->assertTrue(true); // If we get here, no exception was thrown
     }
 
     public function test_performance_tracker_can_track_failures(): void
     {
         $tracker = app(ImportPerformanceTracker::class);
-        
+
         // This should not throw an exception
         $tracker->trackImportFailure(
             'optimized',
@@ -161,14 +162,14 @@ final class ImportMethodComparisonTest extends TestCase
             5.2,
             512
         );
-        
+
         $this->assertTrue(true); // If we get here, no exception was thrown
     }
 
     public function test_can_access_import_metrics_api(): void
     {
         $response = $this->get('/api/v1/import-metrics/summary');
-        
+
         $response->assertStatus(200);
         $response->assertJsonStructure([
             'success',
@@ -186,10 +187,10 @@ final class ImportMethodComparisonTest extends TestCase
         // Create an admin user
         $adminUser = User::factory()->create();
         $adminUser->roles()->attach(1); // Assuming role ID 1 is admin
-        
+
         $response = $this->actingAs($adminUser)
             ->get(route('admin.import-metrics'));
-        
+
         $response->assertStatus(200);
         $response->assertSee('Import Performance Metrics');
     }
@@ -197,7 +198,7 @@ final class ImportMethodComparisonTest extends TestCase
     private function createTestGedcomFile(): \Illuminate\Http\Testing\File
     {
         $gedcomContent = "0 HEAD\n1 GEDC\n2 VERS 5.5.5\n0 @I1@ INDI\n1 NAME John /Doe/\n1 SEX M\n0 TRLR";
-        
+
         return \Illuminate\Http\Testing\File::createWithContent('test.ged', $gedcomContent);
     }
-} 
+}

@@ -302,8 +302,8 @@ final class Individual extends Model
     {
         return $query->where(function ($q) use ($name) {
             $q->where('first_name', 'ILIKE', "%{$name}%")
-              ->orWhere('last_name', 'ILIKE', "%{$name}%")
-              ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", ["%{$name}%"]);
+                ->orWhere('last_name', 'ILIKE', "%{$name}%")
+                ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", ["%{$name}%"]);
         });
     }
 
@@ -378,7 +378,7 @@ final class Individual extends Model
     /**
      * Get the parents of the individual (reverse of familiesAsChild)
      */
-    public function parents(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function parents(): BelongsToMany
     {
         return $this->belongsToMany(Family::class, 'family_children', 'child_id', 'family_id')
             ->withPivot('child_order')

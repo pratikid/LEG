@@ -9,8 +9,8 @@ use App\Models\Tree;
 use App\Models\User;
 use App\Notifications\GedcomImportCompleted;
 use App\Notifications\GedcomImportFailed;
-use App\Services\GedcomMultiDatabaseService;
 use App\Services\GedcomImportOptimizer;
+use App\Services\GedcomMultiDatabaseService;
 use App\Services\ImportPerformanceTracker;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -221,41 +221,6 @@ final class ImportGedcomJob implements ShouldQueue
     }
 
     /**
-     * Calculate total records based on import method and results
-     */
-    private function calculateTotalRecords(array $importResults, string $importMethod): int
-    {
-        if ($importMethod === 'optimized') {
-            // Optimized import returns results in a different format
-            return ($importResults['results']['individuals'] ?? 0) + 
-                   ($importResults['results']['families'] ?? 0) + 
-                   ($importResults['results']['sources'] ?? 0);
-        } else {
-            // Standard import returns results in postgresql format
-            return ($importResults['postgresql']['individuals'] ?? 0) + 
-                   ($importResults['postgresql']['families'] ?? 0);
-        }
-    }
-
-    /**
-     * Prepare notification data based on import method and results
-     */
-    private function prepareNotificationData(array $importResults, string $importMethod): array
-    {
-        if ($importMethod === 'optimized') {
-            return [
-                'individuals' => $importResults['results']['individuals'] ?? 0,
-                'families' => $importResults['results']['families'] ?? 0,
-            ];
-        } else {
-            return [
-                'individuals' => $importResults['postgresql']['individuals'] ?? 0,
-                'families' => $importResults['postgresql']['families'] ?? 0,
-            ];
-        }
-    }
-
-    /**
      * Handle a job failure.
      */
     public function failed(Throwable $exception): void
@@ -291,5 +256,42 @@ final class ImportGedcomJob implements ShouldQueue
         if ($user) {
             $user->notify(new GedcomImportFailed($this->originalFileName, $exception->getMessage()));
         }
+    }
+
+    /**
+     * Calculate total records based on import method and results
+     */
+    private function calculateTotalRecords(array $importResults, string $importMethod): int
+    {
+        if ($importMethod === 'optimized') {
+            // Optimized import returns results in a different format
+            return ($importResults['results']['individuals'] ?? 0) +
+                   ($importResults['results']['families'] ?? 0) +
+                   ($importResults['results']['sources'] ?? 0);
+        }
+
+        // Standard import returns results in postgresql format
+        return ($importResults['postgresql']['individuals'] ?? 0) +
+               ($importResults['postgresql']['families'] ?? 0);
+
+    }
+
+    /**
+     * Prepare notification data based on import method and results
+     */
+    private function prepareNotificationData(array $importResults, string $importMethod): array
+    {
+        if ($importMethod === 'optimized') {
+            return [
+                'individuals' => $importResults['results']['individuals'] ?? 0,
+                'families' => $importResults['results']['families'] ?? 0,
+            ];
+        }
+
+        return [
+            'individuals' => $importResults['postgresql']['individuals'] ?? 0,
+            'families' => $importResults['postgresql']['families'] ?? 0,
+        ];
+
     }
 }

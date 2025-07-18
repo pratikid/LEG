@@ -110,4 +110,4 @@ return [
         'log_rotation' => env('LOG_ROTATION', 'daily'),
     ],
 
-]; 
+];

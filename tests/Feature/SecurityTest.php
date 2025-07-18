@@ -11,7 +11,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
-class SecurityTest extends TestCase
+final class SecurityTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -49,7 +49,7 @@ class SecurityTest extends TestCase
 
         foreach ($sensitiveRoutes as $route) {
             $response = $this->actingAs($user)->get($route);
-            
+
             $response->assertHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
             $response->assertHeader('Pragma', 'no-cache');
             $response->assertHeader('Expires', '0');
@@ -91,7 +91,7 @@ class SecurityTest extends TestCase
         // Test weak password
         $weakPassword = 'password123';
         $result = $this->securityEnhancer->validatePasswordStrength($weakPassword);
-        
+
         $this->assertFalse($result['valid']);
         $this->assertContains('Password must contain at least one uppercase letter', $result['errors']);
         $this->assertContains('Password must contain at least one special character', $result['errors']);
@@ -99,7 +99,7 @@ class SecurityTest extends TestCase
         // Test strong password
         $strongPassword = 'SecurePass123!';
         $result = $this->securityEnhancer->validatePasswordStrength($strongPassword);
-        
+
         $this->assertTrue($result['valid']);
         $this->assertEmpty($result['errors']);
         $this->assertGreaterThan(80, $result['strength_score']);
@@ -108,9 +108,9 @@ class SecurityTest extends TestCase
     public function test_password_generation(): void
     {
         $password = $this->securityEnhancer->generateSecurePassword();
-        
-        $this->assertGreaterThanOrEqual(12, strlen($password));
-        
+
+        $this->assertGreaterThanOrEqual(12, mb_strlen($password));
+
         $validation = $this->securityEnhancer->validatePasswordStrength($password);
         $this->assertTrue($validation['valid']);
     }
@@ -120,20 +120,20 @@ class SecurityTest extends TestCase
         // Test valid email
         $validEmail = 'test@example.com';
         $result = $this->securityEnhancer->validateEmail($validEmail);
-        
+
         $this->assertTrue($result['valid']);
 
         // Test invalid email
         $invalidEmail = 'invalid-email';
         $result = $this->securityEnhancer->validateEmail($invalidEmail);
-        
+
         $this->assertFalse($result['valid']);
         $this->assertContains('Invalid email format', $result['errors']);
 
         // Test disposable email
         $disposableEmail = 'test@tempmail.org';
         $result = $this->securityEnhancer->validateEmail($disposableEmail);
-        
+
         $this->assertFalse($result['valid']);
         $this->assertContains('Disposable email addresses are not allowed', $result['errors']);
     }
@@ -143,27 +143,27 @@ class SecurityTest extends TestCase
         // Test valid file
         $validFile = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
         $result = $this->securityEnhancer->validateFileUpload($validFile, ['application/pdf']);
-        
+
         $this->assertTrue($result['valid']);
 
         // Test file too large
         $largeFile = UploadedFile::fake()->create('large.pdf', 6000000, 'application/pdf'); // 6MB
         $result = $this->securityEnhancer->validateFileUpload($largeFile, ['application/pdf'], 5000000); // 5MB limit
-        
+
         $this->assertFalse($result['valid']);
         $this->assertContains('File size exceeds limit', $result['errors']);
 
         // Test invalid file type
         $invalidFile = UploadedFile::fake()->create('script.php', 100, 'text/plain');
         $result = $this->securityEnhancer->validateFileUpload($invalidFile, ['application/pdf']);
-        
+
         $this->assertFalse($result['valid']);
         $this->assertContains('File type not allowed', $result['errors']);
 
         // Test dangerous extension
         $dangerousFile = UploadedFile::fake()->create('script.php', 100, 'text/plain');
         $result = $this->securityEnhancer->validateFileUpload($dangerousFile);
-        
+
         $this->assertFalse($result['valid']);
         $this->assertContains('File extension not allowed', $result['errors']);
     }
@@ -172,7 +172,7 @@ class SecurityTest extends TestCase
     {
         $maliciousInput = '<script>alert("xss")</script>Hello World';
         $sanitized = $this->securityEnhancer->sanitizeString($maliciousInput);
-        
+
         $this->assertStringNotContainsString('<script>', $sanitized);
         $this->assertStringContainsString('Hello World', $sanitized);
     }
@@ -181,19 +181,19 @@ class SecurityTest extends TestCase
     {
         $token1 = $this->securityEnhancer->generateSecureToken();
         $token2 = $this->securityEnhancer->generateSecureToken();
-        
-        $this->assertEquals(32, strlen($token1));
-        $this->assertEquals(32, strlen($token2));
+
+        $this->assertEquals(32, mb_strlen($token1));
+        $this->assertEquals(32, mb_strlen($token2));
         $this->assertNotEquals($token1, $token2);
     }
 
     public function test_data_encryption_and_decryption(): void
     {
         $originalData = 'sensitive information';
-        
+
         $encrypted = $this->securityEnhancer->encryptData($originalData);
         $decrypted = $this->securityEnhancer->decryptData($encrypted);
-        
+
         $this->assertNotEquals($originalData, $encrypted);
         $this->assertEquals($originalData, $decrypted);
     }
@@ -201,10 +201,10 @@ class SecurityTest extends TestCase
     public function test_data_hashing(): void
     {
         $originalData = 'password123';
-        
+
         $hash = $this->securityEnhancer->hashData($originalData);
         $isValid = $this->securityEnhancer->verifyHash($originalData, $hash);
-        
+
         $this->assertNotEquals($originalData, $hash);
         $this->assertTrue($isValid);
         $this->assertFalse($this->securityEnhancer->verifyHash('wrongpassword', $hash));
@@ -221,7 +221,7 @@ class SecurityTest extends TestCase
 
         // Should redirect to login or show CSRF error
         $this->assertTrue(
-            $response->isRedirect() || 
+            $response->isRedirect() ||
             $response->getStatusCode() === 419 || // CSRF token mismatch
             $response->getStatusCode() === 302
         );
@@ -233,9 +233,9 @@ class SecurityTest extends TestCase
 
         // Test SQL injection attempt in search
         $maliciousSearch = "'; DROP TABLE users; --";
-        
-        $response = $this->actingAs($user)->get('/search?q=' . urlencode($maliciousSearch));
-        
+
+        $response = $this->actingAs($user)->get('/search?q='.urlencode($maliciousSearch));
+
         // Should not crash and should handle gracefully
         $this->assertNotEquals(500, $response->getStatusCode());
     }
@@ -246,7 +246,7 @@ class SecurityTest extends TestCase
 
         // Test XSS attempt in form submission
         $xssPayload = '<script>alert("xss")</script>';
-        
+
         $response = $this->actingAs($user)->post('/individuals', [
             'first_name' => $xssPayload,
             'last_name' => 'Doe',
@@ -264,7 +264,7 @@ class SecurityTest extends TestCase
         // Make multiple rapid requests
         for ($i = 0; $i < 10; $i++) {
             $response = $this->actingAs($user)->get('/dashboard');
-            
+
             // Should not be rate limited for normal usage
             if ($i < 5) {
                 $this->assertNotEquals(429, $response->getStatusCode());
@@ -278,9 +278,9 @@ class SecurityTest extends TestCase
 
         // Test session regeneration
         $response = $this->actingAs($user)->post('/logout');
-        
+
         $this->assertTrue($response->isRedirect());
-        
+
         // Should not be able to access protected routes after logout
         $response = $this->get('/dashboard');
         $this->assertTrue($response->isRedirect());
@@ -295,7 +295,7 @@ class SecurityTest extends TestCase
         ]);
 
         $this->assertTrue($response->isRedirect());
-        
+
         // Test login with valid credentials
         $user = User::factory()->create([
             'email' => 'test@example.com',
@@ -316,9 +316,9 @@ class SecurityTest extends TestCase
         $otherUser = User::factory()->create();
 
         // Test accessing other user's data
-        $response = $this->actingAs($user)->get('/trees/' . ($otherUser->id + 1000));
-        
+        $response = $this->actingAs($user)->get('/trees/'.($otherUser->id + 1000));
+
         // Should return 404 or 403, not expose data
         $this->assertTrue(in_array($response->getStatusCode(), [404, 403]));
     }
-} 
+}

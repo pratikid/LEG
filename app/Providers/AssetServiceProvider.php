@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Vite;
+use Illuminate\Support\ServiceProvider;
 
-class AssetServiceProvider extends ServiceProvider
+final class AssetServiceProvider extends ServiceProvider
 {
     /**
      * Register services.
@@ -34,21 +34,22 @@ class AssetServiceProvider extends ServiceProvider
         });
 
         // Add custom helper for asset URLs with version
-        if (!function_exists('asset_versioned')) {
+        if (! function_exists('asset_versioned')) {
             function asset_versioned(string $path): string
             {
                 $fullPath = public_path($path);
                 $version = file_exists($fullPath) ? filemtime($fullPath) : '1';
-                return asset($path) . '?v=' . $version;
+
+                return asset($path).'?v='.$version;
             }
         }
 
         // Add custom helper for build assets
-        if (!function_exists('build_asset')) {
+        if (! function_exists('build_asset')) {
             function build_asset(string $path): string
             {
                 return Vite::asset($path);
             }
         }
     }
-} 
+}

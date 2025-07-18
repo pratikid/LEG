@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\ImportProgress;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -15,7 +14,9 @@ use Illuminate\Support\Facades\Redis;
 final class ImportPerformanceTracker
 {
     private const METRICS_CACHE_TTL = 86400; // 24 hours
+
     private const METRICS_KEY_PREFIX = 'import_metrics:';
+
     private const COMPARISON_KEY = 'import_method_comparison';
 
     /**
@@ -102,7 +103,7 @@ final class ImportPerformanceTracker
     public function getPerformanceComparison(): array
     {
         $cacheKey = self::COMPARISON_KEY;
-        
+
         return Cache::remember($cacheKey, self::METRICS_CACHE_TTL, function () {
             return $this->calculatePerformanceComparison();
         });
@@ -114,7 +115,7 @@ final class ImportPerformanceTracker
     public function getRecentMetrics(int $hours = 24): array
     {
         $cacheKey = "recent_metrics:{$hours}h";
-        
+
         return Cache::remember($cacheKey, 300, function () use ($hours) { // 5 minutes cache
             return $this->fetchRecentMetrics($hours);
         });
@@ -126,7 +127,7 @@ final class ImportPerformanceTracker
     public function getMethodMetrics(string $method, int $hours = 24): array
     {
         $cacheKey = "method_metrics:{$method}:{$hours}h";
-        
+
         return Cache::remember($cacheKey, 300, function () use ($method, $hours) {
             return $this->fetchMethodMetrics($method, $hours);
         });
@@ -138,23 +139,23 @@ final class ImportPerformanceTracker
     private function storeImportMetrics(array $metrics): void
     {
         $importId = uniqid('import_', true);
-        $key = self::METRICS_KEY_PREFIX . $importId;
-        
+        $key = self::METRICS_KEY_PREFIX.$importId;
+
         // Store in Redis for real-time access
         Redis::setex($key, self::METRICS_CACHE_TTL, json_encode($metrics));
-        
+
         // Also store in cache for aggregated queries
         $method = $metrics['import_method'];
         $methodKey = "import_methods:{$method}";
-        
+
         $methodMetrics = Cache::get($methodKey, []);
         $methodMetrics[] = $metrics;
-        
+
         // Keep only last 100 imports per method
         if (count($methodMetrics) > 100) {
             $methodMetrics = array_slice($methodMetrics, -100);
         }
-        
+
         Cache::put($methodKey, $methodMetrics, self::METRICS_CACHE_TTL);
     }
 
@@ -165,7 +166,7 @@ final class ImportPerformanceTracker
     {
         $method = $metrics['import_method'];
         $aggregatedKey = "aggregated:{$method}";
-        
+
         $aggregated = Cache::get($aggregatedKey, [
             'total_imports' => 0,
             'successful_imports' => 0,
@@ -180,7 +181,7 @@ final class ImportPerformanceTracker
         ]);
 
         $aggregated['total_imports']++;
-        
+
         if ($metrics['success']) {
             $aggregated['successful_imports']++;
             $aggregated['total_duration'] += $metrics['duration_seconds'];
@@ -219,7 +220,7 @@ final class ImportPerformanceTracker
             'comparison' => [],
         ];
 
-        if (!empty($standardMetrics) && !empty($optimizedMetrics)) {
+        if (! empty($standardMetrics) && ! empty($optimizedMetrics)) {
             $comparison['comparison'] = [
                 'duration_improvement' => $this->calculateImprovement(
                     $standardMetrics['avg_duration'] ?? 0,
@@ -247,7 +248,7 @@ final class ImportPerformanceTracker
 
         foreach (['standard', 'optimized'] as $method) {
             $methodMetrics = Cache::get("import_methods:{$method}", []);
-            
+
             $recentMetrics[$method] = array_filter($methodMetrics, function ($metric) use ($cutoffTime) {
                 return strtotime($metric['timestamp']) >= $cutoffTime->timestamp;
             });
@@ -263,7 +264,7 @@ final class ImportPerformanceTracker
     {
         $cutoffTime = now()->subHours($hours);
         $methodMetrics = Cache::get("import_methods:{$method}", []);
-        
+
         return array_filter($methodMetrics, function ($metric) use ($cutoffTime) {
             return strtotime($metric['timestamp']) >= $cutoffTime->timestamp;
         });
@@ -276,9 +277,10 @@ final class ImportPerformanceTracker
     {
         if ($importMethod === 'optimized') {
             return $importResults['results']['individuals'] ?? 0;
-        } else {
-            return $importResults['postgresql']['individuals'] ?? 0;
         }
+
+        return $importResults['postgresql']['individuals'] ?? 0;
+
     }
 
     /**
@@ -288,9 +290,10 @@ final class ImportPerformanceTracker
     {
         if ($importMethod === 'optimized') {
             return $importResults['results']['families'] ?? 0;
-        } else {
-            return $importResults['postgresql']['families'] ?? 0;
         }
+
+        return $importResults['postgresql']['families'] ?? 0;
+
     }
 
     /**
@@ -300,9 +303,10 @@ final class ImportPerformanceTracker
     {
         if ($importMethod === 'optimized') {
             return $importResults['results']['sources'] ?? 0;
-        } else {
-            return $importResults['postgresql']['sources'] ?? 0;
         }
+
+        return $importResults['postgresql']['sources'] ?? 0;
+
     }
 
     /**
@@ -321,7 +325,7 @@ final class ImportPerformanceTracker
         if ($baseline === 0) {
             return $newValue > 0 ? 100 : 0;
         }
-        
+
         return round((($newValue - $baseline) / $baseline) * 100, 2);
     }
 
@@ -332,7 +336,7 @@ final class ImportPerformanceTracker
     {
         $total = $metrics['total_imports'] ?? 0;
         $successful = $metrics['successful_imports'] ?? 0;
-        
+
         return $total > 0 ? round(($successful / $total) * 100, 2) : 0;
     }
-} 
+}

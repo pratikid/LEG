@@ -8,7 +8,6 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 /**
  * Security enhancement service for LEG platform
@@ -16,6 +15,7 @@ use Illuminate\Support\Str;
 final class SecurityEnhancer
 {
     private const MIN_PASSWORD_LENGTH = 12;
+
     private const PASSWORD_COMPLEXITY_RULES = [
         'min:12',
         'regex:/[a-z]/', // lowercase
@@ -30,12 +30,12 @@ final class SecurityEnhancer
     public function validateGedcomContent(string $gedcomContent): array
     {
         $errors = [];
-        
+
         // Check file size (max 50MB)
-        if (strlen($gedcomContent) > 50 * 1024 * 1024) {
+        if (mb_strlen($gedcomContent) > 50 * 1024 * 1024) {
             $errors[] = 'GEDCOM file size exceeds 50MB limit';
         }
-        
+
         // Check for malicious content
         $suspiciousPatterns = [
             '/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/i',
@@ -45,24 +45,24 @@ final class SecurityEnhancer
             '/onerror\s*=/i',
             '/onclick\s*=/i',
         ];
-        
+
         foreach ($suspiciousPatterns as $pattern) {
             if (preg_match($pattern, $gedcomContent)) {
                 $errors[] = 'GEDCOM contains potentially malicious content';
                 break;
             }
         }
-        
+
         // Validate GEDCOM structure
-        if (!str_contains($gedcomContent, '0 HEAD') || !str_contains($gedcomContent, '0 TRLR')) {
+        if (! str_contains($gedcomContent, '0 HEAD') || ! str_contains($gedcomContent, '0 TRLR')) {
             $errors[] = 'Invalid GEDCOM format: Missing required HEAD or TRLR tags';
         }
-        
+
         // Check for null bytes
         if (str_contains($gedcomContent, "\0")) {
             $errors[] = 'GEDCOM contains null bytes';
         }
-        
+
         return [
             'valid' => empty($errors),
             'errors' => $errors,
@@ -77,16 +77,16 @@ final class SecurityEnhancer
     {
         // Remove null bytes
         $gedcomContent = str_replace("\0", '', $gedcomContent);
-        
+
         // Remove control characters except newlines and tabs
         $gedcomContent = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $gedcomContent);
-        
+
         // Normalize line endings
         $gedcomContent = str_replace(["\r\n", "\r"], "\n", $gedcomContent);
-        
+
         // Remove excessive whitespace
         $gedcomContent = preg_replace('/[ \t]+/', ' ', $gedcomContent);
-        
+
         return $gedcomContent;
     }
 
@@ -96,77 +96,42 @@ final class SecurityEnhancer
     public function validatePasswordStrength(string $password): array
     {
         $errors = [];
-        
-        if (strlen($password) < self::MIN_PASSWORD_LENGTH) {
-            $errors[] = "Password must be at least " . self::MIN_PASSWORD_LENGTH . " characters long";
+
+        if (mb_strlen($password) < self::MIN_PASSWORD_LENGTH) {
+            $errors[] = 'Password must be at least '.self::MIN_PASSWORD_LENGTH.' characters long';
         }
-        
-        if (!preg_match('/[a-z]/', $password)) {
+
+        if (! preg_match('/[a-z]/', $password)) {
             $errors[] = 'Password must contain at least one lowercase letter';
         }
-        
-        if (!preg_match('/[A-Z]/', $password)) {
+
+        if (! preg_match('/[A-Z]/', $password)) {
             $errors[] = 'Password must contain at least one uppercase letter';
         }
-        
-        if (!preg_match('/[0-9]/', $password)) {
+
+        if (! preg_match('/[0-9]/', $password)) {
             $errors[] = 'Password must contain at least one number';
         }
-        
-        if (!preg_match('/[@$!%*?&]/', $password)) {
+
+        if (! preg_match('/[@$!%*?&]/', $password)) {
             $errors[] = 'Password must contain at least one special character (@$!%*?&)';
         }
-        
+
         // Check for common passwords
         $commonPasswords = [
             'password', '123456', 'qwerty', 'admin', 'letmein',
-            'welcome', 'monkey', 'dragon', 'master', 'football'
+            'welcome', 'monkey', 'dragon', 'master', 'football',
         ];
-        
-        if (in_array(strtolower($password), $commonPasswords)) {
+
+        if (in_array(mb_strtolower($password), $commonPasswords)) {
             $errors[] = 'Password is too common';
         }
-        
+
         return [
             'valid' => empty($errors),
             'errors' => $errors,
             'strength_score' => $this->calculatePasswordStrength($password),
         ];
-    }
-
-    /**
-     * Calculate password strength score (0-100)
-     */
-    private function calculatePasswordStrength(string $password): int
-    {
-        $score = 0;
-        
-        // Length contribution
-        $score += min(25, strlen($password) * 2);
-        
-        // Character variety contribution
-        $variety = 0;
-        if (preg_match('/[a-z]/', $password)) $variety++;
-        if (preg_match('/[A-Z]/', $password)) $variety++;
-        if (preg_match('/[0-9]/', $password)) $variety++;
-        if (preg_match('/[@$!%*?&]/', $password)) $variety++;
-        
-        $score += $variety * 15;
-        
-        // Entropy contribution
-        $entropy = 0;
-        $charSet = 0;
-        if (preg_match('/[a-z]/', $password)) $charSet += 26;
-        if (preg_match('/[A-Z]/', $password)) $charSet += 26;
-        if (preg_match('/[0-9]/', $password)) $charSet += 10;
-        if (preg_match('/[@$!%*?&]/', $password)) $charSet += 8;
-        
-        if ($charSet > 0) {
-            $entropy = strlen($password) * log($charSet, 2);
-            $score += min(30, $entropy / 2);
-        }
-        
-        return min(100, $score);
     }
 
     /**
@@ -178,21 +143,21 @@ final class SecurityEnhancer
         $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $numbers = '0123456789';
         $special = '@$!%*?&';
-        
+
         $password = '';
-        
+
         // Ensure at least one of each type
-        $password .= $lowercase[random_int(0, strlen($lowercase) - 1)];
-        $password .= $uppercase[random_int(0, strlen($uppercase) - 1)];
-        $password .= $numbers[random_int(0, strlen($numbers) - 1)];
-        $password .= $special[random_int(0, strlen($special) - 1)];
-        
+        $password .= $lowercase[random_int(0, mb_strlen($lowercase) - 1)];
+        $password .= $uppercase[random_int(0, mb_strlen($uppercase) - 1)];
+        $password .= $numbers[random_int(0, mb_strlen($numbers) - 1)];
+        $password .= $special[random_int(0, mb_strlen($special) - 1)];
+
         // Fill remaining length with random characters
-        $allChars = $lowercase . $uppercase . $numbers . $special;
+        $allChars = $lowercase.$uppercase.$numbers.$special;
         for ($i = 4; $i < self::MIN_PASSWORD_LENGTH; $i++) {
-            $password .= $allChars[random_int(0, strlen($allChars) - 1)];
+            $password .= $allChars[random_int(0, mb_strlen($allChars) - 1)];
         }
-        
+
         // Shuffle the password
         return str_shuffle($password);
     }
@@ -203,14 +168,14 @@ final class SecurityEnhancer
     public function validateUserInput(array $data, array $rules): array
     {
         $validator = Validator::make($data, $rules);
-        
+
         if ($validator->fails()) {
             return [
                 'valid' => false,
                 'errors' => $validator->errors()->all(),
             ];
         }
-        
+
         // Additional XSS checks
         $sanitizedData = [];
         foreach ($data as $key => $value) {
@@ -220,7 +185,7 @@ final class SecurityEnhancer
                 $sanitizedData[$key] = $value;
             }
         }
-        
+
         return [
             'valid' => true,
             'data' => $sanitizedData,
@@ -234,17 +199,17 @@ final class SecurityEnhancer
     {
         // Remove HTML tags
         $input = strip_tags($input);
-        
+
         // Convert special characters to HTML entities
         $input = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
-        
+
         // Remove null bytes
         $input = str_replace("\0", '', $input);
-        
+
         // Remove control characters
         $input = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $input);
-        
-        return trim($input);
+
+        return mb_trim($input);
     }
 
     /**
@@ -253,37 +218,38 @@ final class SecurityEnhancer
     public function validateFileUpload($file, array $allowedTypes = [], int $maxSize = 5242880): array
     {
         $errors = [];
-        
-        if (!$file || !$file->isValid()) {
+
+        if (! $file || ! $file->isValid()) {
             $errors[] = 'Invalid file upload';
+
             return ['valid' => false, 'errors' => $errors];
         }
-        
+
         // Check file size (default 5MB)
         if ($file->getSize() > $maxSize) {
-            $errors[] = 'File size exceeds limit of ' . ($maxSize / 1024 / 1024) . 'MB';
+            $errors[] = 'File size exceeds limit of '.($maxSize / 1024 / 1024).'MB';
         }
-        
+
         // Check file type
-        if (!empty($allowedTypes)) {
+        if (! empty($allowedTypes)) {
             $mimeType = $file->getMimeType();
-            if (!in_array($mimeType, $allowedTypes)) {
-                $errors[] = 'File type not allowed. Allowed types: ' . implode(', ', $allowedTypes);
+            if (! in_array($mimeType, $allowedTypes)) {
+                $errors[] = 'File type not allowed. Allowed types: '.implode(', ', $allowedTypes);
             }
         }
-        
+
         // Check file extension
-        $extension = strtolower($file->getClientOriginalExtension());
+        $extension = mb_strtolower($file->getClientOriginalExtension());
         $dangerousExtensions = ['php', 'php3', 'php4', 'php5', 'phtml', 'exe', 'bat', 'cmd', 'sh'];
         if (in_array($extension, $dangerousExtensions)) {
             $errors[] = 'File extension not allowed';
         }
-        
+
         // Check for null bytes in filename
         if (str_contains($file->getClientOriginalName(), "\0")) {
             $errors[] = 'Invalid filename';
         }
-        
+
         return [
             'valid' => empty($errors),
             'errors' => $errors,
@@ -304,22 +270,22 @@ final class SecurityEnhancer
     public function validateEmail(string $email): array
     {
         $errors = [];
-        
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'Invalid email format';
         }
-        
+
         // Check for disposable email domains
         $disposableDomains = [
             'tempmail.org', 'guerrillamail.com', 'mailinator.com',
-            '10minutemail.com', 'throwaway.email'
+            '10minutemail.com', 'throwaway.email',
         ];
-        
-        $domain = substr(strrchr($email, "@"), 1);
+
+        $domain = mb_substr(mb_strrchr($email, '@'), 1);
         if (in_array($domain, $disposableDomains)) {
             $errors[] = 'Disposable email addresses are not allowed';
         }
-        
+
         return [
             'valid' => empty($errors),
             'errors' => $errors,
@@ -345,13 +311,13 @@ final class SecurityEnhancer
     public function detectSuspiciousActivity(User $user): array
     {
         $suspicious = [];
-        
+
         // Check for multiple failed login attempts
         $failedAttempts = $user->failed_login_attempts ?? 0;
         if ($failedAttempts > 5) {
             $suspicious[] = 'Multiple failed login attempts';
         }
-        
+
         // Check for unusual login times
         $lastLogin = $user->last_login_at;
         if ($lastLogin) {
@@ -360,18 +326,18 @@ final class SecurityEnhancer
                 $suspicious[] = 'Unusual login time';
             }
         }
-        
+
         // Check for rapid successive actions
         $recentActions = $user->activityLogs()
             ->where('created_at', '>=', now()->subMinutes(5))
             ->count();
-        
+
         if ($recentActions > 50) {
             $suspicious[] = 'Unusual activity volume';
         }
-        
+
         return [
-            'suspicious' => !empty($suspicious),
+            'suspicious' => ! empty($suspicious),
             'indicators' => $suspicious,
         ];
     }
@@ -407,4 +373,55 @@ final class SecurityEnhancer
     {
         return Hash::check($data, $hash);
     }
-} 
+
+    /**
+     * Calculate password strength score (0-100)
+     */
+    private function calculatePasswordStrength(string $password): int
+    {
+        $score = 0;
+
+        // Length contribution
+        $score += min(25, mb_strlen($password) * 2);
+
+        // Character variety contribution
+        $variety = 0;
+        if (preg_match('/[a-z]/', $password)) {
+            $variety++;
+        }
+        if (preg_match('/[A-Z]/', $password)) {
+            $variety++;
+        }
+        if (preg_match('/[0-9]/', $password)) {
+            $variety++;
+        }
+        if (preg_match('/[@$!%*?&]/', $password)) {
+            $variety++;
+        }
+
+        $score += $variety * 15;
+
+        // Entropy contribution
+        $entropy = 0;
+        $charSet = 0;
+        if (preg_match('/[a-z]/', $password)) {
+            $charSet += 26;
+        }
+        if (preg_match('/[A-Z]/', $password)) {
+            $charSet += 26;
+        }
+        if (preg_match('/[0-9]/', $password)) {
+            $charSet += 10;
+        }
+        if (preg_match('/[@$!%*?&]/', $password)) {
+            $charSet += 8;
+        }
+
+        if ($charSet > 0) {
+            $entropy = mb_strlen($password) * log($charSet, 2);
+            $score += min(30, $entropy / 2);
+        }
+
+        return min(100, $score);
+    }
+}
