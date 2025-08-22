@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Traits\HasCommonModelAttributes;
+use App\Traits\HasTreeRelationship;
+use App\Traits\HasUserRelationship;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +34,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 final class Source extends Model
 {
     use HasFactory;
+    use HasTreeRelationship;
+    use HasUserRelationship;
+    use HasCommonModelAttributes;
 
     protected $fillable = [
         'gedcom_xref',
@@ -57,21 +63,7 @@ final class Source extends Model
         return $this->belongsTo(Repository::class);
     }
 
-    /**
-     * Get the user who created this source
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Get the tree this source belongs to
-     */
-    public function tree(): BelongsTo
-    {
-        return $this->belongsTo(Tree::class);
-    }
+    // User and Tree relationships are now provided by traits
 
     /**
      * Scope to filter by GEDCOM xref

@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Services\Neo4jIndividualService;
+use App\Traits\HasCommonModelAttributes;
 use App\Traits\HasPostgresEnums;
+use App\Traits\HasTreeRelationship;
+use App\Traits\HasUserRelationship;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -50,6 +53,9 @@ final class Individual extends Model
     use HasFactory;
     use HasPostgresEnums;
     use LogsActivity;
+    use HasTreeRelationship;
+    use HasUserRelationship;
+    use HasCommonModelAttributes;
 
     /**
      * Sex constants for better code readability
@@ -226,21 +232,7 @@ final class Individual extends Model
         return $this->full_name;
     }
 
-    /**
-     * Get the tree that owns the individual
-     */
-    public function tree(): BelongsTo
-    {
-        return $this->belongsTo(Tree::class);
-    }
-
-    /**
-     * Get the user that owns the individual
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
+    // Tree and User relationships are now provided by traits
 
     /**
      * Get families where this individual is the husband

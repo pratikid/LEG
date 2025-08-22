@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Traits\HasCommonModelAttributes;
+use App\Traits\HasTreeRelationship;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,6 +32,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 final class Family extends Model
 {
     use HasFactory;
+    use HasTreeRelationship;
+    use HasCommonModelAttributes;
 
     protected $fillable = [
         'tree_id',
@@ -48,13 +52,7 @@ final class Family extends Model
         'divorce_date' => 'date',
     ];
 
-    /**
-     * Get the tree that owns the family.
-     */
-    public function tree(): BelongsTo
-    {
-        return $this->belongsTo(Tree::class);
-    }
+    // Tree relationship is now provided by the HasTreeRelationship trait
 
     /**
      * Get the husband individual.

@@ -6,6 +6,7 @@ namespace App\Services;
 
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Traits\HandlesGedcomOperations;
 
 /**
  * Service for parsing, importing, and exporting GEDCOM files.
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Log;
  */
 final class GedcomService
 {
+    use HandlesGedcomOperations;
     /**
      * Parse GEDCOM content into structured arrays for individuals, families, sources, and notes.
      *
@@ -136,107 +138,7 @@ final class GedcomService
      * @param  string  $dateString  The date string to clean
      * @return string Cleaned and standardized date string
      */
-    public function cleanGedcomDate(string $dateString): string
-    {
-        $originalDate = $dateString;
-        $dateString = mb_trim($dateString);
-
-        // Strip leading 'on', 'On', 'ON', etc.
-        $dateString = preg_replace('/^on\s+/i', '', $dateString);
-
-        // Handle empty or null dates
-        if ($dateString === '' || mb_strtolower($dateString) === 'null') {
-            return '';
-        }
-
-        // Normalize common prefixes (case-insensitive, with/without period)
-        $prefixMap = [
-            'ABT' => ['ABT', 'ABT.', 'ABOUT', 'APPROX', 'APPROX.', 'APPROXIMATELY', 'CIR', 'CIR.', 'CIRC', 'CIRC.', 'CA', 'CA.', 'CAL', 'CAL.'],
-            'EST' => ['EST', 'EST.', 'ESTIMATED'],
-            'BEF' => ['BEF', 'BEF.', 'BEFORE'],
-            'AFT' => ['AFT', 'AFT.', 'AFTER'],
-        ];
-        $prefix = '';
-        foreach ($prefixMap as $norm => $variants) {
-            foreach ($variants as $variant) {
-                if (preg_match('/^'.preg_quote($variant, '/') + '\s+/i', $dateString)) {
-                    $prefix = $norm;
-                    $dateString = preg_replace('/^' + preg_quote($variant, '/') + '\s+/i', '', $dateString);
-                    break 2;
-                }
-            }
-        }
-
-        // Handle year-only dates (1–current year+10)
-        if (preg_match('/^(\d{1,4})$/', $dateString, $matches)) {
-            $year = (int) $matches[1];
-            if ($year >= 1 && $year <= date('Y') + 10) {
-                $cleanedDate = $prefix ? "$prefix $year" : (string) $year;
-
-                // Log::info('Standardized year-only date', compact('originalDate', 'cleanedDate'));
-                return $cleanedDate;
-            }
-        }
-
-        // Handle year ranges (e.g., 463-465)
-        if (preg_match('/^(\d{1,4})\s*-\s*(\d{1,4})$/', $dateString, $matches)) {
-            $startYear = (int) $matches[1];
-            $endYear = (int) $matches[2];
-            if ($startYear >= 1 && $endYear >= 1 && $startYear <= $endYear && $endYear <= date('Y') + 10) {
-                $cleanedDate = $prefix ? "$prefix $startYear-$endYear" : "$startYear-$endYear";
-
-                // Log::info('Standardized year range date', compact('originalDate', 'cleanedDate'));
-                return $cleanedDate;
-            }
-        }
-
-        // Handle BET/BETWEEN (e.g., BET 463 AND 465)
-        if (preg_match('/^BET(?:WEEN)?\s+(\d{1,4})\s+AND\s+(\d{1,4})$/i', $dateString, $matches)) {
-            $startYear = (int) $matches[1];
-            $endYear = (int) $matches[2];
-            if ($startYear >= 1 && $endYear >= 1 && $startYear <= $endYear && $endYear <= date('Y') + 10) {
-                $cleanedDate = "BET $startYear AND $endYear";
-
-                // Log::info('Standardized between date', compact('originalDate', 'cleanedDate'));
-                return $cleanedDate;
-            }
-        }
-
-        // Handle full dates (DD MMM YYYY)
-        if (preg_match('/^(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{1,4})$/i', $dateString, $matches)) {
-            $day = (int) $matches[1];
-            $month = ucfirst(mb_strtolower($matches[2]));
-            $year = (int) $matches[3];
-            if ($day >= 1 && $day <= 31 && $year >= 1 && $year <= date('Y') + 10) {
-                $monthMap = [
-                    'Jan' => 'JAN', 'Feb' => 'FEB', 'Mar' => 'MAR', 'Apr' => 'APR',
-                    'May' => 'MAY', 'Jun' => 'JUN', 'Jul' => 'JUL', 'Aug' => 'AUG',
-                    'Sep' => 'SEP', 'Oct' => 'OCT', 'Nov' => 'NOV', 'Dec' => 'DEC',
-                    'January' => 'JAN', 'February' => 'FEB', 'March' => 'MAR', 'April' => 'APR',
-                    'June' => 'JUN', 'July' => 'JUL', 'August' => 'AUG', 'September' => 'SEP',
-                    'October' => 'OCT', 'November' => 'NOV', 'December' => 'DEC',
-                ];
-                $standardMonth = $monthMap[$month] ?? mb_strtoupper($month);
-                $cleanedDate = $prefix ? "$prefix $day $standardMonth $year" : "$day $standardMonth $year";
-
-                // Log::info('Standardized full date', compact('originalDate', 'cleanedDate'));
-                return $cleanedDate;
-            }
-        }
-
-        // Handle unknown dates
-        if (preg_match('/^(UNKNOWN|UNK|\?)$/i', $dateString)) {
-            $cleanedDate = 'UNKNOWN';
-            Log::info('Standardized unknown date', compact('originalDate', 'cleanedDate'));
-
-            return $cleanedDate;
-        }
-
-        // Fallback: log and return raw string
-        Log::warning('Unrecognized date format', compact('originalDate', 'dateString'));
-
-        return $originalDate;
-    }
+    // Using cleanGedcomDate from HandlesGedcomOperations trait
 
     /**
      * Import parsed GEDCOM data into the database (PostgreSQL, Neo4j) for a given tree.
@@ -498,79 +400,7 @@ final class GedcomService
      * @param  string  $gedcomContent  Raw GEDCOM content
      * @return string Cleaned GEDCOM content with user-defined tags removed
      */
-    private function removeUserDefinedTags(string $gedcomContent): string
-    {
-        $lines = preg_split('/\r?\n/', $gedcomContent);
-        if ($lines === false) {
-            return $gedcomContent;
-        }
-
-        $cleanedLines = [];
-        $skipUntilLevel = null;
-        $removedTags = [];
-
-        foreach ($lines as $line) {
-            $trimmedLine = mb_trim($line);
-
-            // Skip empty lines
-            if (empty($trimmedLine)) {
-                $cleanedLines[] = $line;
-
-                continue;
-            }
-
-            // Parse the line to get level and tag
-            if (preg_match('/^(\d+)\s+(@[^@]+@)?\s*(\w+)\s*(.*)$/', $trimmedLine, $matches)) {
-                $level = (int) $matches[1];
-                $tag = $matches[3];
-                $value = mb_trim($matches[4]);
-
-                // Check if this is a user-defined tag (starts with underscore)
-                if (str_starts_with($tag, '_')) {
-                    $removedTags[] = $tag;
-                    $skipUntilLevel = $level;
-
-                    continue; // Skip this line
-                }
-
-                // Clean dates if this is a DATE tag
-                if ($tag === 'DATE' && ! empty($value)) {
-                    $cleanedDate = $this->cleanGedcomDate($value);
-                    if ($cleanedDate !== $value) {
-                        $line = $matches[1].' '.($matches[2] ?? '').' '.$matches[3].' '.$cleanedDate;
-                    }
-                }
-
-                // Check if we're currently skipping lines due to a user-defined tag
-                if ($skipUntilLevel !== null) {
-                    // If we encounter a line with the same or lower level, stop skipping
-                    if ($level <= $skipUntilLevel) {
-                        $skipUntilLevel = null;
-                        // Don't continue here, process this line normally
-                    } else {
-                        // Skip this line (it's a sub-tag of the user-defined tag)
-                        continue;
-                    }
-                }
-            }
-
-            // Add the line if we're not skipping
-            if ($skipUntilLevel === null) {
-                $cleanedLines[] = $line;
-            }
-        }
-
-        // Log removed tags for debugging
-        if (! empty($removedTags)) {
-            $uniqueRemovedTags = array_unique($removedTags);
-            Log::info('Removed user-defined tags from GEDCOM', [
-                'removed_tags' => $uniqueRemovedTags,
-                'total_removed' => count($removedTags),
-            ]);
-        }
-
-        return implode("\n", $cleanedLines);
-    }
+    // Using removeUserDefinedTags from HandlesGedcomOperations trait
 
     /**
      * Store cleaned GEDCOM content to a file

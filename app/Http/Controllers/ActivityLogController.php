@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
+use App\Traits\HandlesActivityLogFiltering;
 use Illuminate\Http\Request;
 use RuntimeException;
 
 final class ActivityLogController extends Controller
 {
+    use HandlesActivityLogFiltering;
     public function __construct()
     {
         $this->middleware(['auth', 'admin']);
@@ -17,31 +19,7 @@ final class ActivityLogController extends Controller
 
     public function index(Request $request): \Illuminate\View\View
     {
-        $query = ActivityLog::with('user')
-            ->orderBy('created_at', 'desc');
-
-        // Filter by user
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
-        }
-
-        // Filter by action
-        if ($request->filled('action')) {
-            $query->where('action', $request->action);
-        }
-
-        // Filter by model type
-        if ($request->filled('model_type')) {
-            $query->where('model_type', $request->model_type);
-        }
-
-        // Filter by date range
-        if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
-        }
-        if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
-        }
+        $query = $this->getFilteredActivityLogQuery($request);
 
         $logs = $query->paginate(20);
 
@@ -55,25 +33,7 @@ final class ActivityLogController extends Controller
 
     public function export(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $query = ActivityLog::with('user')
-            ->orderBy('created_at', 'desc');
-
-        // Apply the same filters as the index method
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
-        }
-        if ($request->filled('action')) {
-            $query->where('action', $request->action);
-        }
-        if ($request->filled('model_type')) {
-            $query->where('model_type', $request->model_type);
-        }
-        if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
-        }
-        if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
-        }
+        $query = $this->getFilteredActivityLogQuery($request);
 
         $logs = $query->get();
 

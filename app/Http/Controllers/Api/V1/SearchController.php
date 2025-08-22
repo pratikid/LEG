@@ -8,11 +8,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Family;
 use App\Models\Individual;
 use App\Models\Tree;
+use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class SearchController extends Controller
 {
+    use ApiResponseTrait;
     /**
      * Search individuals
      */
@@ -32,15 +34,7 @@ final class SearchController extends Controller
             })
             ->paginate($request->integer('per_page', 15));
 
-        return response()->json([
-            'data' => $individuals->items(),
-            'meta' => [
-                'current_page' => $individuals->currentPage(),
-                'last_page' => $individuals->lastPage(),
-                'per_page' => $individuals->perPage(),
-                'total' => $individuals->total(),
-            ],
-        ]);
+        return $this->paginatedResponse($individuals);
     }
 
     /**
@@ -65,15 +59,7 @@ final class SearchController extends Controller
             })
             ->paginate($request->integer('per_page', 15));
 
-        return response()->json([
-            'data' => $families->items(),
-            'meta' => [
-                'current_page' => $families->currentPage(),
-                'last_page' => $families->lastPage(),
-                'per_page' => $families->perPage(),
-                'total' => $families->total(),
-            ],
-        ]);
+        return $this->paginatedResponse($families);
     }
 
     /**
@@ -92,14 +78,6 @@ final class SearchController extends Controller
             })
             ->paginate($request->integer('per_page', 15));
 
-        return response()->json([
-            'data' => $trees->items(),
-            'meta' => [
-                'current_page' => $trees->currentPage(),
-                'last_page' => $trees->lastPage(),
-                'per_page' => $trees->perPage(),
-                'total' => $trees->total(),
-            ],
-        ]);
+        return $this->paginatedResponse($trees);
     }
 }

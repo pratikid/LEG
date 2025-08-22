@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Traits\HasCommonModelAttributes;
+use App\Traits\HasTreeRelationship;
+use App\Traits\HasUserRelationship;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * @property int $id
@@ -23,6 +28,9 @@ use Illuminate\Database\Eloquent\Model;
 final class Story extends Model
 {
     use HasFactory;
+    use HasTreeRelationship;
+    use HasUserRelationship;
+    use HasCommonModelAttributes;
 
     protected $fillable = [
         'title',
@@ -31,18 +39,12 @@ final class Story extends Model
         'tree_id',
     ];
 
-    /**
-     * Get the tree that owns the story.
-     */
-    public function tree(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(Tree::class);
-    }
+    // Tree relationship is now provided by the HasTreeRelationship trait
 
     /**
      * The individuals that belong to the story.
      */
-    public function individuals(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function individuals(): BelongsToMany
     {
         return $this->belongsToMany(Individual::class, 'individual_story', 'story_id', 'individual_id');
     }

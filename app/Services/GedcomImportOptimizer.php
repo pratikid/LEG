@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Family;
 use App\Models\Individual;
 use App\Models\Source;
+use App\Traits\HandlesGedcomOperations;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -18,6 +19,7 @@ use MongoDB\Client as MongoClient;
  */
 final class GedcomImportOptimizer
 {
+    use HandlesGedcomOperations;
     private const BATCH_SIZE = 100;
 
     private const MAX_MEMORY_USAGE = 512 * 1024 * 1024; // 512MB
@@ -512,33 +514,7 @@ final class GedcomImportOptimizer
         }
     }
 
-    /**
-     * Process GEDCOM line
-     */
-    private function processGedcomLine(array &$parsed, ?string $currentRecord, ?string $currentXref, int $level, string $tag, string $value, array &$context): void
-    {
-        if (! $currentRecord || ! $currentXref) {
-            return;
-        }
-
-        switch ($currentRecord) {
-            case 'INDI':
-                $this->processIndividualLine($parsed, $currentXref, $level, $tag, $value, $context);
-                break;
-            case 'FAM':
-                $this->processFamilyLine($parsed, $currentXref, $level, $tag, $value, $context);
-                break;
-            case 'SOUR':
-                $this->processSourceLine($parsed, $currentXref, $level, $tag, $value, $context);
-                break;
-            case 'NOTE':
-                $this->processNoteLine($parsed, $currentXref, $level, $tag, $value, $context);
-                break;
-            case 'OBJE':
-                $this->processMediaLine($parsed, $currentXref, $level, $tag, $value, $context);
-                break;
-        }
-    }
+    // Using processGedcomLine from HandlesGedcomOperations trait
 
     /**
      * Process individual line
