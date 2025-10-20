@@ -11,7 +11,7 @@
         "clean": "rm -rf public/build node_modules/.vite"
     },
     "dependencies": {
-        "@tailwindcss/vite": "^4.1.10",
+        "@tailwindcss/vite": "^4.1.15",
         "autoprefixer": "^10.4.21",
         "cssnano": "^7.1.1",
         "laravel-vite-plugin": "^2.0.1",
