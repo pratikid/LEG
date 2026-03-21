@@ -87,12 +87,18 @@ jobs:
         
     - name: Copy .env
       run: cp .env.example .env
-      
+
+    - name: Create storage folders
+      run: mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache
+        
     - name: Install dependencies
       run: |
-        composer install --prefer-dist --no-interaction --no-progress
+        composer install --prefer-dist --no-interaction --no-progress --no-scripts
         npm ci
         
+    - name: Run Post-Autoload Scripts
+      run: php artisan package:discover --ansi
+
     - name: Generate key
       run: php artisan key:generate
       
