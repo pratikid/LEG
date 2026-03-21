@@ -20,6 +20,6 @@
         "vite": "^7.1.11"
     },
     "devDependencies": {
-        "axios": "^1.11.0"
+        "axios": "^1.13.0"
     }
 }
