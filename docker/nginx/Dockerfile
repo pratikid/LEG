@@ -44,8 +44,13 @@ RUN chmod 755 /usr/local/bin/fix-permissions.sh
 # Expose ports for Nginx
 EXPOSE 80 443
 
-# Set entrypoint to fix permissions
-ENTRYPOINT ["/usr/local/bin/fix-permissions.sh"]
+# Create a quick permissions script for nginx
+RUN echo '#!/bin/sh' > /usr/local/bin/nginx-start.sh && \
+    echo 'mkdir -p /var/www/html/storage/framework/views' >> /usr/local/bin/nginx-start.sh && \
+    echo 'mkdir -p /var/www/html/storage/framework/cache' >> /usr/local/bin/nginx-start.sh && \
+    echo 'mkdir -p /var/www/html/bootstrap/cache' >> /usr/local/bin/nginx-start.sh && \
+    echo 'exec nginx -g "daemon off;"' >> /usr/local/bin/nginx-start.sh && \
+    chmod +x /usr/local/bin/nginx-start.sh
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start Nginx directly
+CMD ["/usr/local/bin/nginx-start.sh"]

@@ -281,46 +281,70 @@ REDIS_PORT=6379
 
 ## Web Server Configuration
 
-### Apache Configuration
+### Nginx Configuration (Recommended)
 
-Create a virtual host configuration:
-
-```apache
-<VirtualHost *:80>
-    ServerName leg.local
-    DocumentRoot /path/to/leg/public
-    
-    <Directory /path/to/leg/public>
-        AllowOverride All
-        Require all granted
-    </Directory>
-    
-    ErrorLog ${APACHE_LOG_DIR}/leg_error.log
-    CustomLog ${APACHE_LOG_DIR}/leg_access.log combined
-</VirtualHost>
-```
-
-### Nginx Configuration
-
-Create a server block configuration:
+LEG is designed to work optimally with nginx. Create a server block configuration:
 
 ```nginx
 server {
     listen 80;
     server_name leg.local;
     root /path/to/leg/public;
-    index index.php;
-
+    index index.php index.html;
+    
+    # Upload limit for GEDCOM files
+    client_max_body_size 25M;
+    
+    # Handle Laravel routing
     location / {
         try_files $uri $uri/ /index.php?$query_string;
     }
-
+    
+    # Handle PHP files with proper headers
     location ~ \.php$ {
         fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
+        fastcgi_read_timeout 300;
+        
+        # Handle Authorization and CSRF headers
+        fastcgi_param HTTP_AUTHORIZATION $http_authorization;
+        fastcgi_param HTTP_X_XSRF_TOKEN $http_x_xsrf_token;
     }
+    
+    # Cache static assets for performance
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+    
+    # Deny access to sensitive files
+    location ~ /\.|~$ {
+        deny all;
+    }
+}
+```
+
+### SSL Configuration (Production)
+
+For production deployments with SSL:
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name leg.yourdomain.com;
+    root /path/to/leg/public;
+    index index.php index.html;
+    
+    ssl_certificate /path/to/ssl/cert.pem;
+    ssl_certificate_key /path/to/ssl/private.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384;
+    
+    # Include the same location blocks as above
+    # ...
 }
 ```
 

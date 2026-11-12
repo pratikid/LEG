@@ -1,41 +1,66 @@
 #!/bin/bash
 
+# ===================================================================
+# LEG Project Setup Script - Linux/macOS
+# ===================================================================
+# This script sets up the entire LEG development environment using
+# ONLY Docker containers. No local PHP, Node.js, or Composer required!
+# Prerequisites: Docker and Docker Compose
+# ===================================================================
+
+set -e  # Exit on any error
+
+echo "🚀 Starting LEG project setup (100% Docker-based)..."
+echo "All tools run in containers - no local installation required!"
+echo ""
+
 # Create necessary directories
-# mkdir -p docker/nginx/conf.d
+echo "[1/8] Creating necessary directories..."
+mkdir -p docker/nginx/conf.d
 
 # Start Docker containers
-docker-compose up -d
+echo "[2/8] Starting Docker containers (this may take a few minutes)..."
+docker compose up -d
 
-# Create a new Laravel project
-docker-compose exec app composer create-project laravel/laravel .
+# Wait for containers to be ready
+echo "[2.5/8] Waiting for containers to be healthy..."
+sleep 10
 
-# Install Livewire
-docker-compose exec app composer require livewire/livewire
-
-# Install Alpine.js via npm
-docker-compose exec node npm install alpinejs
-
-# Install tailwindcss
-docker-compose exec node npm install -D tailwindcss postcss autoprefixer
-docker-compose exec node npx tailwindcss init -p
+# Install PHP dependencies
+echo "[3/8] Installing PHP dependencies via Composer (in app container)..."
+docker compose exec app composer install
 
 # Generate application key
-docker-compose exec app php artisan key:generate
+echo "[4/8] Generating Laravel application key..."
+docker compose exec app php artisan key:generate
 
-# Install Neo4j client
-docker-compose exec app composer require laudis/neo4j-php-client
+# Install Node.js dependencies
+echo "[5/8] Installing Node.js dependencies via npm (in node container)..."
+docker compose exec node npm install
 
-# Install MongoDB Laravel package
-docker-compose exec app composer require mongodb/laravel-mongodb
+# Run database migrations and seeding
+echo "[6/8] Running database migrations and seeding..."
+docker compose exec app php artisan migrate --seed
 
-# Install Redis Laravel package
-docker-compose exec app composer require predis/predis
+# Build frontend assets
+echo "[7/8] Building frontend assets..."
+docker compose exec node npm run build:fast
 
-# Install dependencies for D3.js
-docker-compose exec node npm install d3
+# Fix permissions
+echo "[8/8] Final setup and permissions..."
+docker compose exec app /usr/local/bin/fix-permissions.sh
 
-# Give proper permissions
-docker-compose exec app chmod -R 777 storage bootstrap/cache
-
-echo "Setup complete! Your Laravel application with Livewire and Alpine.js is ready."
-echo "Access your application at http://localhost" 
+echo ""
+echo "==============================================================="
+echo "✅ Setup complete! LEG development environment is ready."
+echo ""
+echo "🌐 Access points:"
+echo "   - Application: http://localhost"
+echo "   - Neo4j Browser: http://localhost:7474 (neo4j/password123)"
+echo "   - Grafana Dashboard: http://localhost:3000 (admin/admin)"
+echo ""
+echo "🐳 All commands run through Docker - see WARP.md for examples:"
+echo "   docker compose exec app php artisan migrate"
+echo "   docker compose exec node npm run dev"
+echo "   docker compose logs -f app"
+echo "==============================================================="

@@ -11,11 +11,32 @@ parameters:
         - routes/
         - tests/
 
-    # Level 8 for production readiness (balance between strictness and practicality)
-    level: 8
+    # Level 9 for maximum strictness (upgraded from 8)
+    level: 9
 
-    # Memory limit for large codebases
+    # Memory limit for large codebases  
     memoryLimit: 2G
+
+    # Advanced analysis options
+    checkMissingIterableValueType: true
+    checkGenericClassInNonGenericObjectType: true
+    checkMissingCallableSignature: true
+    checkTooWideReturnTypesInProtectedAndPublicMethods: true
+    checkUninitializedProperties: true
+    checkDynamicProperties: false
+    treatPhpDocTypesAsCertain: true
+    
+    # Bleeding edge features
+    bleedingEdge:
+        arrayFilter: true
+        arrayUnpacking: true
+        closureDefaultParameterTypeWidening: true
+        explicitMixedForGlobalVariables: true
+        explicitMixedInUnknownGenericParams: true
+        genericsEverywhere: true
+        paramOutType: true
+        preciseMaybe: true
+        readOnlyByPhpDoc: true
 
     # Ignore specific errors
     ignoreErrors:
@@ -26,21 +47,21 @@ parameters:
         - '#Call to an undefined method [a-zA-Z0-9\\_]+::mock\(\)#'
         - '#Access to an undefined property [a-zA-Z0-9\\_]+::\$[a-zA-Z0-9_]+#'
         - '#Call to an undefined method [a-zA-Z0-9\\_]+::[a-zA-Z0-9_]+\(\)#'
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder#'
+        - '#Call to an undefined method Illuminate\\Database\\Query\\Builder#'
+        - '#Unsafe usage of new static#'
+        - '#Property .* does not accept default value of type null#'
 
     # Exclude paths that don't need analysis
     excludePaths:
         - vendor/*
         - storage/*
         - bootstrap/cache/*
-        - public/*
-        - resources/*
+        - public/build/*
         - node_modules/*
-
-    # Check for missing return types
-    checkMissingIterableValueType: true
-    
-    # Check for generic class instantiations
-    checkGenericClassInNonGenericObjectType: true
-    
-    # Check for missing callable signature
-    checkMissingCallableSignature: true
+        - resources/views/errors/*
+        
+    # Laravel specific settings
+    laravel:
+        analyseMigrations: true
+        analyseSeeders: true

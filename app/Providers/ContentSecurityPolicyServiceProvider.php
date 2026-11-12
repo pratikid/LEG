@@ -27,9 +27,9 @@ final class ContentSecurityPolicyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Add nonce to all script tags
-        Blade::directive('nonce', function () {
-            return '<?php echo "nonce=\"" . app(\App\Http\Middleware\ContentSecurityPolicy::class)->generateNonce() . "\""; ?>';
+        // Add CSP token to all script tags
+        Blade::directive('cspToken', function () {
+            return '<?php echo "nonce=\"" . app(\App\Http\Middleware\ContentSecurityPolicy::class)->generateCspToken() . "\""; ?>';
         });
     }
 }

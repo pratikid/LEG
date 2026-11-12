@@ -9,6 +9,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "8090:8090"
     volumes:
       - ./:/var/www/html:delegated
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
@@ -21,6 +22,7 @@ services:
       - app
     environment:
       - PERMISSIONS_USER=nginx
+    command: ["nginx", "-g", "daemon off;"]
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 10s

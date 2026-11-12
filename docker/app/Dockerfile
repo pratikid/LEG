@@ -19,6 +19,7 @@ RUN apk update && apk upgrade && apk add --no-cache \
     pkgconfig \
     postgresql-dev \
     unzip \
+    xdg-utils \
     zip \
  && docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip soap \
  && pecl install mongodb \

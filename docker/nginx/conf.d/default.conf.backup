@@ -1,0 +1,119 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name localhost _;
+    
+    # Redirect all HTTP requests to HTTPS
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    listen 443 quic reuseport;
+    listen [::]:443 quic reuseport;
+    
+    server_name localhost _;
+    
+    # Upload limit for GEDCOM files (max 20MB + buffer)
+    client_max_body_size 25M;
+    
+    # Buffer settings for better performance
+    client_body_buffer_size 64k;
+    client_header_buffer_size 1k;
+    large_client_header_buffers 4 4k;
+    
+    # Timeout settings
+    client_body_timeout 60s;
+    client_header_timeout 60s;
+    send_timeout 60s;
+    
+    # SSL configuration
+    ssl_certificate /etc/nginx/ssl/live/localhost/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/live/localhost/privkey.pem;
+    
+    # SSL settings
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+    
+    # HSTS (uncomment if you're sure)
+    # add_header Strict-Transport-Security "max-age=63072000" always;
+    
+    # HTTP/3 settings
+    http3 on;
+    http3_hq on;
+    quic_retry on;
+    
+    # Add Alt-Svc header for HTTP/3
+    add_header Alt-Svc 'h3=":443"; ma=86400';
+    
+    # Root directory and index files
+    root /var/www/html/public;
+    index index.php index.html;
+    
+    # Logging
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+    
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header Referrer-Policy "strict-origin-when-cross-origin";
+    
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/json
+        application/javascript
+        application/xml+rss
+        application/atom+xml
+        image/svg+xml;
+    
+    # Handle PHP files
+    location ~ \.php$ {
+        fastcgi_pass app:9000;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+        fastcgi_read_timeout 300;
+        fastcgi_send_timeout 300;
+        fastcgi_connect_timeout 60;
+        
+        # FastCGI buffer settings
+        fastcgi_buffer_size 64k;
+        fastcgi_buffers 4 128k;
+        fastcgi_busy_buffers_size 128k;
+        fastcgi_temp_file_write_size 128k;
+    }
+    
+    # Handle static files
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires max;
+        log_not_found off;
+        access_log off;
+        add_header Cache-Control "public, no-transform";
+    }
+    
+    # Deny access to hidden files
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+    
+    # Handle Laravel routing
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+} 

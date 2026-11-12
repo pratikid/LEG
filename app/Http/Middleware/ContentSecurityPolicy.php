@@ -20,7 +20,7 @@ final class ContentSecurityPolicy
         // Define CSP directives
         $csp = [
             "default-src 'self'",
-            "script-src 'self' 'nonce-".$this->generateNonce()."'",
+            "script-src 'self' 'nonce-".$this->generateCspToken()."'",
             "style-src 'self' https://fonts.googleapis.com",
             "img-src 'self' data: https:",
             "font-src 'self' https://fonts.gstatic.com",
@@ -48,9 +48,9 @@ final class ContentSecurityPolicy
     }
 
     /**
-     * Generate a random nonce for CSP.
+     * Generate a random CSP token for security headers.
      */
-    private function generateNonce(): string
+    public function generateCspToken(): string
     {
         return base64_encode(random_bytes(16));
     }

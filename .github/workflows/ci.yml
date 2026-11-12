@@ -82,7 +82,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '22'
         cache: 'npm'
         
     - name: Copy .env
@@ -160,8 +160,23 @@ jobs:
     - name: Run Laravel Pint
       run: composer lint
       
+    - name: Run frontend tests
+      run: npm test
+      
+    - name: Run ESLint
+      run: npm run lint
+      
+    - name: Run Prettier check
+      run: npm run format:check
+      
+    - name: Run type checking
+      run: npm run type-check
+      
     - name: Build assets
       run: npm run build
+      
+    - name: Analyze bundle size
+      run: npm run build:analyze
       
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
