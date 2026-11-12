@@ -15,7 +15,7 @@
         "laravel/sanctum": "^4.1.1",
         "laravel/tinker": "^2.10.1",
         "laudis/neo4j-php-client": "^3.3",
-        "livewire/livewire": ">=3.6.3",
+        "livewire/livewire": "^3.6.3",
         "mongodb/laravel-mongodb": "^5.4.1",
         "nunomaduro/essentials": "^0.1.0",
         "predis/predis": "^3.0.1",

@@ -56,6 +56,31 @@ class FamilyTreeCore {
         // Create nodeMap after data processing to ensure it contains the correct nodes
         this.nodeMap = new Map(this.treeData.nodes.map(node => [node.id, node]));
         this.links = this.processLinks();
+        this.parentById = new Map();
+        this.childrenById = new Map();
+        this.parentsById = new Map();
+        this.linksByNodeId = new Map();
+        this.linksByType = new Map();
+        this.links.forEach(link => {
+            if (link.type === 'parent-child') {
+                if (!this.parentById.has(link.target.id)) {
+                    this.parentById.set(link.target.id, link.source.id);
+                }
+                if (!this.childrenById.has(link.source.id)) this.childrenById.set(link.source.id, []);
+                if (!this.parentsById.has(link.target.id)) this.parentsById.set(link.target.id, []);
+                this.childrenById.get(link.source.id).push(link.target);
+                this.parentsById.get(link.target.id).push(link.source);
+            }
+
+            if (!this.linksByType.has(link.type)) this.linksByType.set(link.type, []);
+            this.linksByType.get(link.type).push(link);
+
+            [link.source.id, link.target.id].forEach(nodeId => {
+                if (!this.linksByNodeId.has(nodeId)) this.linksByNodeId.set(nodeId, []);
+                this.linksByNodeId.get(nodeId).push(link);
+            });
+        });
+        this.useTransitions = this.treeData.nodes.length <= 500 && this.links.length <= 1000;
         this.currentLayoutData = null;
         this.simulation = null;
         
@@ -250,17 +275,37 @@ class FamilyTreeCore {
                     .attr('stroke-width', 2);
             });
         
-        this.linkLabels = this.svg.append('g')
-            .selectAll('text')
-            .data(this.links)
-            .enter()
-            .append('text')
-            .attr('class', 'link-label')
-            .attr('text-anchor', 'middle')
-            .attr('fill', this.colors.textFill)
-            .style('font-size', '12px')
-            .style('pointer-events', 'none')
-            .text(d => d.type);
+        const labelGroup = this.svg.append('g');
+        this.linkLabels = this.links.length <= 500
+            ? labelGroup.selectAll('text')
+                .data(this.links)
+                .enter()
+                .append('text')
+                .attr('class', 'link-label')
+                .attr('text-anchor', 'middle')
+                .attr('fill', this.colors.textFill)
+                .style('font-size', '12px')
+                .style('pointer-events', 'none')
+                .text(d => d.type)
+            : labelGroup.selectAll('text');
+
+        this.linkElementsByNodeId = new Map();
+        this.link.each((link, index, elements) => {
+            [link.source.id, link.target.id].forEach(nodeId => {
+                if (!this.linkElementsByNodeId.has(nodeId)) {
+                    this.linkElementsByNodeId.set(nodeId, {links: [], labels: []});
+                }
+                this.linkElementsByNodeId.get(nodeId).links.push(elements[index]);
+            });
+        });
+        this.linkLabels.each((link, index, elements) => {
+            [link.source.id, link.target.id].forEach(nodeId => {
+                if (!this.linkElementsByNodeId.has(nodeId)) {
+                    this.linkElementsByNodeId.set(nodeId, {links: [], labels: []});
+                }
+                this.linkElementsByNodeId.get(nodeId).labels.push(elements[index]);
+            });
+        });
     }
     
     createNodes() {
@@ -377,8 +422,11 @@ class FamilyTreeCore {
         }
         
         // Update node positions
-        this.node.transition().duration(500)
-            .attr('transform', d => {
+        const layoutPositions = new Map();
+        if (this.currentLayoutData.descendants) {
+            this.currentLayoutData.descendants().forEach(node => layoutPositions.set(node.id, node));
+        }
+        const setNodePositions = selection => selection.attr('transform', d => {
                 let x, y;
                 
                 if (d.fx !== null && d.fy !== null && !isNaN(d.fx) && !isNaN(d.fy)) {
@@ -387,8 +435,7 @@ class FamilyTreeCore {
                     d.x = x;
                     d.y = y;
                 } else {
-                    const nodeData = this.currentLayoutData.descendants ? 
-                        this.currentLayoutData.descendants().find(n => n.id === d.id) : null;
+                    const nodeData = layoutPositions.get(d.id);
                     
                     if (nodeData && typeof nodeData.x === 'number' && typeof nodeData.y === 'number' && 
                         !isNaN(nodeData.x) && !isNaN(nodeData.y)) {
@@ -409,6 +456,12 @@ class FamilyTreeCore {
                 
                 return `translate(${x},${y})`;
             });
+
+        if (this.useTransitions) {
+            setNodePositions(this.node.transition().duration(500));
+        } else {
+            setNodePositions(this.node);
+        }
         
         // Update link positions
         this.updateLinkPositions();
@@ -441,18 +494,19 @@ class FamilyTreeCore {
                 });
                 
                 // Update link labels during simulation
-                this.linkLabels.attr('transform', d => {
-                    const x = (d.source.x + d.target.x) / 2;
-                    const y = (d.source.y + d.target.y) / 2;
-                    return `translate(${x},${y})`;
-                });
+                if (!this.linkLabels.empty()) {
+                    this.linkLabels.attr('transform', d => {
+                        const x = (d.source.x + d.target.x) / 2;
+                        const y = (d.source.y + d.target.y) / 2;
+                        return `translate(${x},${y})`;
+                    });
+                }
             });
         }
     }
     
     updateLinkPositions() {
-        this.link.transition().duration(500)
-            .attr('d', d => {
+        const updateLinks = selection => selection.attr('d', d => {
                 const sourceX = (d.source.fx !== null && !isNaN(d.source.fx)) ? d.source.fx : 
                                (typeof d.source.x === 'number' && !isNaN(d.source.x)) ? d.source.x : this.width / 2;
                 const sourceY = (d.source.fy !== null && !isNaN(d.source.fy)) ? d.source.fy : 
@@ -471,9 +525,11 @@ class FamilyTreeCore {
                     return `M${sourceX},${sourceY}L${targetX},${targetY}`;
                 }
             });
+
+        const links = this.useTransitions ? this.link.transition().duration(500) : this.link;
+        updateLinks(links);
         
-        this.linkLabels.transition().duration(500)
-            .attr('transform', d => {
+        const updateLabels = selection => selection.attr('transform', d => {
                 const sourceX = (d.source.fx !== null && !isNaN(d.source.fx)) ? d.source.fx : 
                                (typeof d.source.x === 'number' && !isNaN(d.source.x)) ? d.source.x : this.width / 2;
                 const sourceY = (d.source.fy !== null && !isNaN(d.source.fy)) ? d.source.fy : 
@@ -487,6 +543,9 @@ class FamilyTreeCore {
                 const y = (sourceY + targetY) / 2;
                 return `translate(${x},${y})`;
             });
+
+        const labels = this.useTransitions ? this.linkLabels.transition().duration(500) : this.linkLabels;
+        updateLabels(labels);
     }
     
     // Control Functions
@@ -625,8 +684,10 @@ class FamilyTreeCore {
     }
     
     updateConnectedLinks(draggedNode) {
-        this.link.filter(d => d.source.id === draggedNode.id || d.target.id === draggedNode.id)
-            .attr('d', d => {
+        const elements = this.linkElementsByNodeId.get(draggedNode.id);
+        if (!elements) return;
+
+        d3.selectAll(elements.links).attr('d', d => {
                 const sourceX = d.source.id === draggedNode.id ? draggedNode.x : d.source.x;
                 const sourceY = d.source.id === draggedNode.id ? draggedNode.y : d.source.y;
                 const targetX = d.target.id === draggedNode.id ? draggedNode.x : d.target.x;
@@ -642,8 +703,7 @@ class FamilyTreeCore {
                 }
             });
         
-        this.linkLabels.filter(d => d.source.id === draggedNode.id || d.target.id === draggedNode.id)
-            .attr('transform', d => {
+        d3.selectAll(elements.labels).attr('transform', d => {
                 const sourceX = d.source.id === draggedNode.id ? draggedNode.x : d.source.x;
                 const sourceY = d.source.id === draggedNode.id ? draggedNode.y : d.source.y;
                 const targetX = d.target.id === draggedNode.id ? draggedNode.x : d.target.x;

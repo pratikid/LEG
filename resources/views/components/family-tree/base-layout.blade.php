@@ -46,9 +46,7 @@ class BaseLayout {
     }
     
     getRootNodes() {
-        return this.core.treeData.nodes.filter(node => 
-            !this.core.links.some(link => link.target.id === node.id && link.type === 'parent-child')
-        );
+        return this.core.treeData.nodes.filter(node => !this.core.parentById.has(node.id));
     }
     
     createTreeStructure() {
@@ -62,10 +60,7 @@ class BaseLayout {
         if (rootNodes.length === 1) {
             const root = d3.stratify()
                 .id(d => d.id)
-                .parentId(d => {
-                    const parentLink = this.core.links.find(link => link.target.id === d.id && link.type === 'parent-child');
-                    return parentLink ? parentLink.source.id : null;
-                })(this.core.treeData.nodes);
+                .parentId(d => this.core.parentById.get(d.id) ?? null)(this.core.treeData.nodes);
             
             return root;
         } else {
@@ -80,41 +75,13 @@ class BaseLayout {
                 }))
             };
             
-            const allNodes = [virtualRoot];
-            const processedNodes = new Set();
-            
-            this.core.treeData.nodes.forEach(node => {
-                if (!processedNodes.has(node.id)) {
-                    const nodeWithChildren = {
-                        id: node.id,
-                        name: node.name,
-                        data: node,
-                        children: []
-                    };
-                    
-                    this.core.links.filter(link => link.source.id === node.id && link.type === 'parent-child')
-                        .forEach(link => {
-                            const childNode = this.core.treeData.nodes.find(n => n.id === link.target.id);
-                            if (childNode) {
-                                nodeWithChildren.children.push({
-                                    id: childNode.id,
-                                    name: childNode.name,
-                                    data: childNode
-                                });
-                            }
-                        });
-                    
-                    allNodes.push(nodeWithChildren);
-                    processedNodes.add(node.id);
-                }
-            });
+            const allNodes = [virtualRoot, ...this.core.treeData.nodes];
             
             const root = d3.stratify()
                 .id(d => d.id)
                 .parentId(d => {
                     if (d.id === 'virtual-root') return null;
-                    const parentLink = this.core.links.find(link => link.target.id === d.id && link.type === 'parent-child');
-                    return parentLink ? parentLink.source.id : 'virtual-root';
+                    return this.core.parentById.get(d.id) ?? 'virtual-root';
                 })(allNodes);
             
             return root;

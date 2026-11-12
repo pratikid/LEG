@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Jobs\AnalyzePerformanceRegressionJob;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 /**
  * Performance monitoring service with alerting and regression detection
@@ -45,8 +47,15 @@ final class PerformanceMonitoringService
             'updated_at' => now(),
         ]);
 
-        // Check for performance regressions
-        $this->detectPerformanceRegression('gedcom_import', $metrics);
+        // Historical analysis and regression email delivery are non-critical to recording metrics.
+        try {
+            AnalyzePerformanceRegressionJob::dispatch('gedcom_import', $metrics)->onQueue('monitoring');
+        } catch (Throwable $e) {
+            Log::warning('Unable to queue performance regression analysis', [
+                'metric_type' => 'gedcom_import',
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         // Check alert thresholds
         $this->checkAlertThresholds($metrics);
@@ -103,41 +112,33 @@ final class PerformanceMonitoringService
     /**
      * Detect performance regression using statistical analysis
      */
-    private function detectPerformanceRegression(string $metricType, array $currentMetrics): void
+    public function detectPerformanceRegression(string $metricType, array $currentMetrics): void
     {
-        // Get historical performance data (last 30 days)
-        $historicalMetrics = DB::table('performance_metrics')
+        $baseline = DB::table('performance_metrics')
             ->where('metric_type', $metricType)
             ->where('created_at', '>=', now()->subDays(30))
             ->whereNotNull('duration')
-            ->pluck('duration')
-            ->toArray();
+            ->selectRaw('COUNT(*) as sample_count, AVG(duration) as mean, AVG(duration * duration) as mean_square')
+            ->first();
 
-        if (count($historicalMetrics) < 10) {
+        if ($baseline->sample_count < 10) {
             return; // Not enough data for regression analysis
         }
 
-        // Calculate baseline statistics
-        $baseline = [
-            'mean' => array_sum($historicalMetrics) / count($historicalMetrics),
-            'std' => $this->calculateStandardDeviation($historicalMetrics),
+        $mean = (float) $baseline->mean;
+        $standardDeviation = sqrt(max((float) $baseline->mean_square - ($mean * $mean), 0));
+        $baselineStatistics = [
+            'mean' => $mean,
+            'std' => $standardDeviation,
         ];
 
         $currentDuration = $currentMetrics['duration'] ?? 0;
-        $zScore = ($currentDuration - $baseline['mean']) / max($baseline['std'], 1);
+        $zScore = ($currentDuration - $baselineStatistics['mean']) / max($baselineStatistics['std'], 1);
 
         // Alert if performance is significantly worse (z-score > 2.5)
         if ($zScore > 2.5) {
-            $this->triggerRegressionAlert($metricType, $currentMetrics, $baseline, $zScore);
+            $this->triggerRegressionAlert($metricType, $currentMetrics, $baselineStatistics, $zScore);
         }
-    }
-
-    private function calculateStandardDeviation(array $data): float
-    {
-        $mean = array_sum($data) / count($data);
-        $squaredDifferences = array_map(fn ($x) => pow($x - $mean, 2), $data);
-
-        return sqrt(array_sum($squaredDifferences) / count($data));
     }
 
     private function checkAlertThresholds(array $metrics): void
@@ -215,7 +216,7 @@ final class PerformanceMonitoringService
 
         foreach ($adminEmails as $email) {
             try {
-                Mail::send('emails.performance-alert', ['alert' => $alert], function ($message) use ($email, $alert) {
+                Mail::queue('emails.performance-alert', ['alert' => $alert], function ($message) use ($email, $alert) {
                     $message->to($email)
                         ->subject("Performance Alert: {$alert['type']}");
                 });

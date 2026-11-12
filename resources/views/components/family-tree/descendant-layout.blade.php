@@ -17,17 +17,15 @@ class DescendantLayout extends BaseLayout {
         const root = rootNodes[0]; // Use first root
         const descendants = new Set();
         const queue = [root];
+        let queueIndex = 0;
         
-        while (queue.length > 0) {
-            const node = queue.shift();
+        while (queueIndex < queue.length) {
+            const node = queue[queueIndex++];
             descendants.add(node.id);
             
-            this.core.links.filter(link => link.source.id === node.id && link.type === 'parent-child')
-                .forEach(link => {
-                    if (!descendants.has(link.target.id)) {
-                        queue.push(link.target);
-                    }
-                });
+            (this.core.childrenById.get(node.id) || []).forEach(child => {
+                if (!descendants.has(child.id)) queue.push(child);
+            });
         }
         
         // Use tree layout for descendants
@@ -39,8 +37,8 @@ class DescendantLayout extends BaseLayout {
         const rootStratify = d3.stratify()
             .id(d => d.id)
             .parentId(d => {
-                const parentLink = this.core.links.find(link => link.target.id === d.id && link.type === 'parent-child');
-                return parentLink ? parentLink.source.id : null;
+                const parentId = this.core.parentById.get(d.id);
+                return parentId && descendants.has(parentId) ? parentId : null;
             })(treeNodes);
         
         return tree(rootStratify);

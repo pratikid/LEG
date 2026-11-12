@@ -41,9 +41,9 @@ class ForceDirectedLayout extends BaseLayout {
     
     addRelationshipForces() {
         // Add different forces based on relationship types
-        const parentChildLinks = this.core.links.filter(link => link.type === 'parent-child');
-        const spouseLinks = this.core.links.filter(link => link.type === 'SPOUSE_OF');
-        const siblingLinks = this.core.links.filter(link => link.type === 'SIBLING_OF');
+        const parentChildLinks = this.core.linksByType.get('parent-child') || [];
+        const spouseLinks = this.core.linksByType.get('SPOUSE_OF') || [];
+        const siblingLinks = this.core.linksByType.get('SIBLING_OF') || [];
         
         // Parent-child relationships: stronger attraction, shorter distance
         if (parentChildLinks.length > 0) {
@@ -86,13 +86,8 @@ class ForceDirectedLayout extends BaseLayout {
         // Add forces to keep generations roughly aligned
         const decades = Array.from(generations.keys()).sort((a, b) => a - b);
         decades.forEach((decade, index) => {
-            const nodes = generations.get(decade);
             const yPosition = this.core.margin.top + (index + 1) * 100;
-            
-            nodes.forEach(node => {
-                // Add a weak force to pull nodes toward their generational line
-                this.simulation.force(`generation-${decade}`, d3.forceY(yPosition).strength(0.05));
-            });
+            this.simulation.force(`generation-${decade}`, d3.forceY(yPosition).strength(0.05));
         });
     }
     
