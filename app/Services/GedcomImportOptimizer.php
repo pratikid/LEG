@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\Family;
-use App\Models\Individual;
-use App\Models\Source;
 use App\Traits\HandlesGedcomOperations;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -43,20 +40,134 @@ final class GedcomImportOptimizer
      */
     public function importGedcomData(string $gedcomContent, int $treeId): array
     {
-        $startTime = microtime(true);
-        $initialMemory = memory_get_usage();
+        $stream = fopen('php://temp', 'w+b');
+        if ($stream === false) {
+            throw new Exception('Unable to allocate temporary stream for GEDCOM import');
+        }
 
         try {
-            // 1. Clean and validate GEDCOM content
-            $cleanedContent = $this->cleanGedcomContent($gedcomContent);
+            if (fwrite($stream, $gedcomContent) !== mb_strlen($gedcomContent, '8bit')) {
+                throw new Exception('Unable to write GEDCOM content to temporary stream');
+            }
+            rewind($stream);
 
-            // 2. Parse GEDCOM in chunks to manage memory
-            $parsedData = $this->parseGedcomInChunks($cleanedContent);
+            return $this->importGedcomStream($stream, $treeId);
+        } finally {
+            fclose($stream);
+        }
+    }
 
-            // 3. Import data in parallel batches
-            $results = $this->importInParallelBatches($parsedData, $treeId);
+    /**
+     * Import GEDCOM records from a stream without retaining the source or parsed file in memory.
+     *
+     * @param  resource  $stream
+     */
+    public function importGedcomStream($stream, int $treeId): array
+    {
+        $startTime = microtime(true);
+        $initialMemory = memory_get_usage();
+        $familyStream = null;
+        $spooledInputStream = null;
 
-            // 4. Create cross-references
+        try {
+            if (! is_resource($stream)) {
+                throw new Exception('Invalid GEDCOM input stream');
+            }
+
+            $inputStream = $stream;
+            if (! (stream_get_meta_data($stream)['seekable'] ?? false)) {
+                $spooledInputStream = tmpfile();
+                if ($spooledInputStream === false) {
+                    throw new Exception('Unable to allocate temporary GEDCOM input stream');
+                }
+
+                while (! feof($stream)) {
+                    $chunk = fread($stream, 65536);
+                    if ($chunk === false) {
+                        throw new Exception('Failed while copying GEDCOM input stream');
+                    }
+                    if ($chunk === '' && ! feof($stream)) {
+                        throw new Exception('GEDCOM input stream stopped before reaching end of file');
+                    }
+                    if ($chunk !== '' && fwrite($spooledInputStream, $chunk) !== mb_strlen($chunk, '8bit')) {
+                        throw new Exception('Failed while spooling GEDCOM input stream');
+                    }
+                }
+                rewind($spooledInputStream);
+                $inputStream = $spooledInputStream;
+            }
+
+            $this->validateGedcomStream($inputStream);
+
+            $familyStream = tmpfile();
+            if ($familyStream === false) {
+                throw new Exception('Unable to allocate temporary family relationship stream');
+            }
+
+            $results = [
+                'individuals' => 0,
+                'families' => 0,
+                'sources' => 0,
+                'notes' => 0,
+                'media' => 0,
+            ];
+            $batches = $this->getEmptyParsedStructure();
+            $currentRecord = null;
+            $currentXref = null;
+            $currentData = [];
+            $context = [];
+            $lineCount = 0;
+
+            while (($line = fgets($inputStream)) !== false) {
+                if (++$lineCount % self::BATCH_SIZE === 0) {
+                    $this->checkMemoryUsage();
+                }
+                if (str_starts_with($line, "\xEF\xBB\xBF")) {
+                    $line = mb_substr($line, 1);
+                }
+                $line = mb_trim($line);
+                if ($line === '') {
+                    continue;
+                }
+
+                if (! preg_match('/^(\d+)\s+(@[^@]+@\s+)?(\w+)(\s+(.+))?$/', $line, $matches)) {
+                    continue;
+                }
+
+                $level = (int) $matches[1];
+                $xref = isset($matches[2]) ? mb_trim($matches[2]) : null;
+                $tag = $matches[3];
+                $value = isset($matches[5]) ? mb_trim($matches[5]) : '';
+
+                if ($level === 0) {
+                    if ($currentRecord !== null && $currentXref !== null) {
+                        $this->flushCurrentRecord($currentRecord, $currentXref, $currentData, $batches, $familyStream, $results, $treeId);
+                    }
+
+                    $currentRecord = $tag;
+                    $currentXref = $xref;
+                    $currentData = $this->getEmptyParsedStructure();
+                    $context = [];
+                    if ($currentXref !== null) {
+                        $this->initializeRecord($currentData, $currentRecord, $currentXref);
+                    }
+                } elseif ($currentRecord !== null && $currentXref !== null) {
+                    $this->processGedcomLine($currentData, $currentRecord, $currentXref, $level, $tag, $value, $context);
+                }
+            }
+
+            if (! feof($inputStream)) {
+                throw new Exception('Failed while reading GEDCOM input stream');
+            }
+
+            if ($currentRecord !== null && $currentXref !== null) {
+                $this->flushCurrentRecord($currentRecord, $currentXref, $currentData, $batches, $familyStream, $results, $treeId);
+            }
+
+            $this->flushRecordBatches($batches, $results, $treeId);
+            rewind($familyStream);
+            $this->importFamilyRelationshipsFromStream($familyStream, $treeId);
+
             $this->createCrossReferences($treeId);
 
             $endTime = microtime(true);
@@ -85,138 +196,98 @@ final class GedcomImportOptimizer
             ]);
 
             throw $e;
+        } finally {
+            if (is_resource($familyStream)) {
+                fclose($familyStream);
+            }
+            if (is_resource($spooledInputStream)) {
+                fclose($spooledInputStream);
+            }
         }
     }
 
     /**
-     * Clean GEDCOM content and validate format
+     * Verify the complete input before importing any record, preserving all-or-nothing format validation.
+     *
+     * @param  resource  $stream
      */
-    private function cleanGedcomContent(string $gedcomContent): string
+    private function validateGedcomStream($stream): void
     {
-        // Remove BOM if present
-        $gedcomContent = str_replace("\xEF\xBB\xBF", '', $gedcomContent);
-
-        // Normalize line endings
-        $gedcomContent = str_replace(["\r\n", "\r"], "\n", $gedcomContent);
-
-        // Remove empty lines
-        $lines = array_filter(explode("\n", $gedcomContent), 'trim');
-
-        // Validate basic GEDCOM structure
         $hasHeader = false;
         $hasTrailer = false;
 
-        foreach ($lines as $line) {
-            if (str_starts_with($line, '0 HEAD')) {
-                $hasHeader = true;
+        while (($line = fgets($stream)) !== false) {
+            if (str_starts_with($line, "\xEF\xBB\xBF")) {
+                $line = mb_substr($line, 1);
             }
-            if (str_starts_with($line, '0 TRLR')) {
-                $hasTrailer = true;
-            }
+            $line = mb_trim($line);
+            $hasHeader = $hasHeader || str_starts_with($line, '0 HEAD');
+            $hasTrailer = $hasTrailer || str_starts_with($line, '0 TRLR');
         }
 
+        if (! feof($stream)) {
+            throw new Exception('Failed while validating GEDCOM input stream');
+        }
         if (! $hasHeader || ! $hasTrailer) {
             throw new Exception('Invalid GEDCOM format: Missing HEAD or TRLR');
         }
-
-        return implode("\n", $lines);
+        if (! rewind($stream)) {
+            throw new Exception('Unable to rewind GEDCOM input stream');
+        }
     }
 
-    /**
-     * Parse GEDCOM content in chunks to manage memory
-     */
-    private function parseGedcomInChunks(string $gedcomContent): array
+    private function flushCurrentRecord(string $recordType, string $xref, array $record, array &$batches, $familyStream, array &$results, int $treeId): void
     {
-        $lines = explode("\n", $gedcomContent);
-        $parsed = $this->getEmptyParsedStructure();
-        $currentRecord = null;
-        $currentXref = null;
-        $context = [];
-        $lineCount = 0;
+        $key = match ($recordType) {
+            'INDI' => 'individuals',
+            'FAM' => 'families',
+            'SOUR' => 'sources',
+            'NOTE' => 'notes',
+            'OBJE' => 'media',
+            default => null,
+        };
+        if ($key === null) {
+            return;
+        }
+        if (! isset($record[$key][$xref])) {
+            return;
+        }
 
-        foreach ($lines as $line) {
-            $lineCount++;
-
-            // Check memory usage and process in batches
-            if ($lineCount % self::BATCH_SIZE === 0) {
-                $this->checkMemoryUsage();
-            }
-
-            $line = mb_trim($line);
-            if (empty($line)) {
-                continue;
-            }
-
-            // Parse GEDCOM line
-            if (preg_match('/^(\d+)\s+(@[^@]+@\s+)?(\w+)(\s+(.+))?$/', $line, $matches)) {
-                $level = (int) $matches[1];
-                $xref = isset($matches[2]) ? mb_trim($matches[2]) : null;
-                $tag = $matches[3];
-                $value = isset($matches[5]) ? mb_trim($matches[5]) : '';
-
-                if ($level === 0) {
-                    $currentRecord = $tag;
-                    $currentXref = $xref;
-                    $this->initializeRecord($parsed, $currentRecord, $currentXref);
-                } else {
-                    $this->processGedcomLine($parsed, $currentRecord, $currentXref, $level, $tag, $value, $context);
-                }
+        $batches[$key][$xref] = $record[$key][$xref];
+        if ($key === 'families') {
+            $encodedFamily = base64_encode(serialize($record[$key][$xref]));
+            if (fwrite($familyStream, $encodedFamily."\n") !== mb_strlen($encodedFamily, '8bit') + 1) {
+                throw new Exception('Failed to spool GEDCOM family relationship');
             }
         }
 
-        return $parsed;
+        if (count($batches[$key]) >= self::BATCH_SIZE) {
+            $this->flushRecordBatch($key, $batches[$key], $results, $treeId);
+            $batches[$key] = [];
+        }
     }
 
-    /**
-     * Import data in parallel batches
-     */
-    private function importInParallelBatches(array $parsedData, int $treeId): array
+    private function flushRecordBatches(array &$batches, array &$results, int $treeId): void
     {
-        $results = [
-            'individuals' => 0,
-            'families' => 0,
-            'sources' => 0,
-            'notes' => 0,
-            'media' => 0,
-        ];
+        foreach (array_keys($batches) as $key) {
+            $this->flushRecordBatch($key, $batches[$key], $results, $treeId);
+            $batches[$key] = [];
+        }
+    }
 
-        // Import individuals in batches
-        if (! empty($parsedData['individuals'])) {
-            $individualBatches = array_chunk($parsedData['individuals'], self::BATCH_SIZE);
-            foreach ($individualBatches as $batch) {
-                $results['individuals'] += $this->importIndividualsBatch($batch, $treeId);
-            }
+    private function flushRecordBatch(string $key, array $batch, array &$results, int $treeId): void
+    {
+        if ($batch === []) {
+            return;
         }
 
-        // Import families in batches
-        if (! empty($parsedData['families'])) {
-            $familyBatches = array_chunk($parsedData['families'], self::BATCH_SIZE);
-            foreach ($familyBatches as $batch) {
-                $results['families'] += $this->importFamiliesBatch($batch, $treeId);
-            }
-        }
-
-        // Import sources in batches
-        if (! empty($parsedData['sources'])) {
-            $sourceBatches = array_chunk($parsedData['sources'], self::BATCH_SIZE);
-            foreach ($sourceBatches as $batch) {
-                $results['sources'] += $this->importSourcesBatch($batch, $treeId);
-            }
-        }
-
-        // Import notes and media to MongoDB
-        if (! empty($parsedData['notes'])) {
-            $results['notes'] = $this->importNotesToMongo($parsedData['notes'], $treeId);
-        }
-
-        if (! empty($parsedData['media'])) {
-            $results['media'] = $this->importMediaToMongo($parsedData['media'], $treeId);
-        }
-
-        // Import relationships to Neo4j
-        $this->importRelationshipsToNeo4j($parsedData, $treeId);
-
-        return $results;
+        $results[$key] += match ($key) {
+            'individuals' => $this->importIndividualsBatch($batch, $treeId),
+            'families' => $this->importFamiliesBatch($batch, $treeId),
+            'sources' => $this->importSourcesBatch($batch, $treeId),
+            'notes' => $this->importNotesToMongo($batch, $treeId),
+            'media' => $this->importMediaToMongo($batch, $treeId),
+        };
     }
 
     /**
@@ -362,38 +433,81 @@ final class GedcomImportOptimizer
     }
 
     /**
-     * Import relationships to Neo4j
+     * Resolve IDs in bounded batches before creating Neo4j relationships.
+     *
+     * @param  resource  $familyStream
      */
-    private function importRelationshipsToNeo4j(array $parsedData, int $treeId): void
+    private function importFamilyRelationshipsFromStream($familyStream, int $treeId): void
     {
-        // Import family relationships
-        foreach ($parsedData['families'] ?? [] as $familyXref => $family) {
-            $this->importFamilyRelationships($family, $familyXref, $treeId);
+        $families = [];
+        while (($line = fgets($familyStream)) !== false) {
+            $decoded = base64_decode(mb_trim($line), true);
+            if ($decoded === false) {
+                throw new Exception('Invalid GEDCOM family relationship spool');
+            }
+            $family = unserialize($decoded, ['allowed_classes' => false]);
+            if (! is_array($family)) {
+                throw new Exception('Invalid GEDCOM family relationship spool');
+            }
+            $families[] = ['family' => $family];
+            if (count($families) >= self::BATCH_SIZE) {
+                $this->importFamilyRelationshipBatch($families, $treeId);
+                $families = [];
+            }
+        }
+
+        if (! feof($familyStream)) {
+            throw new Exception('Failed while reading spooled GEDCOM family relationships');
+        }
+        if ($families !== []) {
+            $this->importFamilyRelationshipBatch($families, $treeId);
         }
     }
 
-    /**
-     * Import family relationships to Neo4j
-     */
-    private function importFamilyRelationships(array $family, string $familyXref, int $treeId): void
+    private function importFamilyRelationshipBatch(array $families, int $treeId): void
     {
-        $husbandId = $this->getIndividualIdByXref($family['husband'] ?? null);
-        $wifeId = $this->getIndividualIdByXref($family['wife'] ?? null);
-
-        // Create spouse relationship
-        if ($husbandId && $wifeId) {
-            $this->neo4jService->createSpouseRelationship($husbandId, $wifeId, $treeId);
+        $xrefs = [];
+        foreach ($families as $row) {
+            $family = $row['family'];
+            if (! empty($family['husband'])) {
+                $xrefs[] = $family['husband'];
+            }
+            if (! empty($family['wife'])) {
+                $xrefs[] = $family['wife'];
+            }
+            foreach ($family['children'] ?? [] as $childXref) {
+                $xrefs[] = $childXref;
+            }
         }
 
-        // Create parent-child relationships
-        foreach ($family['children'] ?? [] as $childXref) {
-            $childId = $this->getIndividualIdByXref($childXref);
-            if ($childId) {
+        $individualIds = [];
+        foreach (array_chunk(array_values(array_unique($xrefs)), 500) as $xrefBatch) {
+            $individualIds += DB::table('individuals')
+                ->where('tree_id', $treeId)
+                ->whereIn('gedcom_xref', $xrefBatch)
+                ->pluck('id', 'gedcom_xref')
+                ->all();
+        }
+
+        foreach ($families as $row) {
+            $family = $row['family'];
+            $husbandId = isset($family['husband']) ? ($individualIds[$family['husband']] ?? null) : null;
+            $wifeId = isset($family['wife']) ? ($individualIds[$family['wife']] ?? null) : null;
+
+            if ($husbandId && $wifeId) {
+                $this->neo4jService->createSpouseRelationship((int) $husbandId, (int) $wifeId, $treeId);
+            }
+
+            foreach ($family['children'] ?? [] as $childXref) {
+                $childId = $individualIds[$childXref] ?? null;
+                if (! $childId) {
+                    continue;
+                }
                 if ($husbandId) {
-                    $this->neo4jService->createParentChildRelationship($husbandId, $childId, $treeId);
+                    $this->neo4jService->createParentChildRelationship((int) $husbandId, (int) $childId, $treeId);
                 }
                 if ($wifeId) {
-                    $this->neo4jService->createParentChildRelationship($wifeId, $childId, $treeId);
+                    $this->neo4jService->createParentChildRelationship((int) $wifeId, (int) $childId, $treeId);
                 }
             }
         }
@@ -434,18 +548,6 @@ final class GedcomImportOptimizer
         }
 
         return null;
-    }
-
-    /**
-     * Get individual ID by GEDCOM xref
-     */
-    private function getIndividualIdByXref(?string $xref): ?int
-    {
-        if (! $xref) {
-            return null;
-        }
-
-        return Individual::where('gedcom_xref', $xref)->value('id');
     }
 
     /**

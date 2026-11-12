@@ -9,6 +9,8 @@ class PedigreeLayout extends BaseLayout {
     generate() {
         // Group by generation
         const generations = new Map();
+        const generationById = new Map();
+        const nodeIndexByGeneration = new Map();
         const visited = new Set();
         
         // Find root nodes (no parents)
@@ -16,19 +18,21 @@ class PedigreeLayout extends BaseLayout {
         
         // BFS to assign generations
         const queue = rootNodes.map(node => ({node, gen: 0}));
-        while (queue.length > 0) {
-            const {node, gen} = queue.shift();
+        let queueIndex = 0;
+        while (queueIndex < queue.length) {
+            const {node, gen} = queue[queueIndex++];
             if (visited.has(node.id)) continue;
             visited.add(node.id);
             
             if (!generations.has(gen)) generations.set(gen, []);
             generations.get(gen).push(node);
+            generationById.set(node.id, gen);
+            nodeIndexByGeneration.set(node.id, generations.get(gen).length - 1);
             
             // Add children to queue
-            this.core.links.filter(link => link.source.id === node.id && link.type === 'parent-child')
-                .forEach(link => {
-                    queue.push({node: link.target, gen: gen + 1});
-                });
+            (this.core.childrenById.get(node.id) || []).forEach(child => {
+                if (!visited.has(child.id)) queue.push({node: child, gen: gen + 1});
+            });
         }
         
         // Position nodes by generation
@@ -36,10 +40,8 @@ class PedigreeLayout extends BaseLayout {
         const nodeHeight = 80;
         
         const positionedNodes = this.core.treeData.nodes.map(node => {
-            const gen = Array.from(generations.entries())
-                .find(([g, nodes]) => nodes.some(n => n.id === node.id))?.[0] || 0;
-            const genNodes = generations.get(gen) || [];
-            const nodeIndex = genNodes.findIndex(n => n.id === node.id);
+            const gen = generationById.get(node.id) || 0;
+            const nodeIndex = nodeIndexByGeneration.get(node.id) ?? 0;
             
             return {
                 id: node.id,

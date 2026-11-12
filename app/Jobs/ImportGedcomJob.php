@@ -82,18 +82,9 @@ final class ImportGedcomJob implements ShouldQueue
                 'status_message' => 'Reading GEDCOM file...',
             ]);
 
-            // Read the GEDCOM file
-            if (! Storage::disk('local')->exists($this->filePath)) {
+            $disk = Storage::disk('local');
+            if (! $disk->exists($this->filePath)) {
                 throw new Exception("GEDCOM file not found at path: {$this->filePath}");
-            }
-
-            $content = Storage::disk('local')->get($this->filePath);
-            if ($content === null || $content === false) {
-                throw new Exception("Failed to read GEDCOM file content from path: {$this->filePath}");
-            }
-
-            if (empty(mb_trim($content))) {
-                throw new Exception("GEDCOM file is empty at path: {$this->filePath}");
             }
 
             // Update progress - Processing file
@@ -103,11 +94,34 @@ final class ImportGedcomJob implements ShouldQueue
 
             // Use the appropriate service based on import method
             if ($this->importMethod === 'optimized') {
+                if ($disk->size($this->filePath) === 0) {
+                    throw new Exception("GEDCOM file is empty at path: {$this->filePath}");
+                }
+
                 $gedcomService = app(GedcomImportOptimizer::class);
-                $importResults = $gedcomService->importGedcomData($content, $this->treeId);
+                $stream = $disk->readStream($this->filePath);
+                if (! is_resource($stream)) {
+                    throw new Exception("Failed to open GEDCOM file stream from path: {$this->filePath}");
+                }
+
+                try {
+                    $importResults = $gedcomService->importGedcomStream($stream, $this->treeId);
+                } finally {
+                    fclose($stream);
+                }
             } else {
+                $content = $disk->get($this->filePath);
+                if ($content === null || $content === false) {
+                    throw new Exception("Failed to read GEDCOM file content from path: {$this->filePath}");
+                }
+
+                if (empty(mb_trim($content))) {
+                    throw new Exception("GEDCOM file is empty at path: {$this->filePath}");
+                }
+
                 $gedcomService = app(GedcomMultiDatabaseService::class);
                 $importResults = $gedcomService->importGedcomData($content, $this->treeId);
+                unset($content);
             }
 
             // Update progress to completed

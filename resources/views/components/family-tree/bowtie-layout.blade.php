@@ -21,30 +21,26 @@ class BowtieLayout extends BaseLayout {
             
             // Find descendants
             const queue = [root];
-            while (queue.length > 0) {
-                const node = queue.shift();
+            let queueIndex = 0;
+            while (queueIndex < queue.length) {
+                const node = queue[queueIndex++];
                 descendants.add(node.id);
                 
-                this.core.links.filter(link => link.source.id === node.id && link.type === 'parent-child')
-                    .forEach(link => {
-                        if (!descendants.has(link.target.id)) {
-                            queue.push(link.target);
-                        }
-                    });
+                (this.core.childrenById.get(node.id) || []).forEach(child => {
+                    if (!descendants.has(child.id)) queue.push(child);
+                });
             }
             
             // Find ancestors
             const ancestorQueue = [root];
-            while (ancestorQueue.length > 0) {
-                const node = ancestorQueue.shift();
+            let ancestorIndex = 0;
+            while (ancestorIndex < ancestorQueue.length) {
+                const node = ancestorQueue[ancestorIndex++];
                 ancestors.add(node.id);
                 
-                this.core.links.filter(link => link.target.id === node.id && link.type === 'parent-child')
-                    .forEach(link => {
-                        if (!ancestors.has(link.source.id)) {
-                            ancestorQueue.push(link.source);
-                        }
-                    });
+                (this.core.parentsById.get(node.id) || []).forEach(parent => {
+                    if (!ancestors.has(parent.id)) ancestorQueue.push(parent);
+                });
             }
         }
         
