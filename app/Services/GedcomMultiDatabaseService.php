@@ -24,6 +24,7 @@ use MongoDB\Client as MongoClient;
 final class GedcomMultiDatabaseService
 {
     use HandlesGedcomOperations;
+
     private MongoClient $mongoClient;
 
     private Neo4jClient $neo4jClient;

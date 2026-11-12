@@ -12,6 +12,7 @@ use RuntimeException;
 final class ActivityLogController extends Controller
 {
     use HandlesActivityLogFiltering;
+
     public function __construct()
     {
         $this->middleware(['auth', 'admin']);

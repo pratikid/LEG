@@ -15,6 +15,20 @@ final class PrivacySetting extends Model
 {
     use HasFactory;
 
+    public const VISIBILITY_PUBLIC = 'public';
+
+    public const VISIBILITY_FAMILY = 'family';
+
+    public const VISIBILITY_PRIVATE = 'private';
+
+    public const VISIBILITY_DECEASED_ONLY = 'deceased_only';
+
+    public const LIVING_PRIVACY_FULL = 'full'; // Show all data
+
+    public const LIVING_PRIVACY_LIMITED = 'limited'; // Show name and basic info only
+
+    public const LIVING_PRIVACY_HIDDEN = 'hidden'; // Hide completely
+
     protected $fillable = [
         'individual_id',
         'tree_id',
@@ -30,7 +44,7 @@ final class PrivacySetting extends Model
         'show_notes',
         'custom_restrictions',
         'expiry_date',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
@@ -43,17 +57,8 @@ final class PrivacySetting extends Model
         'show_notes' => 'boolean',
         'custom_restrictions' => 'array',
         'expiry_date' => 'datetime',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
     ];
-
-    public const VISIBILITY_PUBLIC = 'public';
-    public const VISIBILITY_FAMILY = 'family';
-    public const VISIBILITY_PRIVATE = 'private';
-    public const VISIBILITY_DECEASED_ONLY = 'deceased_only';
-
-    public const LIVING_PRIVACY_FULL = 'full'; // Show all data
-    public const LIVING_PRIVACY_LIMITED = 'limited'; // Show name and basic info only
-    public const LIVING_PRIVACY_HIDDEN = 'hidden'; // Hide completely
 
     public function individual(): BelongsTo
     {
@@ -75,7 +80,7 @@ final class PrivacySetting extends Model
      */
     public function isFieldVisible(string $field, bool $isLiving = false): bool
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return true; // Default to visible if no privacy settings
         }
 

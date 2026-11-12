@@ -18,4 +18,18 @@ final class ExampleTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    public function test_the_login_page_returns_a_successful_response(): void
+    {
+        $response = $this->get('/login');
+
+        $response->assertStatus(200);
+    }
+
+    public function test_api_routes_are_registered(): void
+    {
+        $this->getJson('/api/ping')
+            ->assertOk()
+            ->assertJson(['message' => 'pong']);
+    }
 }

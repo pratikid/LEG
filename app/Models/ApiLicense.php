@@ -16,6 +16,32 @@ final class ApiLicense extends Model
 {
     use HasFactory;
 
+    // License types
+    public const TYPE_PERSONAL = 'personal';
+
+    public const TYPE_RESEARCH = 'research';
+
+    public const TYPE_COMMERCIAL = 'commercial';
+
+    public const TYPE_ACADEMIC = 'academic';
+
+    public const TYPE_NON_PROFIT = 'non_profit';
+
+    // Permission levels
+    public const PERMISSION_READ = 'read';
+
+    public const PERMISSION_WRITE = 'write';
+
+    public const PERMISSION_EXPORT = 'export';
+
+    public const PERMISSION_ANALYTICS = 'analytics';
+
+    public const PERMISSION_PREMIUM = 'premium';
+
+    public const PERMISSION_RESEARCH = 'research';
+
+    public const PERMISSION_BULK = 'bulk';
+
     protected $fillable = [
         'user_id',
         'license_key',
@@ -29,7 +55,7 @@ final class ApiLicense extends Model
         'is_active',
         'allowed_domains',
         'allowed_ips',
-        'metadata'
+        'metadata',
     ];
 
     protected $casts = [
@@ -39,24 +65,8 @@ final class ApiLicense extends Model
         'is_active' => 'boolean',
         'allowed_domains' => 'array',
         'allowed_ips' => 'array',
-        'metadata' => 'array'
+        'metadata' => 'array',
     ];
-
-    // License types
-    public const TYPE_PERSONAL = 'personal';
-    public const TYPE_RESEARCH = 'research';
-    public const TYPE_COMMERCIAL = 'commercial';
-    public const TYPE_ACADEMIC = 'academic';
-    public const TYPE_NON_PROFIT = 'non_profit';
-
-    // Permission levels
-    public const PERMISSION_READ = 'read';
-    public const PERMISSION_WRITE = 'write';
-    public const PERMISSION_EXPORT = 'export';
-    public const PERMISSION_ANALYTICS = 'analytics';
-    public const PERMISSION_PREMIUM = 'premium';
-    public const PERMISSION_RESEARCH = 'research';
-    public const PERMISSION_BULK = 'bulk';
 
     public function user(): BelongsTo
     {
@@ -73,12 +83,12 @@ final class ApiLicense extends Model
      */
     public function isValid(): bool
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return false;
         }
 
         $now = now();
-        
+
         if ($this->valid_from && $now->isBefore($this->valid_from)) {
             return false;
         }
@@ -95,7 +105,7 @@ final class ApiLicense extends Model
      */
     public function hasPermission(string $permission): bool
     {
-        if (!$this->isValid()) {
+        if (! $this->isValid()) {
             return false;
         }
 
@@ -181,15 +191,16 @@ final class ApiLicense extends Model
     private function ipMatches(string $ipAddress, string $allowedPattern): bool
     {
         // Support CIDR notation and wildcards
-        if (strpos($allowedPattern, '/') !== false) {
+        if (mb_strpos($allowedPattern, '/') !== false) {
             // CIDR notation
             return $this->ipInCidr($ipAddress, $allowedPattern);
         }
 
-        if (strpos($allowedPattern, '*') !== false) {
+        if (mb_strpos($allowedPattern, '*') !== false) {
             // Wildcard matching
             $pattern = str_replace('*', '.*', preg_quote($allowedPattern, '/'));
-            return preg_match('/^' . $pattern . '$/', $ipAddress) === 1;
+
+            return preg_match('/^'.$pattern.'$/', $ipAddress) === 1;
         }
 
         // Exact match
@@ -198,7 +209,8 @@ final class ApiLicense extends Model
 
     private function ipInCidr(string $ip, string $cidr): bool
     {
-        list($subnet, $mask) = explode('/', $cidr);
+        [$subnet, $mask] = explode('/', $cidr);
+
         return (ip2long($ip) & ~((1 << (32 - $mask)) - 1)) === ip2long($subnet);
     }
 }

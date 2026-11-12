@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -41,12 +42,12 @@ final class PerformanceMonitoringService
             'file_size' => $metrics['file_size'] ?? 0,
             'metadata' => json_encode($metrics['metadata'] ?? []),
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         // Check for performance regressions
         $this->detectPerformanceRegression('gedcom_import', $metrics);
-        
+
         // Check alert thresholds
         $this->checkAlertThresholds($metrics);
     }
@@ -65,7 +66,7 @@ final class PerformanceMonitoringService
             'cache_hits' => $metrics['cache_hits'] ?? 0,
             'status_code' => $metrics['status_code'] ?? 200,
             'user_id' => $metrics['user_id'] ?? null,
-            'created_at' => now()
+            'created_at' => now(),
         ]);
 
         if ($metrics['response_time'] > self::ALERT_THRESHOLDS['api_response']) {
@@ -83,7 +84,19 @@ final class PerformanceMonitoringService
             'api_performance' => $this->getApiPerformanceMetrics(),
             'system_health' => $this->getSystemHealthMetrics(),
             'alerts' => $this->getRecentAlerts(),
-            'trends' => $this->getPerformanceTrends()
+            'trends' => $this->getPerformanceTrends(),
+        ];
+    }
+
+    /**
+     * Run automated performance tests
+     */
+    public function runPerformanceTests(): array
+    {
+        return [
+            'import_performance_test' => $this->runImportPerformanceTest(),
+            'api_load_test' => $this->runApiLoadTest(),
+            'database_stress_test' => $this->runDatabaseStressTest(),
         ];
     }
 
@@ -107,7 +120,7 @@ final class PerformanceMonitoringService
         // Calculate baseline statistics
         $baseline = [
             'mean' => array_sum($historicalMetrics) / count($historicalMetrics),
-            'std' => $this->calculateStandardDeviation($historicalMetrics)
+            'std' => $this->calculateStandardDeviation($historicalMetrics),
         ];
 
         $currentDuration = $currentMetrics['duration'] ?? 0;
@@ -122,7 +135,8 @@ final class PerformanceMonitoringService
     private function calculateStandardDeviation(array $data): float
     {
         $mean = array_sum($data) / count($data);
-        $squaredDifferences = array_map(fn($x) => pow($x - $mean, 2), $data);
+        $squaredDifferences = array_map(fn ($x) => pow($x - $mean, 2), $data);
+
         return sqrt(array_sum($squaredDifferences) / count($data));
     }
 
@@ -145,7 +159,7 @@ final class PerformanceMonitoringService
             'baseline_mean' => round($baseline['mean'], 2),
             'z_score' => round($zScore, 2),
             'metadata' => $metrics,
-            'created_at' => now()
+            'created_at' => now(),
         ];
 
         $this->logAlert($alert);
@@ -160,7 +174,7 @@ final class PerformanceMonitoringService
             'metric' => $metric,
             'value' => $value,
             'threshold' => $threshold,
-            'created_at' => now()
+            'created_at' => now(),
         ];
 
         $this->logAlert($alert);
@@ -174,7 +188,7 @@ final class PerformanceMonitoringService
             'endpoint' => $endpoint,
             'response_time' => $metrics['response_time'],
             'threshold' => self::ALERT_THRESHOLDS['api_response'],
-            'created_at' => now()
+            'created_at' => now(),
         ];
 
         $this->logAlert($alert);
@@ -183,14 +197,14 @@ final class PerformanceMonitoringService
     private function logAlert(array $alert): void
     {
         Log::warning('Performance Alert', $alert);
-        
+
         DB::table('performance_alerts')->insert([
             'alert_type' => $alert['type'],
             'severity' => $alert['severity'],
             'details' => json_encode($alert),
             'acknowledged' => false,
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
     }
 
@@ -198,17 +212,17 @@ final class PerformanceMonitoringService
     {
         // Send email notification to administrators
         $adminEmails = config('monitoring.admin_emails', []);
-        
+
         foreach ($adminEmails as $email) {
             try {
                 Mail::send('emails.performance-alert', ['alert' => $alert], function ($message) use ($email, $alert) {
                     $message->to($email)
                         ->subject("Performance Alert: {$alert['type']}");
                 });
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error('Failed to send performance alert email', [
                     'email' => $email,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -234,7 +248,7 @@ final class PerformanceMonitoringService
         return [
             'summary' => $metrics,
             'daily_trend' => $this->getDailyImportTrend(),
-            'method_comparison' => $this->getImportMethodComparison()
+            'method_comparison' => $this->getImportMethodComparison(),
         ];
     }
 
@@ -248,7 +262,7 @@ final class PerformanceMonitoringService
                 ->orderByDesc('avg_response_time')
                 ->limit(10)
                 ->get(),
-                
+
             'response_time_distribution' => DB::table('api_performance_metrics')
                 ->where('created_at', '>=', now()->subHours(24))
                 ->selectRaw('
@@ -258,8 +272,8 @@ final class PerformanceMonitoringService
                     COUNT(CASE WHEN response_time > 1000 THEN 1 END) as over_1000ms
                 ')
                 ->first(),
-                
-            'hourly_trend' => $this->getHourlyApiTrend()
+
+            'hourly_trend' => $this->getHourlyApiTrend(),
         ];
     }
 
@@ -269,7 +283,7 @@ final class PerformanceMonitoringService
             'database_performance' => $this->getDatabasePerformance(),
             'cache_performance' => $this->getCachePerformance(),
             'queue_status' => $this->getQueueStatus(),
-            'disk_usage' => $this->getDiskUsage()
+            'disk_usage' => $this->getDiskUsage(),
         ];
     }
 
@@ -282,6 +296,7 @@ final class PerformanceMonitoringService
             ->get()
             ->map(function ($alert) {
                 $alert->details = json_decode($alert->details, true);
+
                 return $alert;
             })
             ->toArray();
@@ -292,7 +307,7 @@ final class PerformanceMonitoringService
         return [
             'import_duration_trend' => $this->getMetricTrend('gedcom_import', 'duration', 30),
             'api_response_trend' => $this->getApiResponseTrend(7),
-            'memory_usage_trend' => $this->getMetricTrend('gedcom_import', 'memory_peak', 30)
+            'memory_usage_trend' => $this->getMetricTrend('gedcom_import', 'memory_peak', 30),
         ];
     }
 
@@ -338,19 +353,19 @@ final class PerformanceMonitoringService
 
     private function getDatabasePerformance(): array
     {
-        $slowQueries = DB::select("
+        $slowQueries = DB::select('
             SELECT query_time, lock_time, rows_sent, rows_examined, 
                    SUBSTRING(sql_text, 1, 200) as sql_preview
             FROM mysql.slow_log 
             WHERE start_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
             ORDER BY query_time DESC 
             LIMIT 10
-        ");
+        ');
 
         return [
             'slow_queries' => $slowQueries,
             'connection_count' => $this->getDatabaseConnections(),
-            'table_sizes' => $this->getTableSizes()
+            'table_sizes' => $this->getTableSizes(),
         ];
     }
 
@@ -359,7 +374,7 @@ final class PerformanceMonitoringService
         return [
             'hit_rate' => $this->cacheService->getHitRate(),
             'memory_usage' => $this->cacheService->getMemoryUsage(),
-            'key_count' => $this->cacheService->getKeyCount()
+            'key_count' => $this->cacheService->getKeyCount(),
         ];
     }
 
@@ -370,7 +385,7 @@ final class PerformanceMonitoringService
             'failed_jobs' => DB::table('failed_jobs')->count(),
             'processed_jobs_today' => DB::table('job_batches')
                 ->where('created_at', '>=', now()->startOfDay())
-                ->sum('total_jobs')
+                ->sum('total_jobs'),
         ];
     }
 
@@ -381,10 +396,10 @@ final class PerformanceMonitoringService
         $used = $total - $free;
 
         return [
-            'total_gb' => round($total / (1024**3), 2),
-            'used_gb' => round($used / (1024**3), 2),
-            'free_gb' => round($free / (1024**3), 2),
-            'usage_percentage' => round(($used / $total) * 100, 1)
+            'total_gb' => round($total / (1024 ** 3), 2),
+            'used_gb' => round($used / (1024 ** 3), 2),
+            'free_gb' => round($free / (1024 ** 3), 2),
+            'usage_percentage' => round(($used / $total) * 100, 1),
         ];
     }
 
@@ -395,7 +410,7 @@ final class PerformanceMonitoringService
 
     private function getTableSizes(): array
     {
-        return DB::select("
+        return DB::select('
             SELECT table_name,
                    ROUND(((data_length + index_length) / 1024 / 1024), 2) AS table_size_mb,
                    table_rows
@@ -403,7 +418,7 @@ final class PerformanceMonitoringService
             WHERE table_schema = DATABASE()
             ORDER BY (data_length + index_length) DESC
             LIMIT 10
-        ");
+        ');
     }
 
     private function getMetricTrend(string $metricType, string $metric, int $days): array
@@ -429,18 +444,6 @@ final class PerformanceMonitoringService
             ->toArray();
     }
 
-    /**
-     * Run automated performance tests
-     */
-    public function runPerformanceTests(): array
-    {
-        return [
-            'import_performance_test' => $this->runImportPerformanceTest(),
-            'api_load_test' => $this->runApiLoadTest(),
-            'database_stress_test' => $this->runDatabaseStressTest()
-        ];
-    }
-
     private function runImportPerformanceTest(): array
     {
         // This would run automated performance tests on import operations
@@ -449,7 +452,7 @@ final class PerformanceMonitoringService
             'status' => 'passed',
             'duration' => 45.2,
             'baseline' => 50.0,
-            'improvement' => '9.6%'
+            'improvement' => '9.6%',
         ];
     }
 
@@ -461,7 +464,7 @@ final class PerformanceMonitoringService
             'status' => 'passed',
             'max_rps' => 150,
             'avg_response_time' => 120,
-            'error_rate' => '0.1%'
+            'error_rate' => '0.1%',
         ];
     }
 
@@ -473,7 +476,7 @@ final class PerformanceMonitoringService
             'status' => 'passed',
             'max_connections' => 100,
             'query_time_p95' => 45,
-            'deadlocks' => 0
+            'deadlocks' => 0,
         ];
     }
 }

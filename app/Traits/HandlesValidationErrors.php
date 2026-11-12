@@ -15,9 +15,7 @@ trait HandlesValidationErrors
     /**
      * Handle validation exception and return a consistent response.
      *
-     * @param ValidationException $exception
-     * @param string $message Custom error message
-     * @return JsonResponse
+     * @param  string  $message  Custom error message
      */
     protected function handleValidationException(ValidationException $exception, string $message = 'Validation failed'): JsonResponse
     {
@@ -26,12 +24,12 @@ trait HandlesValidationErrors
             'errors' => $exception->errors(),
         ], 422);
     }
-    
+
     /**
      * Execute a callback and handle validation exceptions.
      *
-     * @param callable $callback The callback to execute
-     * @param string $errorMessage Custom error message for validation failures
+     * @param  callable  $callback  The callback to execute
+     * @param  string  $errorMessage  Custom error message for validation failures
      * @return mixed The callback result or error response
      */
     protected function tryValidation(callable $callback, string $errorMessage = 'Validation failed')

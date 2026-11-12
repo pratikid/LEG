@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Traits\HandlesGedcomOperations;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Traits\HandlesGedcomOperations;
 
 /**
  * Service for parsing, importing, and exporting GEDCOM files.
@@ -15,6 +15,7 @@ use App\Traits\HandlesGedcomOperations;
 final class GedcomService
 {
     use HandlesGedcomOperations;
+
     /**
      * Parse GEDCOM content into structured arrays for individuals, families, sources, and notes.
      *

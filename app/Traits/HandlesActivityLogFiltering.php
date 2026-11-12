@@ -16,7 +16,7 @@ trait HandlesActivityLogFiltering
     /**
      * Apply common activity log filters to a query
      *
-     * @param Request $request The HTTP request
+     * @param  Request  $request  The HTTP request
      * @return Builder The filtered query
      */
     protected function getFilteredActivityLogQuery(Request $request): Builder
@@ -43,7 +43,7 @@ trait HandlesActivityLogFiltering
         if ($request->filled('start_date')) {
             $query->whereDate('created_at', '>=', $request->start_date);
         }
-        
+
         if ($request->filled('end_date')) {
             $query->whereDate('created_at', '<=', $request->end_date);
         }

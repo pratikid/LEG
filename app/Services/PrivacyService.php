@@ -10,7 +10,6 @@ use App\Models\PrivacySetting;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * Privacy service for data protection, anonymization, and access control
@@ -31,7 +30,7 @@ final class PrivacyService
             ->where('is_active', true)
             ->first();
 
-        if (!$consent) {
+        if (! $consent) {
             return false;
         }
 
@@ -67,7 +66,7 @@ final class PrivacyService
             'ip_address' => $ipAddress,
             'user_agent' => $userAgent,
             'consent_version' => '1.0',
-            'is_active' => true
+            'is_active' => true,
         ]);
     }
 
@@ -99,7 +98,7 @@ final class PrivacyService
 
         $data = $individual->toArray();
 
-        if (!$canViewPrivateData) {
+        if (! $canViewPrivateData) {
             $data = $this->filterPrivateFields($data, $privacySettings, $isLiving);
         }
 
@@ -126,8 +125,8 @@ final class PrivacyService
             'generation' => $this->calculateGeneration($individual),
             'has_children' => $individual->children()->exists(),
             'child_count_range' => $this->categorizeChildCount($individual->children()->count()),
-            'surname_initial' => $data['last_name'] ? substr($data['last_name'], 0, 1) : null,
-            'lifespan_category' => $this->categorizeLifespan($data['birth_year'], $data['death_year'])
+            'surname_initial' => $data['last_name'] ? mb_substr($data['last_name'], 0, 1) : null,
+            'lifespan_category' => $this->categorizeLifespan($data['birth_year'], $data['death_year']),
         ];
     }
 
@@ -149,14 +148,14 @@ final class PrivacyService
         $anonymizedRelationships = [];
         foreach ($individuals as $individual) {
             $pseudoId = $relationshipMap[$individual->id];
-            
+
             // Parent relationships
             foreach ($individual->parents as $parent) {
                 if (isset($relationshipMap[$parent->id])) {
                     $anonymizedRelationships[] = [
                         'child_id' => $pseudoId,
                         'parent_id' => $relationshipMap[$parent->id],
-                        'relationship_type' => 'parent_child'
+                        'relationship_type' => 'parent_child',
                     ];
                 }
             }
@@ -171,11 +170,11 @@ final class PrivacyService
                                ($rel['person_a'] === $pseudoId && $rel['person_b'] === $spouseId);
                     });
 
-                    if (!$exists) {
+                    if (! $exists) {
                         $anonymizedRelationships[] = [
                             'person_a' => $pseudoId,
                             'person_b' => $spouseId,
-                            'relationship_type' => 'spouse'
+                            'relationship_type' => 'spouse',
                         ];
                     }
                 }
@@ -189,8 +188,8 @@ final class PrivacyService
                 'anonymization_date' => now()->toISOString(),
                 'total_individuals' => count($anonymizedData),
                 'total_relationships' => count($anonymizedRelationships),
-                'privacy_level' => 'k-anonymity-5'
-            ]
+                'privacy_level' => 'k-anonymity-5',
+            ],
         ];
     }
 
@@ -222,7 +221,7 @@ final class PrivacyService
 
     private function canViewPrivateData(Individual $individual, ?User $viewer): bool
     {
-        if (!$viewer) {
+        if (! $viewer) {
             return false;
         }
 
@@ -238,7 +237,7 @@ final class PrivacyService
 
     private function filterPrivateFields(array $data, ?PrivacySetting $settings, bool $isLiving): array
     {
-        if (!$settings) {
+        if (! $settings) {
             return $data; // No privacy settings, show all data
         }
 
@@ -246,12 +245,12 @@ final class PrivacyService
 
         // Apply field-level filtering
         $fields = [
-            'birth_date', 'birth_year', 'death_date', 'death_year', 
-            'birth_location', 'death_location'
+            'birth_date', 'birth_year', 'death_date', 'death_year',
+            'birth_location', 'death_location',
         ];
 
         foreach ($fields as $field) {
-            if (!$settings->isFieldVisible($field, $isLiving)) {
+            if (! $settings->isFieldVisible($field, $isLiving)) {
                 $filteredData[$field] = null;
             }
         }
@@ -262,15 +261,17 @@ final class PrivacyService
     private function generatePseudonymousId(int $originalId): string
     {
         // Generate deterministic but non-reversible pseudonymous ID
-        $salt = config('app.key') . 'genealogy_anonymization';
-        return 'anon_' . substr(Hash::make($originalId . $salt), -12);
+        $salt = config('app.key').'genealogy_anonymization';
+
+        return 'anon_'.mb_substr(Hash::make($originalId.$salt), -12);
     }
 
     private function fuzzDate(int $year): string
     {
         // Group years into 5-year ranges for privacy
-        $rangeStart = intval(floor($year / 5) * 5);
+        $rangeStart = (int) (floor($year / 5) * 5);
         $rangeEnd = $rangeStart + 4;
+
         return "{$rangeStart}-{$rangeEnd}";
     }
 
@@ -283,7 +284,7 @@ final class PrivacyService
         // Extract country or state level location
         $parts = explode(',', $location);
         if (count($parts) >= 2) {
-            return trim(end($parts)); // Return country/state
+            return mb_trim(end($parts)); // Return country/state
         }
 
         return 'Unknown Region';
@@ -292,12 +293,12 @@ final class PrivacyService
     private function calculateGeneration(Individual $individual): int
     {
         // Simple generation calculation based on birth year
-        if (!$individual->birth_year) {
+        if (! $individual->birth_year) {
             return 0;
         }
 
         // Assume 25 years per generation, with 1950 as generation 0
-        return intval(($individual->birth_year - 1950) / 25);
+        return (int) (($individual->birth_year - 1950) / 25);
     }
 
     private function categorizeChildCount(int $childCount): string
@@ -313,7 +314,7 @@ final class PrivacyService
 
     private function categorizeLifespan(?int $birthYear, ?int $deathYear): string
     {
-        if (!$birthYear || !$deathYear) {
+        if (! $birthYear || ! $deathYear) {
             return 'unknown';
         }
 

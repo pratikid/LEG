@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Services\Analytics;
 
 use App\Services\Neo4jIndividualService;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Laudis\Neo4j\Contracts\TransactionInterface;
 use Exception;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Advanced Neo4j Analytics Service
@@ -17,9 +16,11 @@ use Exception;
  */
 final class Neo4jAnalyticsService
 {
-    private Neo4jIndividualService $neo4j;
     private const CACHE_TTL = 3600; // 1 hour
+
     private const CACHE_PREFIX = 'neo4j_analytics:';
+
+    private Neo4jIndividualService $neo4j;
 
     public function __construct(Neo4jIndividualService $neo4j)
     {
@@ -31,8 +32,8 @@ final class Neo4jAnalyticsService
      */
     public function getTreeRelationshipAnalytics(int $treeId): array
     {
-        $cacheKey = self::CACHE_PREFIX . "tree_relationships:{$treeId}";
-        
+        $cacheKey = self::CACHE_PREFIX."tree_relationships:{$treeId}";
+
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($treeId) {
             return [
                 'network_metrics' => $this->getNetworkMetrics($treeId),
@@ -41,7 +42,7 @@ final class Neo4jAnalyticsService
                 'relationship_patterns' => $this->getRelationshipPatterns($treeId),
                 'ancestry_paths' => $this->getAncestryPathAnalysis($treeId),
                 'family_clusters' => $this->getFamilyClusters($treeId),
-                'relationship_strength' => $this->getRelationshipStrengthMetrics($treeId)
+                'relationship_strength' => $this->getRelationshipStrengthMetrics($treeId),
             ];
         });
     }
@@ -68,7 +69,7 @@ final class Neo4jAnalyticsService
             // Calculate network density
             $nodeCount = $networkStats->get('node_count');
             $relationshipCount = $networkStats->get('relationship_count');
-            $density = $nodeCount > 1 ? 
+            $density = $nodeCount > 1 ?
                 ($relationshipCount / ($nodeCount * ($nodeCount - 1))) : 0;
 
             // Get connected components
@@ -89,14 +90,15 @@ final class Neo4jAnalyticsService
                 'largest_component_size' => max(array_map('count', $components)),
                 'average_clustering_coefficient' => $clustering,
                 'network_diameter' => $diameter,
-                'average_degree' => $nodeCount > 0 ? round($relationshipCount / $nodeCount, 2) : 0
+                'average_degree' => $nodeCount > 0 ? round($relationshipCount / $nodeCount, 2) : 0,
             ];
 
         } catch (Exception $e) {
             Log::error('Failed to calculate network metrics', [
                 'tree_id' => $treeId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return $this->getEmptyNetworkMetrics();
         }
     }
@@ -126,14 +128,15 @@ final class Neo4jAnalyticsService
                 'page_rank' => $pageRank,
                 'most_connected_individuals' => $this->getMostConnectedIndividuals($treeId),
                 'bridge_individuals' => $this->getBridgeIndividuals($treeId),
-                'influential_ancestors' => $this->getInfluentialAncestors($treeId)
+                'influential_ancestors' => $this->getInfluentialAncestors($treeId),
             ];
 
         } catch (Exception $e) {
             Log::error('Failed to calculate centrality analysis', [
                 'tree_id' => $treeId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return [];
         }
     }
@@ -162,14 +165,15 @@ final class Neo4jAnalyticsService
                 'family_branches' => $familyBranches,
                 'surname_clusters' => $surnameClusters,
                 'community_metrics' => $this->calculateCommunityMetrics($communities),
-                'isolated_individuals' => $this->findIsolatedIndividuals($treeId)
+                'isolated_individuals' => $this->findIsolatedIndividuals($treeId),
             ];
 
         } catch (Exception $e) {
             Log::error('Failed to perform community analysis', [
                 'tree_id' => $treeId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return [];
         }
     }
@@ -198,14 +202,15 @@ final class Neo4jAnalyticsService
                 'generation_patterns' => $generationPatterns,
                 'relationship_type_distribution' => $relationshipTypes,
                 'endogamy_analysis' => $this->analyzeEndogamy($treeId),
-                'remarriage_patterns' => $this->analyzeRemarriagePatterns($treeId)
+                'remarriage_patterns' => $this->analyzeRemarriagePatterns($treeId),
             ];
 
         } catch (Exception $e) {
             Log::error('Failed to analyze relationship patterns', [
                 'tree_id' => $treeId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return [];
         }
     }
@@ -234,14 +239,15 @@ final class Neo4jAnalyticsService
                 'lineage_completeness' => $completeness,
                 'pedigree_collapse' => $pedigreeCollapse,
                 'generation_depth' => $this->calculateGenerationDepth($treeId),
-                'ancestry_bottlenecks' => $this->findAncestryBottlenecks($treeId)
+                'ancestry_bottlenecks' => $this->findAncestryBottlenecks($treeId),
             ];
 
         } catch (Exception $e) {
             Log::error('Failed to analyze ancestry paths', [
                 'tree_id' => $treeId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return [];
         }
     }
@@ -269,14 +275,15 @@ final class Neo4jAnalyticsService
                 'temporal_clusters' => $temporalClusters,
                 'surname_clusters' => $surnameClusters,
                 'sibling_groups' => $siblingGroups,
-                'cluster_statistics' => $this->calculateClusterStatistics($treeId)
+                'cluster_statistics' => $this->calculateClusterStatistics($treeId),
             ];
 
         } catch (Exception $e) {
             Log::error('Failed to analyze family clusters', [
                 'tree_id' => $treeId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return [];
         }
     }
@@ -301,14 +308,15 @@ final class Neo4jAnalyticsService
                 'multipath_relationship_strength' => $multipathStrength,
                 'relationship_redundancy' => $redundancy,
                 'strongest_family_bonds' => $this->findStrongestFamilyBonds($treeId),
-                'weakest_connections' => $this->findWeakestConnections($treeId)
+                'weakest_connections' => $this->findWeakestConnections($treeId),
             ];
 
         } catch (Exception $e) {
             Log::error('Failed to calculate relationship strength metrics', [
                 'tree_id' => $treeId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return [];
         }
     }
@@ -320,7 +328,7 @@ final class Neo4jAnalyticsService
     {
         try {
             $pathQuery = '
-                MATCH path = shortestPath((a:Individual {id: $id1})-[*1..' . $maxDepth . ']-(b:Individual {id: $id2}))
+                MATCH path = shortestPath((a:Individual {id: $id1})-[*1..'.$maxDepth.']-(b:Individual {id: $id2}))
                 WHERE a.tree_id = b.tree_id
                 RETURN path,
                        length(path) as path_length,
@@ -335,7 +343,7 @@ final class Neo4jAnalyticsService
 
             $result = $this->neo4j->getClient()->run($pathQuery, [
                 'id1' => $individualId1,
-                'id2' => $individualId2
+                'id2' => $individualId2,
             ]);
 
             if ($result->count() === 0) {
@@ -343,21 +351,22 @@ final class Neo4jAnalyticsService
             }
 
             $pathData = $result->first();
-            
+
             return [
                 'relationship_found' => true,
                 'path_length' => $pathData->get('path_length'),
                 'relationship_types' => $pathData->get('relationship_types'),
                 'individuals' => $pathData->get('individuals'),
-                'relationship_description' => $this->describeRelationship($pathData->get('relationship_types'))
+                'relationship_description' => $this->describeRelationship($pathData->get('relationship_types')),
             ];
 
         } catch (Exception $e) {
             Log::error('Failed to find relationship path', [
                 'individual_1' => $individualId1,
                 'individual_2' => $individualId2,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return ['relationship_found' => false, 'error' => $e->getMessage()];
         }
     }
@@ -373,10 +382,10 @@ final class Neo4jAnalyticsService
 
         try {
             $idList = implode(',', $individualIds);
-            
+
             $mrcaQuery = '
                 MATCH (individuals:Individual) 
-                WHERE individuals.id IN [' . $idList . ']
+                WHERE individuals.id IN ['.$idList.']
                 MATCH (ancestor:Individual)
                 WHERE ALL(ind IN individuals WHERE EXISTS((ancestor)-[:PARENT_OF*]->(ind)))
                 WITH ancestor, individuals, 
@@ -404,17 +413,18 @@ final class Neo4jAnalyticsService
                     'id' => $ancestor->get('ancestor_id'),
                     'first_name' => $ancestor->get('first_name'),
                     'last_name' => $ancestor->get('last_name'),
-                    'birth_date' => $ancestor->get('birth_date')
+                    'birth_date' => $ancestor->get('birth_date'),
                 ],
                 'generation_distance' => $ancestor->get('generation_distance'),
-                'descendant_count' => count($individualIds)
+                'descendant_count' => count($individualIds),
             ];
 
         } catch (Exception $e) {
             Log::error('Failed to find MRCA', [
                 'individual_ids' => $individualIds,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return ['ancestor_found' => false, 'error' => $e->getMessage()];
         }
     }
@@ -437,7 +447,7 @@ final class Neo4jAnalyticsService
             foreach ($individuals as $individual) {
                 // Calculate metrics for each individual
                 $metrics = $this->calculateIndividualMetrics($individual->id);
-                
+
                 // Update PostgreSQL with derived metrics
                 DB::table('fact_individuals')
                     ->where('individual_id', $individual->id)
@@ -448,7 +458,7 @@ final class Neo4jAnalyticsService
                         'ancestor_count' => $metrics['ancestor_count'] ?? null,
                         'descendant_count' => $metrics['descendant_count'] ?? null,
                         'generation_depth' => $metrics['generation_depth'] ?? null,
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]);
 
                 $updated++;
@@ -459,17 +469,18 @@ final class Neo4jAnalyticsService
             return [
                 'success' => true,
                 'individuals_updated' => $updated,
-                'duration_seconds' => round($duration, 2)
+                'duration_seconds' => round($duration, 2),
             ];
 
         } catch (Exception $e) {
             Log::error('Failed to update relationship metrics', [
                 'tree_id' => $treeId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -490,7 +501,7 @@ final class Neo4jAnalyticsService
             // For now, return simplified connected components
             // This would need GDS library installed in Neo4j
             return [['component_members' => range(1, 10)]]; // Placeholder
-            
+
         } catch (Exception $e) {
             return []; // Fallback for missing GDS library
         }
@@ -528,6 +539,7 @@ final class Neo4jAnalyticsService
             ';
 
             $result = $this->neo4j->getClient()->run($query, ['treeId' => $treeId]);
+
             return $result->first()->get('diameter');
 
         } catch (Exception $e) {
@@ -549,12 +561,12 @@ final class Neo4jAnalyticsService
             ';
 
             $result = $this->neo4j->getClient()->run($query, ['treeId' => $treeId]);
-            
+
             return array_map(function ($record) {
                 return [
                     'individual_id' => $record->get('individual_id'),
-                    'name' => $record->get('first_name') . ' ' . $record->get('last_name'),
-                    'degree' => $record->get('degree')
+                    'name' => $record->get('first_name').' '.$record->get('last_name'),
+                    'degree' => $record->get('degree'),
                 ];
             }, $result->toArray());
 
@@ -606,12 +618,12 @@ final class Neo4jAnalyticsService
             ';
 
             $result = $this->neo4j->getClient()->run($query, ['treeId' => $treeId]);
-            
+
             return array_map(function ($record) {
                 return [
                     'individual_id' => $record->get('ancestor_id'),
-                    'name' => $record->get('first_name') . ' ' . $record->get('last_name'),
-                    'descendant_count' => $record->get('descendant_count')
+                    'name' => $record->get('first_name').' '.$record->get('last_name'),
+                    'descendant_count' => $record->get('descendant_count'),
                 ];
             }, $result->toArray());
 
@@ -655,12 +667,12 @@ final class Neo4jAnalyticsService
             ';
 
             $result = $this->neo4j->getClient()->run($query, ['treeId' => $treeId]);
-            
+
             return array_map(function ($record) {
                 return [
                     'surname' => $record->get('surname'),
                     'count' => $record->get('count'),
-                    'individuals' => $record->get('individuals')
+                    'individuals' => $record->get('individuals'),
                 ];
             }, $result->toArray());
 
@@ -674,8 +686,8 @@ final class Neo4jAnalyticsService
         return [
             'community_count' => count($communities),
             'modularity' => 0.75, // Placeholder
-            'average_community_size' => count($communities) > 0 ? 
-                array_sum(array_map('count', $communities)) / count($communities) : 0
+            'average_community_size' => count($communities) > 0 ?
+                array_sum(array_map('count', $communities)) / count($communities) : 0,
         ];
     }
 
@@ -691,11 +703,11 @@ final class Neo4jAnalyticsService
             ';
 
             $result = $this->neo4j->getClient()->run($query, ['treeId' => $treeId]);
-            
+
             return array_map(function ($record) {
                 return [
                     'individual_id' => $record->get('individual_id'),
-                    'name' => $record->get('first_name') . ' ' . $record->get('last_name')
+                    'name' => $record->get('first_name').' '.$record->get('last_name'),
                 ];
             }, $result->toArray());
 
@@ -713,7 +725,7 @@ final class Neo4jAnalyticsService
             'closeness_centrality' => 0.4,
             'ancestor_count' => 10,
             'descendant_count' => 5,
-            'generation_depth' => 3
+            'generation_depth' => 3,
         ];
     }
 
@@ -721,7 +733,7 @@ final class Neo4jAnalyticsService
     {
         // Convert relationship path to human-readable description
         $pathLength = count($relationshipTypes);
-        
+
         if ($pathLength === 1) {
             return match ($relationshipTypes[0]) {
                 'PARENT_OF' => 'Parent',
@@ -754,31 +766,118 @@ final class Neo4jAnalyticsService
             'largest_component_size' => 0,
             'average_clustering_coefficient' => 0,
             'network_diameter' => null,
-            'average_degree' => 0
+            'average_degree' => 0,
         ];
     }
 
     // Placeholder methods for complex algorithms that would need full Neo4j GDS implementation
-    private function analyzeMarriagePatterns(int $treeId): array { return []; }
-    private function analyzeFamilySizePatterns(int $treeId): array { return []; }
-    private function analyzeGenerationPatterns(int $treeId): array { return []; }
-    private function getRelationshipTypeDistribution(int $treeId): array { return []; }
-    private function analyzeEndogamy(int $treeId): array { return []; }
-    private function analyzeRemarriagePatterns(int $treeId): array { return []; }
-    private function findLongestAncestryPaths(int $treeId): array { return []; }
-    private function findCommonAncestors(int $treeId): array { return []; }
-    private function analyzeLineageCompleteness(int $treeId): array { return []; }
-    private function analyzePedigreeCollapse(int $treeId): array { return []; }
-    private function calculateGenerationDepth(int $treeId): int { return 0; }
-    private function findAncestryBottlenecks(int $treeId): array { return []; }
-    private function identifyGeographicClusters(int $treeId): array { return []; }
-    private function identifyTemporalClusters(int $treeId): array { return []; }
-    private function identifySurnameClusters(int $treeId): array { return []; }
-    private function identifySiblingGroups(int $treeId): array { return []; }
-    private function calculateClusterStatistics(int $treeId): array { return []; }
-    private function calculateDirectRelationshipStrength(int $treeId): array { return []; }
-    private function calculateMultipathRelationshipStrength(int $treeId): array { return []; }
-    private function calculateRelationshipRedundancy(int $treeId): array { return []; }
-    private function findStrongestFamilyBonds(int $treeId): array { return []; }
-    private function findWeakestConnections(int $treeId): array { return []; }
+    private function analyzeMarriagePatterns(int $treeId): array
+    {
+        return [];
+    }
+
+    private function analyzeFamilySizePatterns(int $treeId): array
+    {
+        return [];
+    }
+
+    private function analyzeGenerationPatterns(int $treeId): array
+    {
+        return [];
+    }
+
+    private function getRelationshipTypeDistribution(int $treeId): array
+    {
+        return [];
+    }
+
+    private function analyzeEndogamy(int $treeId): array
+    {
+        return [];
+    }
+
+    private function analyzeRemarriagePatterns(int $treeId): array
+    {
+        return [];
+    }
+
+    private function findLongestAncestryPaths(int $treeId): array
+    {
+        return [];
+    }
+
+    private function findCommonAncestors(int $treeId): array
+    {
+        return [];
+    }
+
+    private function analyzeLineageCompleteness(int $treeId): array
+    {
+        return [];
+    }
+
+    private function analyzePedigreeCollapse(int $treeId): array
+    {
+        return [];
+    }
+
+    private function calculateGenerationDepth(int $treeId): int
+    {
+        return 0;
+    }
+
+    private function findAncestryBottlenecks(int $treeId): array
+    {
+        return [];
+    }
+
+    private function identifyGeographicClusters(int $treeId): array
+    {
+        return [];
+    }
+
+    private function identifyTemporalClusters(int $treeId): array
+    {
+        return [];
+    }
+
+    private function identifySurnameClusters(int $treeId): array
+    {
+        return [];
+    }
+
+    private function identifySiblingGroups(int $treeId): array
+    {
+        return [];
+    }
+
+    private function calculateClusterStatistics(int $treeId): array
+    {
+        return [];
+    }
+
+    private function calculateDirectRelationshipStrength(int $treeId): array
+    {
+        return [];
+    }
+
+    private function calculateMultipathRelationshipStrength(int $treeId): array
+    {
+        return [];
+    }
+
+    private function calculateRelationshipRedundancy(int $treeId): array
+    {
+        return [];
+    }
+
+    private function findStrongestFamilyBonds(int $treeId): array
+    {
+        return [];
+    }
+
+    private function findWeakestConnections(int $treeId): array
+    {
+        return [];
+    }
 }

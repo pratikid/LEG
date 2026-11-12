@@ -12,12 +12,12 @@ trait HandlesGedcomDates
     /**
      * Clean and standardize a GEDCOM date.
      *
-     * @param string|null $date The date to clean
+     * @param  string|null  $date  The date to clean
      * @return string|null The cleaned date or null if invalid
      */
     protected function cleanGedcomDate(?string $date): ?string
     {
-        if (!$date) {
+        if (! $date) {
             return null;
         }
 
@@ -26,12 +26,12 @@ trait HandlesGedcomDates
 
         // Handle year-only dates
         if (preg_match('/^\d{4}$/', $date)) {
-            return $date . '-01-01'; // Default to January 1st
+            return $date.'-01-01'; // Default to January 1st
         }
 
         // Handle year ranges like '1900-1950'
         if (preg_match('/^(\d{4})-(\d{4})$/', $date, $matches)) {
-            return $matches[1] . '-01-01'; // Use the first year
+            return $matches[1].'-01-01'; // Use the first year
         }
 
         // Handle 'BETWEEN X AND Y' format
@@ -56,13 +56,13 @@ trait HandlesGedcomDates
     /**
      * Format a date for display.
      *
-     * @param string|null $date The date to format
-     * @param string $format The format to use (default: Y-m-d)
+     * @param  string|null  $date  The date to format
+     * @param  string  $format  The format to use (default: Y-m-d)
      * @return string|null The formatted date or null if invalid
      */
     protected function formatGedcomDate(?string $date, string $format = 'Y-m-d'): ?string
     {
-        if (!$date) {
+        if (! $date) {
             return null;
         }
 
@@ -77,12 +77,12 @@ trait HandlesGedcomDates
     /**
      * Extract year from a date string.
      *
-     * @param string|null $date The date string
+     * @param  string|null  $date  The date string
      * @return int|null The year or null if invalid
      */
     protected function extractYearFromDate(?string $date): ?int
     {
-        if (!$date) {
+        if (! $date) {
             return null;
         }
 

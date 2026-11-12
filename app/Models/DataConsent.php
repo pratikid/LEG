@@ -15,6 +15,39 @@ final class DataConsent extends Model
 {
     use HasFactory;
 
+    // Consent types
+    public const TYPE_ESSENTIAL = 'essential';
+
+    public const TYPE_ANALYTICS = 'analytics';
+
+    public const TYPE_MARKETING = 'marketing';
+
+    public const TYPE_RESEARCH = 'research';
+
+    public const TYPE_DATA_SHARING = 'data_sharing';
+
+    // Legal basis under GDPR Article 6
+    public const BASIS_CONSENT = 'consent';
+
+    public const BASIS_CONTRACT = 'contract';
+
+    public const BASIS_LEGAL_OBLIGATION = 'legal_obligation';
+
+    public const BASIS_VITAL_INTERESTS = 'vital_interests';
+
+    public const BASIS_PUBLIC_TASK = 'public_task';
+
+    public const BASIS_LEGITIMATE_INTERESTS = 'legitimate_interests';
+
+    // Data categories
+    public const DATA_PERSONAL = 'personal_data';
+
+    public const DATA_GENEALOGICAL = 'genealogical_data';
+
+    public const DATA_USAGE = 'usage_data';
+
+    public const DATA_TECHNICAL = 'technical_data';
+
     protected $fillable = [
         'user_id',
         'consent_type',
@@ -31,7 +64,7 @@ final class DataConsent extends Model
         'ip_address',
         'user_agent',
         'consent_version',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
@@ -41,29 +74,8 @@ final class DataConsent extends Model
         'consent_given' => 'boolean',
         'consent_date' => 'datetime',
         'withdrawal_date' => 'datetime',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
     ];
-
-    // Consent types
-    public const TYPE_ESSENTIAL = 'essential';
-    public const TYPE_ANALYTICS = 'analytics';
-    public const TYPE_MARKETING = 'marketing';
-    public const TYPE_RESEARCH = 'research';
-    public const TYPE_DATA_SHARING = 'data_sharing';
-
-    // Legal basis under GDPR Article 6
-    public const BASIS_CONSENT = 'consent';
-    public const BASIS_CONTRACT = 'contract';
-    public const BASIS_LEGAL_OBLIGATION = 'legal_obligation';
-    public const BASIS_VITAL_INTERESTS = 'vital_interests';
-    public const BASIS_PUBLIC_TASK = 'public_task';
-    public const BASIS_LEGITIMATE_INTERESTS = 'legitimate_interests';
-
-    // Data categories
-    public const DATA_PERSONAL = 'personal_data';
-    public const DATA_GENEALOGICAL = 'genealogical_data';
-    public const DATA_USAGE = 'usage_data';
-    public const DATA_TECHNICAL = 'technical_data';
 
     public function user(): BelongsTo
     {
@@ -75,7 +87,7 @@ final class DataConsent extends Model
      */
     public function isValidConsent(): bool
     {
-        if (!$this->is_active || !$this->consent_given) {
+        if (! $this->is_active || ! $this->consent_given) {
             return false;
         }
 
@@ -98,7 +110,7 @@ final class DataConsent extends Model
     {
         $this->update([
             'is_active' => false,
-            'withdrawal_date' => now()
+            'withdrawal_date' => now(),
         ]);
 
         return true;
@@ -109,7 +121,7 @@ final class DataConsent extends Model
      */
     public function hasDataCategoryConsent(string $category): bool
     {
-        if (!$this->isValidConsent()) {
+        if (! $this->isValidConsent()) {
             return false;
         }
 
@@ -121,7 +133,7 @@ final class DataConsent extends Model
      */
     public function hasProcessingConsent(string $activity): bool
     {
-        if (!$this->isValidConsent()) {
+        if (! $this->isValidConsent()) {
             return false;
         }
 

@@ -7,12 +7,12 @@ namespace App\Services\Analytics;
 use App\Models\Individual;
 use App\Models\Tree;
 use App\Services\Neo4jIndividualService;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Collection;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * ETL Service for populating analytics warehouse tables
@@ -21,7 +21,9 @@ use Exception;
 final class AnalyticsETLService
 {
     private Neo4jIndividualService $neo4j;
+
     private array $locationCache = [];
+
     private array $timeCache = [];
 
     public function __construct(Neo4jIndividualService $neo4j)
@@ -42,7 +44,7 @@ final class AnalyticsETLService
             'locations_created' => 0,
             'time_records_created' => 0,
             'duration_seconds' => 0,
-            'errors' => []
+            'errors' => [],
         ];
 
         try {
@@ -62,10 +64,10 @@ final class AnalyticsETLService
                         $results['relationships_processed'] += $treeResults['relationships'];
                         $results['locations_created'] += $treeResults['locations'];
                     } catch (Exception $e) {
-                        $results['errors'][] = "Tree {$tree->id}: " . $e->getMessage();
+                        $results['errors'][] = "Tree {$tree->id}: ".$e->getMessage();
                         Log::error('ETL error processing tree', [
                             'tree_id' => $tree->id,
-                            'error' => $e->getMessage()
+                            'error' => $e->getMessage(),
                         ]);
                     }
                 }
@@ -75,10 +77,10 @@ final class AnalyticsETLService
             Log::info('Analytics ETL pipeline completed', $results);
 
         } catch (Exception $e) {
-            $results['errors'][] = "Global ETL error: " . $e->getMessage();
+            $results['errors'][] = 'Global ETL error: '.$e->getMessage();
             Log::error('Analytics ETL pipeline failed', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
 
@@ -94,7 +96,7 @@ final class AnalyticsETLService
             'individuals' => 0,
             'relationships' => 0,
             'locations' => 0,
-            'tree_metrics' => false
+            'tree_metrics' => false,
         ];
 
         Log::info("Processing tree {$tree->id} for analytics");
@@ -173,18 +175,18 @@ final class AnalyticsETLService
                 'lifespan_days' => $lifespanDays,
                 'birth_year' => $individual->birth_date?->year,
                 'death_year' => $individual->death_date?->year,
-                'birth_decade' => $individual->birth_date ? intval($individual->birth_date->year / 10) * 10 : null,
-                'death_decade' => $individual->death_date ? intval($individual->death_date->year / 10) * 10 : null,
-                'birth_century' => $individual->birth_date ? intval(($individual->birth_date->year - 1) / 100) + 1 : null,
-                'death_century' => $individual->death_date ? intval(($individual->death_date->year - 1) / 100) + 1 : null,
+                'birth_decade' => $individual->birth_date ? (int) ($individual->birth_date->year / 10) * 10 : null,
+                'death_decade' => $individual->death_date ? (int) ($individual->death_date->year / 10) * 10 : null,
+                'birth_century' => $individual->birth_date ? (int) (($individual->birth_date->year - 1) / 100) + 1 : null,
+                'death_century' => $individual->death_date ? (int) (($individual->death_date->year - 1) / 100) + 1 : null,
                 'sex' => $individual->sex ?? 'U',
                 'generation' => $generation,
                 'migration_distance_km' => $migrationDistance,
                 'first_name_key' => $firstNameKey,
                 'last_name_key' => $lastNameKey,
-                'name_length' => strlen(trim(($individual->first_name ?? '') . ' ' . ($individual->last_name ?? ''))),
-                'name_syllables' => $this->countSyllables(trim(($individual->first_name ?? '') . ' ' . ($individual->last_name ?? ''))),
-                'updated_at' => now()
+                'name_length' => mb_strlen(mb_trim(($individual->first_name ?? '').' '.($individual->last_name ?? ''))),
+                'name_syllables' => $this->countSyllables(mb_trim(($individual->first_name ?? '').' '.($individual->last_name ?? ''))),
+                'updated_at' => now(),
             ]
         );
 
@@ -198,11 +200,11 @@ final class AnalyticsETLService
     private function processTreeRelationships(Tree $tree): array
     {
         $processed = 0;
-        
+
         try {
             // Get all individuals in tree for relationship processing
             $individualIds = $tree->individuals()->pluck('id')->toArray();
-            
+
             foreach ($individualIds as $individualId) {
                 // Process parent relationships
                 $parents = $this->neo4j->getParents($individualId);
@@ -219,7 +221,7 @@ final class AnalyticsETLService
                     }
                 }
 
-                // Process spouse relationships  
+                // Process spouse relationships
                 $spouses = $this->neo4j->getSpouses($individualId);
                 foreach ($spouses as $spouseRecord) {
                     $spouseNode = $spouseRecord->get('b');
@@ -261,7 +263,7 @@ final class AnalyticsETLService
         } catch (Exception $e) {
             Log::error('Error processing tree relationships', [
                 'tree_id' => $tree->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
 
@@ -275,8 +277,8 @@ final class AnalyticsETLService
     {
         $individualA = Individual::find($individualAId);
         $individualB = Individual::find($individualBId);
-        
-        if (!$individualA || !$individualB) {
+
+        if (! $individualA || ! $individualB) {
             return;
         }
 
@@ -287,7 +289,7 @@ final class AnalyticsETLService
             [
                 'individual_a_id' => $individualAId,
                 'individual_b_id' => $individualBId,
-                'relationship_type' => $relationshipType
+                'relationship_type' => $relationshipType,
             ],
             [
                 'tree_id' => $treeId,
@@ -295,7 +297,7 @@ final class AnalyticsETLService
                 'generation_diff' => $generationDiff,
                 'age_diff_years' => $ageDiff,
                 'is_direct_relationship' => true,
-                'updated_at' => now()
+                'updated_at' => now(),
             ]
         );
     }
@@ -341,7 +343,7 @@ final class AnalyticsETLService
         DB::table('fact_tree_metrics')->updateOrInsert(
             [
                 'tree_id' => $tree->id,
-                'snapshot_date' => $snapshotDate
+                'snapshot_date' => $snapshotDate,
             ],
             [
                 'individual_count' => $individualCount,
@@ -359,7 +361,7 @@ final class AnalyticsETLService
                 'birth_date_completeness' => $completeness->birth_date_completeness ?? 0,
                 'death_date_completeness' => $completeness->death_date_completeness ?? 0,
                 'location_completeness' => $completeness->location_completeness ?? 0,
-                'updated_at' => now()
+                'updated_at' => now(),
             ]
         );
     }
@@ -375,14 +377,15 @@ final class AnalyticsETLService
         $existingCount = DB::table('dim_time')->count();
         if ($existingCount > 0) {
             Log::info("Time dimension already populated with {$existingCount} records");
+
             return;
         }
 
         Log::info('Populating time dimension table');
-        
+
         $batchSize = 1000;
         $records = [];
-        
+
         for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
             $records[] = [
                 'date' => $date->toDateString(),
@@ -395,10 +398,10 @@ final class AnalyticsETLService
                 'month_name' => $date->monthName,
                 'day_name' => $date->dayName,
                 'is_weekend' => $date->isWeekend(),
-                'decade' => intval($date->year / 10) * 10,
-                'century' => intval(($date->year - 1) / 100) + 1,
+                'decade' => (int) ($date->year / 10) * 10,
+                'century' => (int) (($date->year - 1) / 100) + 1,
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ];
 
             if (count($records) >= $batchSize) {
@@ -407,7 +410,7 @@ final class AnalyticsETLService
             }
         }
 
-        if (!empty($records)) {
+        if (! empty($records)) {
             DB::table('dim_time')->insert($records);
         }
 
@@ -419,12 +422,12 @@ final class AnalyticsETLService
      */
     private function getOrCreateTimeKey(?Carbon $date): ?int
     {
-        if (!$date) {
+        if (! $date) {
             return null;
         }
 
         $dateString = $date->toDateString();
-        
+
         if (isset($this->timeCache[$dateString])) {
             return $this->timeCache[$dateString];
         }
@@ -435,6 +438,7 @@ final class AnalyticsETLService
 
         if ($timeRecord) {
             $this->timeCache[$dateString] = $timeRecord->id;
+
             return $timeRecord->id;
         }
 
@@ -446,12 +450,12 @@ final class AnalyticsETLService
      */
     private function getOrCreateLocationKey(?string $location): ?int
     {
-        if (!$location || empty(trim($location))) {
+        if (! $location || empty(mb_trim($location))) {
             return null;
         }
 
-        $locationKey = md5(strtolower(trim($location)));
-        
+        $locationKey = md5(mb_strtolower(mb_trim($location)));
+
         if (isset($this->locationCache[$locationKey])) {
             return $this->locationCache[$locationKey];
         }
@@ -462,6 +466,7 @@ final class AnalyticsETLService
 
         if ($locationRecord) {
             $this->locationCache[$locationKey] = $locationRecord->id;
+
             return $locationRecord->id;
         }
 
@@ -480,10 +485,11 @@ final class AnalyticsETLService
             'longitude' => $geoData['longitude'] ?? null,
             'confidence_score' => $geoData['confidence'] ?? 0,
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         $this->locationCache[$locationKey] = $locationId;
+
         return $locationId;
     }
 
@@ -491,18 +497,20 @@ final class AnalyticsETLService
 
     private function calculateLifespanDays(?Carbon $birthDate, ?Carbon $deathDate): ?int
     {
-        if (!$birthDate || !$deathDate) {
+        if (! $birthDate || ! $deathDate) {
             return null;
         }
+
         return $birthDate->diffInDays($deathDate);
     }
 
     private function calculateMigrationDistance(?string $birthPlace, ?string $deathPlace): ?float
     {
         // Placeholder - would implement actual geographic distance calculation
-        if (!$birthPlace || !$deathPlace || $birthPlace === $deathPlace) {
+        if (! $birthPlace || ! $deathPlace || $birthPlace === $deathPlace) {
             return 0.0;
         }
+
         return null; // TODO: Implement Haversine distance calculation
     }
 
@@ -520,24 +528,26 @@ final class AnalyticsETLService
 
     private function calculateAgeDifference(Individual $a, Individual $b): ?float
     {
-        if (!$a->birth_date || !$b->birth_date) {
+        if (! $a->birth_date || ! $b->birth_date) {
             return null;
         }
+
         return $a->birth_date->diffInYears($b->birth_date, false);
     }
 
     private function normalizeNameKey(?string $name): ?string
     {
-        if (!$name) {
+        if (! $name) {
             return null;
         }
-        return strtolower(trim(preg_replace('/[^a-zA-Z]/', '', $name)));
+
+        return mb_strtolower(mb_trim(preg_replace('/[^a-zA-Z]/', '', $name)));
     }
 
     private function normalizeLocation(string $location): string
     {
         // Basic location normalization
-        return trim(preg_replace('/\s+/', ' ', $location));
+        return mb_trim(preg_replace('/\s+/', ' ', $location));
     }
 
     private function geocodeLocation(string $location): array
@@ -550,26 +560,26 @@ final class AnalyticsETLService
             'country' => null,
             'latitude' => null,
             'longitude' => null,
-            'confidence' => 0
+            'confidence' => 0,
         ];
     }
 
     private function countSyllables(string $text): int
     {
         // Simple syllable counting algorithm
-        $text = strtolower($text);
+        $text = mb_strtolower($text);
         $vowels = 'aeiouy';
         $count = 0;
         $prevWasVowel = false;
-        
-        for ($i = 0; $i < strlen($text); $i++) {
-            $isVowel = strpos($vowels, $text[$i]) !== false;
-            if ($isVowel && !$prevWasVowel) {
+
+        for ($i = 0; $i < mb_strlen($text); $i++) {
+            $isVowel = mb_strpos($vowels, $text[$i]) !== false;
+            if ($isVowel && ! $prevWasVowel) {
                 $count++;
             }
             $prevWasVowel = $isVowel;
         }
-        
+
         return max(1, $count);
     }
 }

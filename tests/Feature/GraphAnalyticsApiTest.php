@@ -4,41 +4,42 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Tree;
-use App\Models\Individual;
+use App\Models\User;
 use App\Services\Analytics\Neo4jAnalyticsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
-use Tests\TestCase;
 use Mockery;
+use Tests\TestCase;
 
 /**
  * Test Neo4j Graph Analytics API Endpoints
- * 
+ *
  * This test suite demonstrates the usage patterns for the graph analytics
  * API endpoints and validates their responses and behavior.
  */
-class GraphAnalyticsApiTest extends TestCase
+final class GraphAnalyticsApiTest extends TestCase
 {
     use RefreshDatabase;
 
     private User $user;
+
     private Tree $tree;
+
     private Neo4jAnalyticsService $mockService;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->user = User::factory()->create([
-            'subscription_type' => 'pro'  // For advanced analytics access
+            'subscription_type' => 'pro',  // For advanced analytics access
         ]);
-        
+
         $this->tree = Tree::factory()->create([
             'user_id' => $this->user->id,
             'name' => 'Test Family Tree',
-            'public_analytics_enabled' => true
+            'public_analytics_enabled' => true,
         ]);
 
         // Mock the Neo4jAnalyticsService for testing
@@ -62,7 +63,7 @@ class GraphAnalyticsApiTest extends TestCase
             'clustering_coefficient' => 0.342,
             'diameter' => 8,
             'connected_components' => 1,
-            'average_degree' => 3.27
+            'average_degree' => 3.27,
         ];
 
         $this->mockService
@@ -78,12 +79,12 @@ class GraphAnalyticsApiTest extends TestCase
             ->assertJson([
                 'success' => true,
                 'data' => [
-                    'network_metrics' => $expectedMetrics
+                    'network_metrics' => $expectedMetrics,
                 ],
                 'meta' => [
                     'tree_id' => $this->tree->id,
-                    'section' => 'network'
-                ]
+                    'section' => 'network',
+                ],
             ]);
     }
 
@@ -94,24 +95,24 @@ class GraphAnalyticsApiTest extends TestCase
             'degree_centrality' => [
                 'top_individuals' => [
                     ['individual_id' => 123, 'name' => 'John Smith', 'score' => 0.85],
-                    ['individual_id' => 456, 'name' => 'Mary Johnson', 'score' => 0.72]
+                    ['individual_id' => 456, 'name' => 'Mary Johnson', 'score' => 0.72],
                 ],
-                'average_score' => 0.23
+                'average_score' => 0.23,
             ],
             'betweenness_centrality' => [
                 'top_individuals' => [
                     ['individual_id' => 123, 'name' => 'John Smith', 'score' => 0.45],
-                    ['individual_id' => 789, 'name' => 'Robert Brown', 'score' => 0.38]
+                    ['individual_id' => 789, 'name' => 'Robert Brown', 'score' => 0.38],
                 ],
-                'average_score' => 0.11
+                'average_score' => 0.11,
             ],
             'pagerank' => [
                 'top_individuals' => [
                     ['individual_id' => 123, 'name' => 'John Smith', 'score' => 0.023],
-                    ['individual_id' => 456, 'name' => 'Mary Johnson', 'score' => 0.019]
+                    ['individual_id' => 456, 'name' => 'Mary Johnson', 'score' => 0.019],
                 ],
-                'average_score' => 0.007
-            ]
+                'average_score' => 0.007,
+            ],
         ];
 
         $this->mockService
@@ -127,8 +128,8 @@ class GraphAnalyticsApiTest extends TestCase
             ->assertJson([
                 'success' => true,
                 'data' => [
-                    'centrality_analysis' => $expectedCentrality
-                ]
+                    'centrality_analysis' => $expectedCentrality,
+                ],
             ]);
     }
 
@@ -143,17 +144,17 @@ class GraphAnalyticsApiTest extends TestCase
                     'length' => 3,
                     'individuals' => [123, 789, 345, 456],
                     'relationships' => ['parent', 'spouse', 'parent'],
-                    'strength' => 0.82
+                    'strength' => 0.82,
                 ],
                 [
                     'length' => 4,
                     'individuals' => [123, 111, 222, 333, 456],
                     'relationships' => ['child', 'sibling', 'parent', 'spouse'],
-                    'strength' => 0.67
-                ]
+                    'strength' => 0.67,
+                ],
             ],
             'shortest_path_length' => 3,
-            'total_paths_found' => 2
+            'total_paths_found' => 2,
         ];
 
         $this->mockService
@@ -163,7 +164,7 @@ class GraphAnalyticsApiTest extends TestCase
             ->andReturn($expectedPaths);
 
         $response = $this->actingAs($this->user, 'api')
-            ->getJson("/api/v1/analytics/trees/{$this->tree->id}/paths" .
+            ->getJson("/api/v1/analytics/trees/{$this->tree->id}/paths".
                 "?from_individual_id={$fromId}&to_individual_id={$toId}");
 
         $response->assertStatus(200)
@@ -173,8 +174,8 @@ class GraphAnalyticsApiTest extends TestCase
                 'meta' => [
                     'tree_id' => $this->tree->id,
                     'from_individual_id' => $fromId,
-                    'to_individual_id' => $toId
-                ]
+                    'to_individual_id' => $toId,
+                ],
             ]);
     }
 
@@ -187,14 +188,14 @@ class GraphAnalyticsApiTest extends TestCase
                 'individual_id' => 999,
                 'name' => 'Common Ancestor',
                 'birth_year' => 1820,
-                'generation_depth' => 5
+                'generation_depth' => 5,
             ],
             'paths_to_mrca' => [
                 123 => ['path_length' => 3, 'generations_up' => 3],
                 456 => ['path_length' => 4, 'generations_up' => 4],
-                789 => ['path_length' => 2, 'generations_up' => 2]
+                789 => ['path_length' => 2, 'generations_up' => 2],
             ],
-            'relationship_coefficient' => 0.125
+            'relationship_coefficient' => 0.125,
         ];
 
         $this->mockService
@@ -204,8 +205,8 @@ class GraphAnalyticsApiTest extends TestCase
             ->andReturn($expectedMRCA);
 
         $response = $this->actingAs($this->user, 'api')
-            ->getJson("/api/v1/analytics/trees/{$this->tree->id}/mrca" .
-                "?individual_ids=" . implode(',', $individualIds));
+            ->getJson("/api/v1/analytics/trees/{$this->tree->id}/mrca".
+                '?individual_ids='.implode(',', $individualIds));
 
         $response->assertStatus(200)
             ->assertJson([
@@ -213,8 +214,8 @@ class GraphAnalyticsApiTest extends TestCase
                 'data' => $expectedMRCA,
                 'meta' => [
                     'tree_id' => $this->tree->id,
-                    'individual_ids' => $individualIds
-                ]
+                    'individual_ids' => $individualIds,
+                ],
             ]);
     }
 
@@ -224,7 +225,7 @@ class GraphAnalyticsApiTest extends TestCase
         $expectedInfluential = [
             ['individual_id' => 123, 'name' => 'John Smith', 'pagerank_score' => 0.023, 'rank' => 1],
             ['individual_id' => 456, 'name' => 'Mary Johnson', 'pagerank_score' => 0.019, 'rank' => 2],
-            ['individual_id' => 789, 'name' => 'Robert Brown', 'pagerank_score' => 0.017, 'rank' => 3]
+            ['individual_id' => 789, 'name' => 'Robert Brown', 'pagerank_score' => 0.017, 'rank' => 3],
         ];
 
         $this->mockService
@@ -243,8 +244,8 @@ class GraphAnalyticsApiTest extends TestCase
                 'meta' => [
                     'tree_id' => $this->tree->id,
                     'metric' => 'pagerank',
-                    'limit' => 20
-                ]
+                    'limit' => 20,
+                ],
             ]);
     }
 
@@ -256,7 +257,7 @@ class GraphAnalyticsApiTest extends TestCase
             'computation_time_seconds' => 12.34,
             'individuals_processed' => 150,
             'relationships_processed' => 245,
-            'cache_updated' => true
+            'cache_updated' => true,
         ];
 
         $this->mockService
@@ -267,14 +268,14 @@ class GraphAnalyticsApiTest extends TestCase
 
         $response = $this->actingAs($this->user, 'api')
             ->postJson("/api/v1/analytics/trees/{$this->tree->id}/graph/compute", [
-                'sections' => ['centrality', 'communities', 'network']
+                'sections' => ['centrality', 'communities', 'network'],
             ]);
 
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
                 'message' => 'Graph analytics computation completed',
-                'data' => $expectedResults
+                'data' => $expectedResults,
             ]);
     }
 
@@ -286,12 +287,12 @@ class GraphAnalyticsApiTest extends TestCase
 
         $response = $this->actingAs($this->user, 'api')
             ->postJson("/api/v1/analytics/trees/{$this->tree->id}/graph/compute", [
-                'sections' => ['centrality', 'communities']
+                'sections' => ['centrality', 'communities'],
             ]);
 
         $response->assertStatus(402)  // Payment Required
             ->assertJson([
-                'error' => 'Advanced graph analytics require premium subscription'
+                'error' => 'Advanced graph analytics require premium subscription',
             ]);
     }
 
@@ -307,7 +308,7 @@ class GraphAnalyticsApiTest extends TestCase
             'common_connections' => 8,
             'path_strength' => 1.0,
             'genealogical_distance' => 1,
-            'coefficient_of_relationship' => 0.0  // Not blood related
+            'coefficient_of_relationship' => 0.0,  // Not blood related
         ];
 
         $this->mockService
@@ -317,7 +318,7 @@ class GraphAnalyticsApiTest extends TestCase
             ->andReturn($expectedStrength);
 
         $response = $this->actingAs($this->user, 'api')
-            ->getJson("/api/v1/analytics/trees/{$this->tree->id}/relationship-strength" .
+            ->getJson("/api/v1/analytics/trees/{$this->tree->id}/relationship-strength".
                 "?individual1_id={$individual1Id}&individual2_id={$individual2Id}");
 
         $response->assertStatus(200)
@@ -327,8 +328,8 @@ class GraphAnalyticsApiTest extends TestCase
                 'meta' => [
                     'tree_id' => $this->tree->id,
                     'individual1_id' => $individual1Id,
-                    'individual2_id' => $individual2Id
-                ]
+                    'individual2_id' => $individual2Id,
+                ],
             ]);
     }
 
@@ -348,8 +349,8 @@ class GraphAnalyticsApiTest extends TestCase
                         'primary_surname' => 'Smith',
                         'geographic_center' => 'Boston, MA',
                         'time_period' => '1850-1920',
-                        'avg_generation_depth' => 3.2
-                    ]
+                        'avg_generation_depth' => 3.2,
+                    ],
                 ],
                 [
                     'community_id' => 2,
@@ -359,10 +360,10 @@ class GraphAnalyticsApiTest extends TestCase
                         'primary_surname' => 'Johnson',
                         'geographic_center' => 'New York, NY',
                         'time_period' => '1870-1940',
-                        'avg_generation_depth' => 2.8
-                    ]
-                ]
-            ]
+                        'avg_generation_depth' => 2.8,
+                    ],
+                ],
+            ],
         ];
 
         $this->mockService
@@ -378,8 +379,8 @@ class GraphAnalyticsApiTest extends TestCase
             ->assertJson([
                 'success' => true,
                 'data' => [
-                    'communities' => $expectedCommunities
-                ]
+                    'communities' => $expectedCommunities,
+                ],
             ]);
     }
 
@@ -397,14 +398,14 @@ class GraphAnalyticsApiTest extends TestCase
     public function caches_graph_analytics_results()
     {
         $cacheKey = "analytics:graph:{$this->tree->id}:network";
-        
+
         // Ensure cache is empty initially
         Cache::forget($cacheKey);
-        
+
         $expectedMetrics = [
             'node_count' => 150,
             'relationship_count' => 245,
-            'density' => 0.0218
+            'density' => 0.0218,
         ];
 
         $this->mockService
@@ -427,8 +428,8 @@ class GraphAnalyticsApiTest extends TestCase
             ->assertJson([
                 'success' => true,
                 'data' => [
-                    'network_metrics' => $expectedMetrics
-                ]
+                    'network_metrics' => $expectedMetrics,
+                ],
             ]);
     }
 
@@ -440,7 +441,7 @@ class GraphAnalyticsApiTest extends TestCase
             'relationship_count' => 245,
             'generations_depth' => 8,
             'largest_family_cluster' => 45,
-            'community_count' => 6
+            'community_count' => 6,
         ];
 
         $this->mockService
@@ -477,8 +478,8 @@ class GraphAnalyticsApiTest extends TestCase
                 'meta' => [
                     'tree_id' => $this->tree->id,
                     'public_access' => true,
-                    'anonymized' => true
-                ]
+                    'anonymized' => true,
+                ],
             ]);
     }
 
@@ -493,7 +494,7 @@ class GraphAnalyticsApiTest extends TestCase
 
         $response->assertStatus(403)
             ->assertJson([
-                'error' => 'Unauthorized access to tree'
+                'error' => 'Unauthorized access to tree',
             ]);
     }
 
@@ -501,17 +502,17 @@ class GraphAnalyticsApiTest extends TestCase
     public function can_batch_analyze_relationships()
     {
         $pairs = [[123, 456], [123, 789], [456, 789]];
-        
+
         $this->mockService
             ->shouldReceive('getRelationshipStrength')
             ->with($this->tree->id, 123, 456)
             ->andReturn(['strength' => 0.75]);
-            
+
         $this->mockService
             ->shouldReceive('getRelationshipStrength')
             ->with($this->tree->id, 123, 789)
             ->andReturn(['strength' => 0.45]);
-            
+
         $this->mockService
             ->shouldReceive('getRelationshipStrength')
             ->with($this->tree->id, 456, 789)
@@ -520,7 +521,7 @@ class GraphAnalyticsApiTest extends TestCase
         $response = $this->actingAs($this->user, 'api')
             ->postJson('/api/v1/analytics/bulk/relationship-batch', [
                 'tree_id' => $this->tree->id,
-                'individual_pairs' => $pairs
+                'individual_pairs' => $pairs,
             ]);
 
         $response->assertStatus(200)
@@ -529,8 +530,8 @@ class GraphAnalyticsApiTest extends TestCase
                 'data' => [
                     ['individual1_id' => 123, 'individual2_id' => 456],
                     ['individual1_id' => 123, 'individual2_id' => 789],
-                    ['individual1_id' => 456, 'individual2_id' => 789]
-                ]
+                    ['individual1_id' => 456, 'individual2_id' => 789],
+                ],
             ]);
     }
 }

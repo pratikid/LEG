@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Analytics;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Geographic Analytics Service
@@ -14,7 +14,9 @@ use Illuminate\Support\Facades\Cache;
 final class GeographicService
 {
     private const CACHE_TTL = 3600; // 1 hour
+
     private const CACHE_PREFIX = 'geographic:';
+
     private const EARTH_RADIUS_KM = 6371;
 
     /**
@@ -22,8 +24,8 @@ final class GeographicService
      */
     public function getTreeGeographics(int $treeId): array
     {
-        $cacheKey = self::CACHE_PREFIX . "tree:{$treeId}";
-        
+        $cacheKey = self::CACHE_PREFIX."tree:{$treeId}";
+
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($treeId) {
             return [
                 'location_summary' => $this->getLocationSummary($treeId),
@@ -31,7 +33,7 @@ final class GeographicService
                 'geographic_distribution' => $this->getGeographicDistribution($treeId),
                 'birth_location_trends' => $this->getBirthLocationTrends($treeId),
                 'settlement_analysis' => $this->getSettlementAnalysis($treeId),
-                'distance_metrics' => $this->getDistanceMetrics($treeId)
+                'distance_metrics' => $this->getDistanceMetrics($treeId),
             ];
         });
     }
@@ -69,7 +71,7 @@ final class GeographicService
         $coordinates = DB::table('fact_individuals fi')
             ->join('dim_location dl', function ($join) {
                 $join->on('fi.birth_location_key', '=', 'dl.id')
-                     ->orOn('fi.death_location_key', '=', 'dl.id');
+                    ->orOn('fi.death_location_key', '=', 'dl.id');
             })
             ->where('fi.tree_id', $treeId)
             ->whereNotNull('dl.latitude')
@@ -88,7 +90,7 @@ final class GeographicService
             'geographic_spread_km' => $geographicSpread,
             'location_completeness' => $this->calculateLocationCompleteness($treeId),
             'top_countries' => $this->getTopCountries($treeId),
-            'geocoding_quality' => $this->getGeocodingQuality($treeId)
+            'geocoding_quality' => $this->getGeocodingQuality($treeId),
         ];
     }
 
@@ -107,7 +109,7 @@ final class GeographicService
             ->select(
                 'birth_loc.country as birth_country',
                 'birth_loc.state as birth_state',
-                'death_loc.country as death_country', 
+                'death_loc.country as death_country',
                 'death_loc.state as death_state',
                 'fi.migration_distance_km',
                 'fi.birth_decade'
@@ -142,7 +144,7 @@ final class GeographicService
             ->orderBy('birth_decade')
             ->get()
             ->keyBy('birth_decade')
-            ->map(fn($item) => round($item->avg_distance, 1))
+            ->map(fn ($item) => round($item->avg_distance, 1))
             ->toArray();
 
         return [
@@ -150,14 +152,14 @@ final class GeographicService
                 'total_migrants' => $personalMigrations->count(),
                 'average_distance_km' => $migrationStats ? round($migrationStats->avg_distance, 1) : 0,
                 'max_distance_km' => $migrationStats ? round($migrationStats->max_distance, 1) : 0,
-                'migration_routes' => $this->identifyMigrationRoutes($personalMigrations)
+                'migration_routes' => $this->identifyMigrationRoutes($personalMigrations),
             ],
             'generational_patterns' => $generationalMigration,
             'temporal_trends' => [
                 'by_decade' => $migrationByDecade,
-                'migration_trend' => $this->analyzeMigrationTrend($migrationByDecade)
+                'migration_trend' => $this->analyzeMigrationTrend($migrationByDecade),
             ],
-            'migration_categories' => $this->categorizeMigrations($personalMigrations)
+            'migration_categories' => $this->categorizeMigrations($personalMigrations),
         ];
     }
 
@@ -176,7 +178,7 @@ final class GeographicService
             ->orderByDesc('births')
             ->get()
             ->keyBy('country')
-            ->map(fn($item) => $item->births)
+            ->map(fn ($item) => $item->births)
             ->toArray();
 
         // Birth locations by state/province within top countries
@@ -191,7 +193,7 @@ final class GeographicService
             ->get()
             ->groupBy('country')
             ->map(function ($states) {
-                return $states->keyBy('state')->map(fn($item) => $item->births)->toArray();
+                return $states->keyBy('state')->map(fn ($item) => $item->births)->toArray();
             })
             ->toArray();
 
@@ -207,7 +209,7 @@ final class GeographicService
             'urban_rural_distribution' => $urbanRural,
             'population_centers' => $this->identifyPopulationCenters($treeId),
             'density_by_generation' => $densityByGeneration,
-            'geographic_concentration' => $this->calculateGeographicConcentration($treeId)
+            'geographic_concentration' => $this->calculateGeographicConcentration($treeId),
         ];
     }
 
@@ -228,7 +230,7 @@ final class GeographicService
             ->get()
             ->groupBy('birth_decade')
             ->map(function ($decade) {
-                return $decade->keyBy('country')->map(fn($item) => $item->births)->toArray();
+                return $decade->keyBy('country')->map(fn ($item) => $item->births)->toArray();
             })
             ->toArray();
 
@@ -242,7 +244,7 @@ final class GeographicService
             'country_trends_by_decade' => $countryTrends,
             'new_settlements' => $newSettlements,
             'frontier_expansion' => $frontierExpansion,
-            'settlement_longevity' => $this->analyzeSettlementLongevity($treeId)
+            'settlement_longevity' => $this->analyzeSettlementLongevity($treeId),
         ];
     }
 
@@ -272,7 +274,7 @@ final class GeographicService
             'family_clusters' => $familyClusters,
             'multigenerational_settlements' => $multigenerationalSettlements,
             'settlement_establishment' => $settlementEstablishment,
-            'community_continuity' => $this->analyzeCommunityontinuity($treeId)
+            'community_continuity' => $this->analyzeCommunityontinuity($treeId),
         ];
     }
 
@@ -307,7 +309,7 @@ final class GeographicService
             'average_distance_from_center' => round($dispersion['average'], 1),
             'max_distance_from_center' => round($dispersion['maximum'], 1),
             'geographic_outliers' => $outliers,
-            'family_diameter_km' => $this->calculateFamilyDiameter($coordinates)
+            'family_diameter_km' => $this->calculateFamilyDiameter($coordinates),
         ];
     }
 
@@ -322,7 +324,7 @@ final class GeographicService
         return [
             'tree_1' => $tree1Geographic,
             'tree_2' => $tree2Geographic,
-            'comparison' => $this->calculateGeographicComparison($tree1Geographic, $tree2Geographic)
+            'comparison' => $this->calculateGeographicComparison($tree1Geographic, $tree2Geographic),
         ];
     }
 
@@ -340,7 +342,7 @@ final class GeographicService
             $insights[] = [
                 'type' => 'low_location_data',
                 'message' => 'Limited location data reduces geographic analysis accuracy. Consider adding more place information.',
-                'priority' => 'high'
+                'priority' => 'high',
             ];
         }
 
@@ -350,31 +352,31 @@ final class GeographicService
             $insights[] = [
                 'type' => 'geographic_concentration',
                 'message' => 'Family shows high geographic concentration, suggesting strong community ties.',
-                'priority' => 'info'
+                'priority' => 'info',
             ];
         } elseif ($concentration < 0.3) {
             $insights[] = [
                 'type' => 'geographic_dispersion',
                 'message' => 'Family is highly dispersed geographically, indicating significant migration patterns.',
-                'priority' => 'info'
+                'priority' => 'info',
             ];
         }
 
         // Migration patterns
         $migrationCount = $geographic['migration_patterns']['personal_migrations']['total_migrants'];
         $totalIndividuals = DB::table('fact_individuals')->where('tree_id', $treeId)->count();
-        
+
         if ($migrationCount > 0 && $migrationCount / $totalIndividuals > 0.3) {
             $insights[] = [
                 'type' => 'high_migration',
                 'message' => 'Family shows high migration rates, indicating mobility and adaptation.',
-                'priority' => 'info'
+                'priority' => 'info',
             ];
         }
 
         return [
             'insights' => $insights,
-            'recommendations' => $this->generateGeographicRecommendations($geographic)
+            'recommendations' => $this->generateGeographicRecommendations($geographic),
         ];
     }
 
@@ -405,7 +407,7 @@ final class GeographicService
             ->where('tree_id', $treeId)
             ->where(function ($query) {
                 $query->whereNotNull('birth_location_key')
-                      ->orWhereNotNull('death_location_key');
+                    ->orWhereNotNull('death_location_key');
             })
             ->count();
 
@@ -417,7 +419,7 @@ final class GeographicService
         return DB::table('fact_individuals fi')
             ->join('dim_location dl', function ($join) {
                 $join->on('fi.birth_location_key', '=', 'dl.id')
-                     ->orOn('fi.death_location_key', '=', 'dl.id');
+                    ->orOn('fi.death_location_key', '=', 'dl.id');
             })
             ->where('fi.tree_id', $treeId)
             ->whereNotNull('dl.country')
@@ -429,7 +431,7 @@ final class GeographicService
             ->map(function ($item) {
                 return [
                     'country' => $item->country,
-                    'individual_count' => $item->count
+                    'individual_count' => $item->count,
                 ];
             })
             ->toArray();
@@ -440,7 +442,7 @@ final class GeographicService
         $locationStats = DB::table('fact_individuals fi')
             ->join('dim_location dl', function ($join) {
                 $join->on('fi.birth_location_key', '=', 'dl.id')
-                     ->orOn('fi.death_location_key', '=', 'dl.id');
+                    ->orOn('fi.death_location_key', '=', 'dl.id');
             })
             ->where('fi.tree_id', $treeId)
             ->selectRaw('
@@ -450,14 +452,14 @@ final class GeographicService
             ')
             ->first();
 
-        $geocodingRate = $locationStats && $locationStats->total_locations > 0 
-            ? round(($locationStats->geocoded_locations / $locationStats->total_locations) * 100, 1) 
+        $geocodingRate = $locationStats && $locationStats->total_locations > 0
+            ? round(($locationStats->geocoded_locations / $locationStats->total_locations) * 100, 1)
             : 0;
 
         return [
             'geocoding_rate' => $geocodingRate,
             'average_confidence' => $locationStats ? round($locationStats->avg_confidence, 1) : 0,
-            'total_locations' => $locationStats->total_locations ?? 0
+            'total_locations' => $locationStats->total_locations ?? 0,
         ];
     }
 
@@ -469,32 +471,32 @@ final class GeographicService
             'pattern_type' => 'westward_expansion', // could be 'urban_migration', 'return_migration', etc.
             'generations_affected' => 3,
             'average_distance_per_generation' => 150.5,
-            'primary_direction' => 'west'
+            'primary_direction' => 'west',
         ];
     }
 
     private function identifyMigrationRoutes(object $migrations): array
     {
         $routes = [];
-        
+
         foreach ($migrations as $migration) {
-            $route = $migration->birth_country . ' → ' . $migration->death_country;
-            if (!isset($routes[$route])) {
+            $route = $migration->birth_country.' → '.$migration->death_country;
+            if (! isset($routes[$route])) {
                 $routes[$route] = [
                     'count' => 0,
                     'average_distance' => 0,
-                    'total_distance' => 0
+                    'total_distance' => 0,
                 ];
             }
-            
+
             $routes[$route]['count']++;
             $routes[$route]['total_distance'] += $migration->migration_distance_km;
             $routes[$route]['average_distance'] = $routes[$route]['total_distance'] / $routes[$route]['count'];
         }
 
         // Sort by frequency and return top routes
-        uasort($routes, fn($a, $b) => $b['count'] <=> $a['count']);
-        
+        uasort($routes, fn ($a, $b) => $b['count'] <=> $a['count']);
+
         return array_slice($routes, 0, 10);
     }
 
@@ -513,11 +515,13 @@ final class GeographicService
 
         if ($lateAvg > $earlyAvg * 1.2) {
             return 'increasing';
-        } elseif ($lateAvg < $earlyAvg * 0.8) {
-            return 'decreasing';
-        } else {
-            return 'stable';
         }
+        if ($lateAvg < $earlyAvg * 0.8) {
+            return 'decreasing';
+        }
+
+        return 'stable';
+
     }
 
     private function categorizeMigrations(object $migrations): array
@@ -526,12 +530,12 @@ final class GeographicService
             'local' => 0,      // < 50km
             'regional' => 0,   // 50-500km
             'national' => 0,   // 500-2000km
-            'international' => 0 // > 2000km
+            'international' => 0, // > 2000km
         ];
 
         foreach ($migrations as $migration) {
             $distance = $migration->migration_distance_km;
-            
+
             if ($distance < 50) {
                 $categories['local']++;
             } elseif ($distance < 500) {
@@ -553,7 +557,7 @@ final class GeographicService
         return [
             'urban_percentage' => 65.0,
             'rural_percentage' => 35.0,
-            'urbanization_trend' => 'increasing'
+            'urbanization_trend' => 'increasing',
         ];
     }
 
@@ -577,8 +581,8 @@ final class GeographicService
             ->get()
             ->map(function ($center) {
                 return [
-                    'location' => $center->city . ', ' . $center->state . ', ' . $center->country,
-                    'population' => $center->population
+                    'location' => $center->city.', '.$center->state.', '.$center->country,
+                    'population' => $center->population,
                 ];
             })
             ->toArray();
@@ -602,6 +606,7 @@ final class GeographicService
         $total = $countryDistribution->sum('count');
         $hhi = $countryDistribution->sum(function ($item) use ($total) {
             $share = $item->count / $total;
+
             return $share * $share;
         });
 
@@ -620,7 +625,7 @@ final class GeographicService
         return [
             'expansion_direction' => 'westward',
             'expansion_rate_km_per_decade' => 75.0,
-            'frontier_generations' => 2
+            'frontier_generations' => 2,
         ];
     }
 
@@ -655,7 +660,7 @@ final class GeographicService
 
         return [
             'latitude' => array_sum($lats) / count($lats),
-            'longitude' => array_sum($lons) / count($lons)
+            'longitude' => array_sum($lons) / count($lons),
         ];
     }
 
@@ -672,7 +677,7 @@ final class GeographicService
 
         return [
             'average' => $distances->average(),
-            'maximum' => $distances->max()
+            'maximum' => $distances->max(),
         ];
     }
 
@@ -686,12 +691,12 @@ final class GeographicService
                     $coord->longitude,
                     $center['latitude'],
                     $center['longitude']
-                )
+                ),
             ];
         });
 
         $mean = $distances->avg('distance');
-        $stdDev = sqrt($distances->map(fn($d) => pow($d['distance'] - $mean, 2))->avg());
+        $stdDev = sqrt($distances->map(fn ($d) => pow($d['distance'] - $mean, 2))->avg());
         $threshold = $mean + (2 * $stdDev); // 2 standard deviations
 
         return $distances->where('distance', '>', $threshold)
@@ -738,7 +743,7 @@ final class GeographicService
         $a = sin($deltaLat / 2) * sin($deltaLat / 2) +
              cos($lat1Rad) * cos($lat2Rad) *
              sin($deltaLon / 2) * sin($deltaLon / 2);
-        
+
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
         return self::EARTH_RADIUS_KM * $c;
@@ -750,7 +755,7 @@ final class GeographicService
             'location_count_difference' => $tree1['location_summary']['total_unique_locations'] - $tree2['location_summary']['total_unique_locations'],
             'country_count_difference' => $tree1['location_summary']['countries'] - $tree2['location_summary']['countries'],
             'geographic_spread_difference' => ($tree1['location_summary']['geographic_spread_km'] ?? 0) - ($tree2['location_summary']['geographic_spread_km'] ?? 0),
-            'migration_rate_difference' => $tree1['migration_patterns']['personal_migrations']['total_migrants'] - $tree2['migration_patterns']['personal_migrations']['total_migrants']
+            'migration_rate_difference' => $tree1['migration_patterns']['personal_migrations']['total_migrants'] - $tree2['migration_patterns']['personal_migrations']['total_migrants'],
         ];
     }
 

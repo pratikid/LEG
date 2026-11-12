@@ -15,9 +15,7 @@ trait ApiResponseTrait
     /**
      * Format paginated response.
      *
-     * @param LengthAwarePaginator $paginator
-     * @param array $additionalData Additional data to include in the response
-     * @return JsonResponse
+     * @param  array  $additionalData  Additional data to include in the response
      */
     protected function paginatedResponse(LengthAwarePaginator $paginator, array $additionalData = []): JsonResponse
     {
@@ -30,49 +28,41 @@ trait ApiResponseTrait
                 'total' => $paginator->total(),
             ],
         ];
-        
-        if (!empty($additionalData)) {
+
+        if (! empty($additionalData)) {
             $response = array_merge($response, $additionalData);
         }
-        
+
         return response()->json($response);
     }
-    
+
     /**
      * Format a success response.
      *
-     * @param mixed $data
-     * @param string $message
-     * @param int $statusCode
-     * @return JsonResponse
+     * @param  mixed  $data
      */
     protected function successResponse($data = null, string $message = 'Success', int $statusCode = 200): JsonResponse
     {
         $response = ['message' => $message];
-        
+
         if ($data !== null) {
             $response['data'] = $data;
         }
-        
+
         return response()->json($response, $statusCode);
     }
-    
+
     /**
      * Format an error response.
-     *
-     * @param string $message
-     * @param array $errors
-     * @param int $statusCode
-     * @return JsonResponse
      */
     protected function errorResponse(string $message = 'Error', array $errors = [], int $statusCode = 400): JsonResponse
     {
         $response = ['message' => $message];
-        
-        if (!empty($errors)) {
+
+        if (! empty($errors)) {
             $response['errors'] = $errors;
         }
-        
+
         return response()->json($response, $statusCode);
     }
 }

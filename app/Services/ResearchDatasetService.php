@@ -6,7 +6,6 @@ namespace App\Services;
 
 use App\Models\Individual;
 use App\Models\Tree;
-use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 
@@ -24,8 +23,8 @@ final class ResearchDatasetService
     /**
      * Generate anonymized research dataset
      *
-     * @param array $treeIds Tree IDs to include
-     * @param array $options Dataset configuration
+     * @param  array  $treeIds  Tree IDs to include
+     * @param  array  $options  Dataset configuration
      * @return array Dataset metadata and file path
      */
     public function generateAnonymizedDataset(array $treeIds, array $options = []): array
@@ -39,17 +38,17 @@ final class ResearchDatasetService
             'geographic_generalization' => 'country', // none, region, country
             'minimum_cluster_size' => 5,
             'differential_privacy' => false,
-            'epsilon' => 1.0 // for differential privacy
+            'epsilon' => 1.0, // for differential privacy
         ];
 
         $config = array_merge($defaultOptions, $options);
 
         // Collect individuals from specified trees
         $individuals = $this->collectIndividuals($treeIds);
-        
+
         // Apply anonymization
         $anonymizedData = $this->applyAnonymization($individuals, $config);
-        
+
         // Apply differential privacy if requested
         if ($config['differential_privacy']) {
             $anonymizedData = $this->applyDifferentialPrivacy($anonymizedData, $config['epsilon']);
@@ -65,7 +64,7 @@ final class ResearchDatasetService
             'file_path' => $filePath,
             'metadata' => $this->generateDatasetMetadata($anonymizedData, $config),
             'statistics' => $this->calculateDatasetStatistics($anonymizedData),
-            'privacy_report' => $this->generatePrivacyReport($config)
+            'privacy_report' => $this->generatePrivacyReport($config),
         ];
     }
 
@@ -75,14 +74,14 @@ final class ResearchDatasetService
     private function applyAnonymization(Collection $individuals, array $config): array
     {
         $anonymizedData = [];
-        
+
         foreach ($individuals as $individual) {
             $anonymizedIndividual = $this->privacyService->anonymizeIndividual($individual);
-            
+
             // Apply additional privacy measures based on config
             $anonymizedIndividual = $this->applyTemporalAggregation($anonymizedIndividual, $config);
             $anonymizedIndividual = $this->applyGeographicGeneralization($anonymizedIndividual, $config);
-            
+
             $anonymizedData[] = $anonymizedIndividual;
         }
 
@@ -102,7 +101,7 @@ final class ResearchDatasetService
             if (isset($record['birth_year']) && is_numeric($record['birth_year'])) {
                 $record['birth_year'] = $this->addLaplaceNoise($record['birth_year'], $epsilon);
             }
-            
+
             if (isset($record['death_year']) && is_numeric($record['death_year'])) {
                 $record['death_year'] = $this->addLaplaceNoise($record['death_year'], $epsilon);
             }
@@ -115,12 +114,14 @@ final class ResearchDatasetService
     {
         $scale = $sensitivity / $epsilon;
         $noise = $this->generateLaplaceNoise($scale);
-        return max(0, intval($value + $noise));
+
+        return max(0, (int) ($value + $noise));
     }
 
     private function generateLaplaceNoise(float $scale): float
     {
         $u = mt_rand() / mt_getrandmax() - 0.5;
+
         return -$scale * ($u >= 0 ? 1 : -1) * log(1 - 2 * abs($u));
     }
 
@@ -128,10 +129,10 @@ final class ResearchDatasetService
     {
         // Group records by quasi-identifiers
         $groups = [];
-        
+
         foreach ($data as $record) {
             $key = $this->generateQuasiIdentifierKey($record);
-            if (!isset($groups[$key])) {
+            if (! isset($groups[$key])) {
                 $groups[$key] = [];
             }
             $groups[$key][] = $record;
@@ -154,9 +155,9 @@ final class ResearchDatasetService
             $record['birth_year'] ?? 'unknown',
             $record['sex'] ?? 'unknown',
             $record['birth_location_region'] ?? 'unknown',
-            $record['generation'] ?? 'unknown'
+            $record['generation'] ?? 'unknown',
         ];
-        
+
         return implode('|', $identifiers);
     }
 
@@ -171,30 +172,31 @@ final class ResearchDatasetService
     {
         if ($config['temporal_aggregation'] !== 'none') {
             $yearRange = (int) explode('-', $config['temporal_aggregation'])[0];
-            
+
             if (isset($individual['birth_year']) && is_numeric($individual['birth_year'])) {
                 $individual['birth_year'] = $this->aggregateToRange($individual['birth_year'], $yearRange);
             }
-            
+
             if (isset($individual['death_year']) && is_numeric($individual['death_year'])) {
                 $individual['death_year'] = $this->aggregateToRange($individual['death_year'], $yearRange);
             }
         }
-        
+
         return $individual;
     }
 
     private function aggregateToRange(int $year, int $range): string
     {
-        $rangeStart = intval(floor($year / $range) * $range);
+        $rangeStart = (int) (floor($year / $range) * $range);
         $rangeEnd = $rangeStart + $range - 1;
+
         return "{$rangeStart}-{$rangeEnd}";
     }
 
     private function applyGeographicGeneralization(array $individual, array $config): array
     {
         $level = $config['geographic_generalization'];
-        
+
         if ($level === 'none') {
             return $individual;
         }
@@ -205,7 +207,7 @@ final class ResearchDatasetService
                 $individual[$field] = $this->generalizeGeographicLocation($individual[$field], $level);
             }
         }
-        
+
         return $individual;
     }
 
@@ -226,27 +228,30 @@ final class ResearchDatasetService
     {
         // Extract region from location string
         $parts = explode(',', $location);
-        return count($parts) >= 2 ? trim($parts[-2]) : 'Unknown Region';
+
+        return count($parts) >= 2 ? mb_trim($parts[-2]) : 'Unknown Region';
     }
 
     private function extractCountry(string $location): string
     {
         // Extract country from location string
         $parts = explode(',', $location);
-        return trim(end($parts)) ?: 'Unknown Country';
+
+        return mb_trim(end($parts)) ?: 'Unknown Country';
     }
 
     private function generateDatasetFilename(array $config): string
     {
         $timestamp = now()->format('Y-m-d_H-i-s');
         $privacyLevel = str_replace('-', '_', $config['privacy_level']);
+
         return "research_dataset_{$privacyLevel}_{$timestamp}";
     }
 
     private function saveDataset(array $data, string $filename, string $format): string
     {
         $path = "research-datasets/{$filename}.{$format}";
-        
+
         $content = match ($format) {
             'json' => json_encode($data, JSON_PRETTY_PRINT),
             'csv' => $this->convertToCsv($data),
@@ -254,7 +259,7 @@ final class ResearchDatasetService
         };
 
         Storage::disk('local')->put($path, $content);
-        
+
         return $path;
     }
 
@@ -290,10 +295,10 @@ final class ResearchDatasetService
                 'k_anonymity' => $config['minimum_cluster_size'],
                 'temporal_aggregation' => $config['temporal_aggregation'],
                 'geographic_generalization' => $config['geographic_generalization'],
-                'differential_privacy' => $config['differential_privacy']
+                'differential_privacy' => $config['differential_privacy'],
             ],
-            'fields' => !empty($data) ? array_keys($data[0]) : [],
-            'schema_version' => '1.0'
+            'fields' => ! empty($data) ? array_keys($data[0]) : [],
+            'schema_version' => '1.0',
         ];
     }
 
@@ -310,7 +315,7 @@ final class ResearchDatasetService
             'total_records' => count($data),
             'gender_distribution' => $genderCounts,
             'generation_distribution' => $generationCounts,
-            'data_quality' => $this->assessDataQuality($data)
+            'data_quality' => $this->assessDataQuality($data),
         ];
     }
 
@@ -318,13 +323,13 @@ final class ResearchDatasetService
     {
         $totalRecords = count($data);
         $fields = ['birth_year', 'death_year', 'sex', 'birth_location_region'];
-        
+
         $quality = [];
         foreach ($fields as $field) {
-            $nonEmptyCount = count(array_filter($data, fn($record) => !empty($record[$field] ?? null)));
+            $nonEmptyCount = count(array_filter($data, fn ($record) => ! empty($record[$field] ?? null)));
             $quality[$field] = [
                 'completeness_percentage' => $totalRecords > 0 ? round(($nonEmptyCount / $totalRecords) * 100, 1) : 0,
-                'non_empty_count' => $nonEmptyCount
+                'non_empty_count' => $nonEmptyCount,
             ];
         }
 
@@ -338,28 +343,28 @@ final class ResearchDatasetService
                 'k_anonymity' => [
                     'enabled' => true,
                     'k_value' => $config['minimum_cluster_size'],
-                    'description' => 'Ensures each record is indistinguishable from at least k-1 others'
+                    'description' => 'Ensures each record is indistinguishable from at least k-1 others',
                 ],
                 'temporal_aggregation' => [
                     'enabled' => $config['temporal_aggregation'] !== 'none',
                     'aggregation_level' => $config['temporal_aggregation'],
-                    'description' => 'Groups dates into ranges to reduce precision'
+                    'description' => 'Groups dates into ranges to reduce precision',
                 ],
                 'geographic_generalization' => [
                     'enabled' => $config['geographic_generalization'] !== 'none',
                     'generalization_level' => $config['geographic_generalization'],
-                    'description' => 'Generalizes geographic information to broader regions'
+                    'description' => 'Generalizes geographic information to broader regions',
                 ],
                 'differential_privacy' => [
                     'enabled' => $config['differential_privacy'],
                     'epsilon' => $config['epsilon'] ?? null,
-                    'description' => 'Adds statistical noise to protect individual privacy'
-                ]
+                    'description' => 'Adds statistical noise to protect individual privacy',
+                ],
             ],
             'risk_assessment' => [
                 'reidentification_risk' => $this->assessReidentificationRisk($config),
-                'compliance_status' => 'GDPR_COMPLIANT'
-            ]
+                'compliance_status' => 'GDPR_COMPLIANT',
+            ],
         ];
     }
 
@@ -367,10 +372,18 @@ final class ResearchDatasetService
     {
         $riskFactors = 0;
 
-        if ($config['minimum_cluster_size'] < 5) $riskFactors++;
-        if ($config['temporal_aggregation'] === 'none') $riskFactors++;
-        if ($config['geographic_generalization'] === 'none') $riskFactors++;
-        if (!$config['differential_privacy']) $riskFactors++;
+        if ($config['minimum_cluster_size'] < 5) {
+            $riskFactors++;
+        }
+        if ($config['temporal_aggregation'] === 'none') {
+            $riskFactors++;
+        }
+        if ($config['geographic_generalization'] === 'none') {
+            $riskFactors++;
+        }
+        if (! $config['differential_privacy']) {
+            $riskFactors++;
+        }
 
         return match (true) {
             $riskFactors === 0 => 'Very Low',

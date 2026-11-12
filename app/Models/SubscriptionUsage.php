@@ -15,31 +15,38 @@ final class SubscriptionUsage extends Model
 {
     use HasFactory;
 
+    // Usage types for tracking different features
+    public const TYPE_TREES_CREATED = 'trees_created';
+
+    public const TYPE_INDIVIDUALS_ADDED = 'individuals_added';
+
+    public const TYPE_GEDCOM_IMPORTS = 'gedcom_imports';
+
+    public const TYPE_API_CALLS = 'api_calls';
+
+    public const TYPE_REPORTS_GENERATED = 'reports_generated';
+
+    public const TYPE_EXPORTS_PERFORMED = 'exports_performed';
+
+    public const TYPE_STORAGE_USED = 'storage_used';
+
+    public const TYPE_ANALYTICS_QUERIES = 'analytics_queries';
+
     protected $fillable = [
         'subscription_id',
         'usage_type',
         'usage_count',
         'period_start',
         'period_end',
-        'metadata'
+        'metadata',
     ];
 
     protected $casts = [
         'usage_count' => 'integer',
         'period_start' => 'datetime',
         'period_end' => 'datetime',
-        'metadata' => 'array'
+        'metadata' => 'array',
     ];
-
-    // Usage types for tracking different features
-    public const TYPE_TREES_CREATED = 'trees_created';
-    public const TYPE_INDIVIDUALS_ADDED = 'individuals_added';
-    public const TYPE_GEDCOM_IMPORTS = 'gedcom_imports';
-    public const TYPE_API_CALLS = 'api_calls';
-    public const TYPE_REPORTS_GENERATED = 'reports_generated';
-    public const TYPE_EXPORTS_PERFORMED = 'exports_performed';
-    public const TYPE_STORAGE_USED = 'storage_used';
-    public const TYPE_ANALYTICS_QUERIES = 'analytics_queries';
 
     public function subscription(): BelongsTo
     {
@@ -52,6 +59,7 @@ final class SubscriptionUsage extends Model
     public function isCurrentPeriod(): bool
     {
         $now = now();
+
         return $now->between($this->period_start, $this->period_end);
     }
 

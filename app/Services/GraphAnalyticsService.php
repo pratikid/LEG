@@ -6,9 +6,6 @@ namespace App\Services;
 
 use App\Models\Individual;
 use App\Models\Tree;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Laudis\Neo4j\Contracts\ClientInterface;
 
 /**
@@ -25,14 +22,14 @@ final class GraphAnalyticsService
     /**
      * Find the shortest relationship path between two individuals
      *
-     * @param int $individualA First individual ID
-     * @param int $individualB Second individual ID
+     * @param  int  $individualA  First individual ID
+     * @param  int  $individualB  Second individual ID
      * @return array{path: array<array{id: int, name: string, relationship: string}>, distance: int, relationship_type: string}
      */
     public function findRelationshipPath(int $individualA, int $individualB): array
     {
         $cacheKey = "relationship_path:{$individualA}:{$individualB}";
-        
+
         return $this->cacheService->remember($cacheKey, 3600, function () use ($individualA, $individualB) {
             $query = "
                 MATCH (a:Individual {id: $individualA})
@@ -55,7 +52,7 @@ final class GraphAnalyticsService
                 return [
                     'path' => [],
                     'distance' => -1,
-                    'relationship_type' => 'No relationship found'
+                    'relationship_type' => 'No relationship found',
                 ];
             }
 
@@ -69,19 +66,19 @@ final class GraphAnalyticsService
             for ($i = 0; $i < count($individuals); $i++) {
                 $individual = $individuals[$i];
                 $relationship = $i < count($relationships) ? $this->translateRelationship($relationships[$i]) : '';
-                
+
                 $path[] = [
                     'id' => $individual['id'],
                     'name' => $individual['name'],
                     'birth_year' => $individual['birth_year'] ?? null,
-                    'relationship' => $relationship
+                    'relationship' => $relationship,
                 ];
             }
 
             return [
                 'path' => $path,
                 'distance' => $distance,
-                'relationship_type' => $this->determineRelationshipType($distance, $relationships)
+                'relationship_type' => $this->determineRelationshipType($distance, $relationships),
             ];
         });
     }
@@ -89,14 +86,14 @@ final class GraphAnalyticsService
     /**
      * Find common ancestors between two individuals
      *
-     * @param int $individualA First individual ID
-     * @param int $individualB Second individual ID
+     * @param  int  $individualA  First individual ID
+     * @param  int  $individualB  Second individual ID
      * @return array<array{id: int, name: string, birth_year: ?int, relationship_to_a: string, relationship_to_b: string}>
      */
     public function findCommonAncestors(int $individualA, int $individualB): array
     {
         $cacheKey = "common_ancestors:{$individualA}:{$individualB}";
-        
+
         return $this->cacheService->remember($cacheKey, 7200, function () use ($individualA, $individualB) {
             $query = "
                 MATCH (a:Individual {id: $individualA})
@@ -122,7 +119,7 @@ final class GraphAnalyticsService
                     'birth_year' => $record->get('birth_year'),
                     'relationship_to_a' => $this->generateAncestorRelationship($record->get('distance_to_a')),
                     'relationship_to_b' => $this->generateAncestorRelationship($record->get('distance_to_b')),
-                    'combined_distance' => $record->get('distance_to_a') + $record->get('distance_to_b')
+                    'combined_distance' => $record->get('distance_to_a') + $record->get('distance_to_b'),
                 ];
             }
 
@@ -133,13 +130,13 @@ final class GraphAnalyticsService
     /**
      * Calculate relationship statistics for a family tree
      *
-     * @param int $treeId Tree ID
+     * @param  int  $treeId  Tree ID
      * @return array{total_individuals: int, total_families: int, generations: int, most_children: array, oldest_person: array, statistics: array}
      */
     public function calculateTreeStatistics(int $treeId): array
     {
         $cacheKey = "tree_statistics:{$treeId}";
-        
+
         return $this->cacheService->remember($cacheKey, 3600, function () use ($treeId) {
             // Total individuals and families
             $totalQuery = "
@@ -208,20 +205,20 @@ final class GraphAnalyticsService
                 'most_children' => [
                     'id' => $childrenResult?->get('id'),
                     'name' => $childrenResult?->get('name'),
-                    'child_count' => $childrenResult?->get('child_count') ?? 0
+                    'child_count' => $childrenResult?->get('child_count') ?? 0,
                 ],
                 'oldest_person' => [
                     'id' => $oldestResult?->get('id'),
                     'name' => $oldestResult?->get('name'),
-                    'birth_year' => $oldestResult?->get('birth_year')
+                    'birth_year' => $oldestResult?->get('birth_year'),
                 ],
                 'statistics' => [
                     'males' => $statsResult->get('males') ?? 0,
                     'females' => $statsResult->get('females') ?? 0,
                     'estimated_living' => $statsResult->get('estimated_living') ?? 0,
                     'average_birth_year' => round($statsResult->get('avg_birth_year') ?? 0),
-                    'gender_ratio' => $this->calculateGenderRatio($statsResult->get('males') ?? 0, $statsResult->get('females') ?? 0)
-                ]
+                    'gender_ratio' => $this->calculateGenderRatio($statsResult->get('males') ?? 0, $statsResult->get('females') ?? 0),
+                ],
             ];
         });
     }
@@ -229,24 +226,24 @@ final class GraphAnalyticsService
     /**
      * Calculate coefficient of relationship between two individuals
      *
-     * @param int $individualA First individual ID
-     * @param int $individualB Second individual ID
+     * @param  int  $individualA  First individual ID
+     * @param  int  $individualB  Second individual ID
      * @return array{coefficient: float, description: string, shared_ancestors: int}
      */
     public function calculateCoefficientOfRelationship(int $individualA, int $individualB): array
     {
         $commonAncestors = $this->findCommonAncestors($individualA, $individualB);
-        
+
         if (empty($commonAncestors)) {
             return [
                 'coefficient' => 0.0,
                 'description' => 'No genetic relationship detected',
-                'shared_ancestors' => 0
+                'shared_ancestors' => 0,
             ];
         }
 
         $totalCoefficient = 0.0;
-        
+
         foreach ($commonAncestors as $ancestor) {
             // Calculate coefficient for this ancestor path
             // Formula: (1/2)^(n1 + n2 + 1) where n1 and n2 are distances to common ancestor
@@ -258,21 +255,21 @@ final class GraphAnalyticsService
         return [
             'coefficient' => round($totalCoefficient, 6),
             'description' => $this->describeGeneticRelationship($totalCoefficient),
-            'shared_ancestors' => count($commonAncestors)
+            'shared_ancestors' => count($commonAncestors),
         ];
     }
 
     /**
      * Find all descendants of an individual up to specified generations
      *
-     * @param int $individualId Individual ID
-     * @param int $maxGenerations Maximum generations to traverse
+     * @param  int  $individualId  Individual ID
+     * @param  int  $maxGenerations  Maximum generations to traverse
      * @return array<array{id: int, name: string, generation: int, relationship: string}>
      */
     public function findDescendants(int $individualId, int $maxGenerations = 10): array
     {
         $cacheKey = "descendants:{$individualId}:{$maxGenerations}";
-        
+
         return $this->cacheService->remember($cacheKey, 3600, function () use ($individualId, $maxGenerations) {
             $query = "
                 MATCH (ancestor:Individual {id: $individualId})
@@ -294,7 +291,7 @@ final class GraphAnalyticsService
                     'name' => $record->get('name'),
                     'birth_year' => $record->get('birth_year'),
                     'generation' => $generation,
-                    'relationship' => $this->generateDescendantRelationship($generation)
+                    'relationship' => $this->generateDescendantRelationship($generation),
                 ];
             }
 
@@ -305,13 +302,13 @@ final class GraphAnalyticsService
     /**
      * Analyze surname distribution in a tree
      *
-     * @param int $treeId Tree ID
+     * @param  int  $treeId  Tree ID
      * @return array<array{surname: string, count: int, percentage: float}>
      */
     public function analyzeSurnameDistribution(int $treeId): array
     {
         $cacheKey = "surname_distribution:{$treeId}";
-        
+
         return $this->cacheService->remember($cacheKey, 7200, function () use ($treeId) {
             $query = "
                 MATCH (i:Individual {tree_id: $treeId})
@@ -330,7 +327,7 @@ final class GraphAnalyticsService
                 $distribution[] = [
                     'surname' => $record->get('surname'),
                     'count' => $record->get('count'),
-                    'percentage' => $record->get('percentage')
+                    'percentage' => $record->get('percentage'),
                 ];
             }
 
@@ -345,7 +342,7 @@ final class GraphAnalyticsService
             'PARENT_OF' => 'parent of',
             'SPOUSE_OF' => 'spouse of',
             'SIBLING_OF' => 'sibling of',
-            default => strtolower(str_replace('_', ' ', $relationship))
+            default => mb_strtolower(str_replace('_', ' ', $relationship))
         };
     }
 
@@ -354,7 +351,7 @@ final class GraphAnalyticsService
         if ($distance === 0) {
             return 'Same person';
         }
-        
+
         if ($distance === 1) {
             return match ($relationships[0] ?? '') {
                 'SPOUSE_OF' => 'Spouse',
@@ -382,7 +379,7 @@ final class GraphAnalyticsService
             2 => 'Grandparent',
             3 => 'Great-grandparent',
             4 => 'Great-great-grandparent',
-            default => str_repeat('Great-', $distance - 2) . 'grandparent'
+            default => str_repeat('Great-', $distance - 2).'grandparent'
         };
     }
 
@@ -393,7 +390,7 @@ final class GraphAnalyticsService
             2 => 'Grandchild',
             3 => 'Great-grandchild',
             4 => 'Great-great-grandchild',
-            default => str_repeat('Great-', $generation - 2) . 'grandchild'
+            default => str_repeat('Great-', $generation - 2).'grandchild'
         };
     }
 
@@ -402,7 +399,7 @@ final class GraphAnalyticsService
         if ($females === 0) {
             return $males > 0 ? 999.0 : 0.0;
         }
-        
+
         return round($males / $females, 2);
     }
 

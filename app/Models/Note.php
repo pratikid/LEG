@@ -11,12 +11,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 final class Note extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'gedcom_xref',
         'text',
         'tree_id',
-        'user_id'
+        'user_id',
     ];
 
     public function tree(): BelongsTo

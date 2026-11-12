@@ -12,7 +12,6 @@ use App\Traits\HasUserRelationship;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
@@ -50,12 +49,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 final class Individual extends Model
 {
+    use HasCommonModelAttributes;
     use HasFactory;
     use HasPostgresEnums;
-    use LogsActivity;
     use HasTreeRelationship;
     use HasUserRelationship;
-    use HasCommonModelAttributes;
+    use LogsActivity;
 
     /**
      * Sex constants for better code readability

@@ -28,13 +28,13 @@ final class ApiUsageLog extends Model
         'referer',
         'consumed_quota',
         'error_message',
-        'metadata'
+        'metadata',
     ];
 
     protected $casts = [
         'request_data' => 'array',
         'metadata' => 'array',
-        'response_time' => 'integer'
+        'response_time' => 'integer',
     ];
 
     public function license(): BelongsTo

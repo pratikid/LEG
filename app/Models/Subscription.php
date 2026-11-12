@@ -16,6 +16,26 @@ final class Subscription extends Model
 {
     use HasFactory;
 
+    // Subscription statuses
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_CANCELED = 'canceled';
+
+    public const STATUS_PAST_DUE = 'past_due';
+
+    public const STATUS_UNPAID = 'unpaid';
+
+    public const STATUS_TRIALING = 'trialing';
+
+    public const STATUS_INCOMPLETE = 'incomplete';
+
+    // Billing cycles
+    public const CYCLE_MONTHLY = 'monthly';
+
+    public const CYCLE_YEARLY = 'yearly';
+
+    public const CYCLE_LIFETIME = 'lifetime';
+
     protected $fillable = [
         'user_id',
         'plan_id',
@@ -30,7 +50,7 @@ final class Subscription extends Model
         'payment_method',
         'stripe_subscription_id',
         'stripe_price_id',
-        'metadata'
+        'metadata',
     ];
 
     protected $casts = [
@@ -39,21 +59,8 @@ final class Subscription extends Model
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
         'canceled_at' => 'datetime',
-        'metadata' => 'array'
+        'metadata' => 'array',
     ];
-
-    // Subscription statuses
-    public const STATUS_ACTIVE = 'active';
-    public const STATUS_CANCELED = 'canceled';
-    public const STATUS_PAST_DUE = 'past_due';
-    public const STATUS_UNPAID = 'unpaid';
-    public const STATUS_TRIALING = 'trialing';
-    public const STATUS_INCOMPLETE = 'incomplete';
-
-    // Billing cycles
-    public const CYCLE_MONTHLY = 'monthly';
-    public const CYCLE_YEARLY = 'yearly';
-    public const CYCLE_LIFETIME = 'lifetime';
 
     public function user(): BelongsTo
     {
@@ -83,8 +90,8 @@ final class Subscription extends Model
      */
     public function isTrialing(): bool
     {
-        return $this->status === self::STATUS_TRIALING && 
-               $this->trial_ends_at && 
+        return $this->status === self::STATUS_TRIALING &&
+               $this->trial_ends_at &&
                $this->trial_ends_at->isFuture();
     }
 
@@ -105,7 +112,7 @@ final class Subscription extends Model
      */
     public function hasFeatureAccess(string $feature): bool
     {
-        if (!$this->isActive()) {
+        if (! $this->isActive()) {
             return false;
         }
 
@@ -117,7 +124,7 @@ final class Subscription extends Model
      */
     public function isWithinLimits(string $limitType): bool
     {
-        if (!$this->isActive()) {
+        if (! $this->isActive()) {
             return false;
         }
 
@@ -127,6 +134,7 @@ final class Subscription extends Model
         }
 
         $currentUsage = $this->getCurrentUsage($limitType);
+
         return $currentUsage < $limit;
     }
 
@@ -154,17 +162,17 @@ final class Subscription extends Model
             ->firstOrCreate([
                 'usage_type' => $usageType,
                 'period_start' => $periodStart,
-                'period_end' => $periodEnd
+                'period_end' => $periodEnd,
             ], [
                 'usage_count' => 0,
-                'metadata' => []
+                'metadata' => [],
             ]);
 
         $usage->increment('usage_count', $quantity);
-        
-        if (!empty($metadata)) {
+
+        if (! empty($metadata)) {
             $usage->update([
-                'metadata' => array_merge($usage->metadata ?? [], $metadata)
+                'metadata' => array_merge($usage->metadata ?? [], $metadata),
             ]);
         }
 
@@ -180,7 +188,7 @@ final class Subscription extends Model
             return null; // Lifetime subscription
         }
 
-        if (!$this->ends_at) {
+        if (! $this->ends_at) {
             return null;
         }
 
@@ -193,7 +201,7 @@ final class Subscription extends Model
     public function needsRenewal(int $daysThreshold = 7): bool
     {
         $daysRemaining = $this->daysRemaining();
-        
+
         if ($daysRemaining === null) {
             return false; // Lifetime subscription
         }
@@ -208,7 +216,7 @@ final class Subscription extends Model
     {
         $this->update([
             'status' => self::STATUS_CANCELED,
-            'canceled_at' => now()
+            'canceled_at' => now(),
         ]);
     }
 
@@ -219,7 +227,7 @@ final class Subscription extends Model
     {
         $this->update([
             'status' => self::STATUS_ACTIVE,
-            'canceled_at' => null
+            'canceled_at' => null,
         ]);
     }
 }

@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 final class SearchController extends Controller
 {
     use ApiResponseTrait;
+
     /**
      * Search individuals
      */

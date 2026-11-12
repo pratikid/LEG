@@ -20,6 +20,7 @@ use MongoDB\Client as MongoClient;
 final class GedcomImportOptimizer
 {
     use HandlesGedcomOperations;
+
     private const BATCH_SIZE = 100;
 
     private const MAX_MEMORY_USAGE = 512 * 1024 * 1024; // 512MB

@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace App\Console\Commands\Analytics;
 
 use App\Services\Analytics\AnalyticsETLService;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Exception;
 
 /**
  * Laravel Artisan command for running the analytics ETL pipeline
  * Usage: php artisan analytics:etl [--tree=ID] [--force] [--dry-run]
  */
-class RunAnalyticsETL extends Command
+final class RunAnalyticsETL extends Command
 {
     protected $signature = 'analytics:etl 
                             {--tree= : Process specific tree ID only}
@@ -40,7 +40,7 @@ class RunAnalyticsETL extends Command
             $startTime = microtime(true);
 
             // Validate prerequisites
-            if (!$this->validatePrerequisites()) {
+            if (! $this->validatePrerequisites()) {
                 return Command::FAILURE;
             }
 
@@ -58,8 +58,9 @@ class RunAnalyticsETL extends Command
             return Command::SUCCESS;
 
         } catch (Exception $e) {
-            $this->error('❌ ETL Pipeline failed: ' . $e->getMessage());
-            $this->line('Stack trace: ' . $e->getTraceAsString());
+            $this->error('❌ ETL Pipeline failed: '.$e->getMessage());
+            $this->line('Stack trace: '.$e->getTraceAsString());
+
             return Command::FAILURE;
         }
     }
@@ -76,23 +77,25 @@ class RunAnalyticsETL extends Command
             DB::connection()->getPdo();
             $this->line('✅ PostgreSQL connection: OK');
         } catch (Exception $e) {
-            $this->error('❌ PostgreSQL connection failed: ' . $e->getMessage());
+            $this->error('❌ PostgreSQL connection failed: '.$e->getMessage());
+
             return false;
         }
 
         // Check if analytics tables exist
         $requiredTables = [
             'dim_time',
-            'dim_location', 
+            'dim_location',
             'fact_individuals',
             'fact_relationships',
             'fact_tree_metrics',
-            'analytics_jobs'
+            'analytics_jobs',
         ];
 
         foreach ($requiredTables as $table) {
-            if (!$this->tableExists($table)) {
+            if (! $this->tableExists($table)) {
                 $this->error("❌ Required table '{$table}' does not exist. Please run migrations first.");
+
                 return false;
             }
         }
@@ -104,11 +107,13 @@ class RunAnalyticsETL extends Command
 
         if ($individualsCount === 0) {
             $this->warn('⚠️  No individuals found in database');
+
             return false;
         }
 
         if ($treesCount === 0) {
             $this->warn('⚠️  No family trees found in database');
+
             return false;
         }
 
@@ -123,17 +128,17 @@ class RunAnalyticsETL extends Command
     private function clearCache(): void
     {
         $this->info('🧹 Clearing analytics cache...');
-        
+
         // Clear analytics-specific cache keys
         cache()->tags(['analytics'])->flush();
-        
+
         // Clear individual processing cache
         $cacheKeys = cache()->get('analytics:individual_cache_keys', []);
         foreach ($cacheKeys as $key) {
             cache()->forget($key);
         }
         cache()->forget('analytics:individual_cache_keys');
-        
+
         $this->line('✅ Cache cleared');
     }
 
@@ -147,7 +152,7 @@ class RunAnalyticsETL extends Command
         }
 
         $treeId = $this->option('tree');
-        
+
         if ($treeId) {
             return $this->runTreeSpecificETL((int) $treeId);
         }
@@ -164,10 +169,10 @@ class RunAnalyticsETL extends Command
 
         $treesCount = DB::table('trees')->count();
         $individualsCount = DB::table('individuals')->count();
-        
+
         $processedIndividuals = DB::table('fact_individuals')->count();
         $processedRelationships = DB::table('fact_relationships')->count();
-        
+
         $this->table(
             ['Metric', 'Current', 'To Process'],
             [
@@ -175,7 +180,7 @@ class RunAnalyticsETL extends Command
                 ['Individuals', $individualsCount, $individualsCount - $processedIndividuals],
                 ['Relationships (estimated)', '?', '?'],
                 ['Time dimension records', DB::table('dim_time')->count(), 'Auto-populated'],
-                ['Location records', DB::table('dim_location')->count(), 'Auto-created as needed']
+                ['Location records', DB::table('dim_location')->count(), 'Auto-created as needed'],
             ]
         );
 
@@ -187,7 +192,7 @@ class RunAnalyticsETL extends Command
             'time_records_created' => 0,
             'duration_seconds' => 0,
             'errors' => [],
-            'dry_run' => true
+            'dry_run' => true,
         ];
     }
 
@@ -199,7 +204,7 @@ class RunAnalyticsETL extends Command
         $this->info("🌳 Processing tree ID: {$treeId}");
 
         $tree = DB::table('trees')->where('id', $treeId)->first();
-        if (!$tree) {
+        if (! $tree) {
             throw new Exception("Tree with ID {$treeId} not found");
         }
 
@@ -211,7 +216,7 @@ class RunAnalyticsETL extends Command
         $progressBar->setFormat('Processing: %current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s%');
 
         $results = $this->etlService->processTree($tree);
-        
+
         $progressBar->finish();
         $this->newLine(2);
 
@@ -222,7 +227,7 @@ class RunAnalyticsETL extends Command
             'locations_created' => $results['locations'],
             'time_records_created' => 0,
             'duration_seconds' => 0,
-            'errors' => []
+            'errors' => [],
         ];
     }
 
@@ -232,7 +237,7 @@ class RunAnalyticsETL extends Command
     private function runFullETL(): array
     {
         $this->info('🌍 Running full ETL pipeline for all trees...');
-        
+
         return $this->etlService->runFullETL();
     }
 
@@ -242,13 +247,14 @@ class RunAnalyticsETL extends Command
     private function displayResults(array $results, float $startTime): void
     {
         $duration = round(microtime(true) - $startTime, 2);
-        
+
         $this->newLine();
         $this->info('📊 ETL Pipeline Results');
         $this->newLine();
 
-        if (!empty($results['dry_run'])) {
+        if (! empty($results['dry_run'])) {
             $this->warn('This was a dry-run. No data was processed.');
+
             return;
         }
 
@@ -260,18 +266,18 @@ class RunAnalyticsETL extends Command
                 ['Relationships Processed', number_format($results['relationships_processed'] ?? 0)],
                 ['Locations Created', number_format($results['locations_created'] ?? 0)],
                 ['Time Records Available', number_format($results['time_records_created'] ?? 0)],
-                ['Total Duration', $duration . ' seconds'],
+                ['Total Duration', $duration.' seconds'],
                 ['Processing Rate', $this->calculateProcessingRate($results, $duration)],
-                ['Errors', count($results['errors'] ?? [])]
+                ['Errors', count($results['errors'] ?? [])],
             ]
         );
 
         // Display errors if any
-        if (!empty($results['errors'])) {
+        if (! empty($results['errors'])) {
             $this->newLine();
             $this->error('❌ Errors encountered:');
             foreach ($results['errors'] as $error) {
-                $this->line('  • ' . $error);
+                $this->line('  • '.$error);
             }
         }
 
@@ -295,7 +301,7 @@ class RunAnalyticsETL extends Command
         $totalRecords = ($results['individuals_processed'] ?? 0) + ($results['relationships_processed'] ?? 0);
         $rate = round($totalRecords / $duration, 2);
 
-        return number_format($rate) . ' records/sec';
+        return number_format($rate).' records/sec';
     }
 
     /**

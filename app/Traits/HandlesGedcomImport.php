@@ -15,49 +15,49 @@ use Illuminate\Support\Facades\Storage;
 trait HandlesGedcomImport
 {
     use HandlesGedcomDates;
-    
+
     /**
      * Clean and store the GEDCOM file content.
      *
-     * @param string $gedcomContent The raw GEDCOM content
-     * @param string $filename The name of the file
+     * @param  string  $gedcomContent  The raw GEDCOM content
+     * @param  string  $filename  The name of the file
      * @return string The path to the stored file
      */
     protected function cleanAndStoreGedcomContent(string $gedcomContent, string $filename): string
     {
         // Remove BOM if present
         $gedcomContent = $this->removeBOM($gedcomContent);
-        
+
         // Normalize line endings
         $gedcomContent = $this->normalizeLineEndings($gedcomContent);
-        
+
         // Store the cleaned content
-        $path = 'gedcom/' . $filename;
+        $path = 'gedcom/'.$filename;
         Storage::put($path, $gedcomContent);
-        
+
         return $path;
     }
-    
+
     /**
      * Remove Byte Order Mark (BOM) from the content.
      *
-     * @param string $content The content to process
+     * @param  string  $content  The content to process
      * @return string The content without BOM
      */
     protected function removeBOM(string $content): string
     {
         // UTF-8 BOM is 0xEF 0xBB 0xBF
-        if (substr($content, 0, 3) === "\xEF\xBB\xBF") {
-            return substr($content, 3);
+        if (mb_substr($content, 0, 3) === "\xEF\xBB\xBF") {
+            return mb_substr($content, 3);
         }
-        
+
         return $content;
     }
-    
+
     /**
      * Normalize line endings to LF.
      *
-     * @param string $content The content to process
+     * @param  string  $content  The content to process
      * @return string The content with normalized line endings
      */
     protected function normalizeLineEndings(string $content): string
@@ -65,14 +65,13 @@ trait HandlesGedcomImport
         // Convert all line endings to LF
         return str_replace(["\r\n", "\r"], "\n", $content);
     }
-    
+
     /**
      * Handle GEDCOM import failure.
      *
-     * @param ImportProgress $progress The import progress record
-     * @param Exception $exception The exception that occurred
-     * @param string|null $filePath The path to the GEDCOM file
-     * @return void
+     * @param  ImportProgress  $progress  The import progress record
+     * @param  Exception  $exception  The exception that occurred
+     * @param  string|null  $filePath  The path to the GEDCOM file
      */
     protected function handleImportFailure(ImportProgress $progress, Exception $exception, ?string $filePath = null): void
     {
@@ -81,7 +80,7 @@ trait HandlesGedcomImport
             'status' => ImportProgress::STATUS_FAILED,
             'error_message' => $exception->getMessage(),
         ]);
-        
+
         // Log the error
         Log::error('GEDCOM import failed', [
             'message' => $exception->getMessage(),
@@ -90,27 +89,27 @@ trait HandlesGedcomImport
             'user_id' => $progress->user_id,
             'tree_id' => $progress->tree_id,
         ]);
-        
+
         // Clean up the file if needed
         if ($filePath && Storage::exists($filePath)) {
             Storage::delete($filePath);
         }
     }
-    
+
     /**
      * Extract level, tag, and value from a GEDCOM line.
      *
-     * @param string $line The GEDCOM line to parse
+     * @param  string  $line  The GEDCOM line to parse
      * @return array{level: int, tag: string, value: string} The parsed components
      */
     protected function parseGedcomLine(string $line): array
     {
-        $line = trim($line);
-        
+        $line = mb_trim($line);
+
         if (empty($line)) {
             return ['level' => 0, 'tag' => '', 'value' => ''];
         }
-        
+
         // Basic pattern: level + tag + optional value
         if (preg_match('/^(\d+)\s+([A-Z0-9_]+)(?:\s+(.*))?$/', $line, $matches)) {
             return [
@@ -119,27 +118,26 @@ trait HandlesGedcomImport
                 'value' => $matches[3] ?? '',
             ];
         }
-        
+
         // Handle pointer references
         if (preg_match('/^(\d+)\s+(@[A-Z0-9:]+@)\s+([A-Z0-9_]+)(?:\s+(.*))?$/', $line, $matches)) {
             return [
                 'level' => (int) $matches[1],
                 'tag' => $matches[3],
-                'value' => $matches[2] . (isset($matches[4]) ? ' ' . $matches[4] : ''),
+                'value' => $matches[2].(isset($matches[4]) ? ' '.$matches[4] : ''),
             ];
         }
-        
+
         // Default fallback
         return ['level' => 0, 'tag' => 'UNKNOWN', 'value' => $line];
     }
-    
+
     /**
      * Update import progress.
      *
-     * @param ImportProgress $progress The import progress record
-     * @param int $processedRecords The number of processed records
-     * @param string|null $statusMessage Optional status message
-     * @return void
+     * @param  ImportProgress  $progress  The import progress record
+     * @param  int  $processedRecords  The number of processed records
+     * @param  string|null  $statusMessage  Optional status message
      */
     protected function updateImportProgress(ImportProgress $progress, int $processedRecords, ?string $statusMessage = null): void
     {

@@ -14,18 +14,18 @@ trait HasCommonModelAttributes
      */
     public function getDisplayNameAttribute(): string
     {
-        return $this->name ?? $this->title ?? $this->first_name . ' ' . $this->last_name ?? 'Unknown';
+        return $this->name ?? $this->title ?? $this->first_name.' '.$this->last_name ?? 'Unknown';
     }
-    
+
     /**
      * Format a date for display.
      */
     protected function formatDateForDisplay(?string $date): ?string
     {
-        if (!$date) {
+        if (! $date) {
             return null;
         }
-        
+
         return date('F j, Y', strtotime($date));
     }
 }

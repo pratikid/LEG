@@ -6,11 +6,9 @@ namespace App\Services;
 
 use App\Models\Individual;
 use App\Models\Tree;
-use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\View;
 
 /**
  * Advanced reporting service with PDF generation and customizable templates
@@ -26,8 +24,7 @@ final class ReportService
     /**
      * Generate family tree chart report
      *
-     * @param Tree $tree
-     * @param array $options Configuration options
+     * @param  array  $options  Configuration options
      * @return array Report data and metadata
      */
     public function generateFamilyTreeChart(Tree $tree, array $options = []): array
@@ -40,14 +37,14 @@ final class ReportService
             'include_locations' => false,
             'generations' => 4,
             'style' => 'traditional', // traditional, modern, compact
-            'color_scheme' => 'default'
+            'color_scheme' => 'default',
         ];
 
         $config = array_merge($defaultOptions, $options);
 
         // Get tree individuals with privacy filtering
         $individuals = $this->getTreeIndividuals($tree, $config['generations']);
-        
+
         // Generate chart data structure
         $chartData = $this->buildChartStructure($individuals, $config);
 
@@ -58,7 +55,7 @@ final class ReportService
             'tree' => $tree,
             'chart_data' => $chartData,
             'statistics' => $this->graphService->calculateTreeStatistics($tree->id),
-            'options' => $config
+            'options' => $config,
         ];
 
         if ($config['format'] === 'pdf') {
@@ -70,10 +67,6 @@ final class ReportService
 
     /**
      * Generate ancestor report
-     *
-     * @param Individual $individual
-     * @param array $options
-     * @return array
      */
     public function generateAncestorReport(Individual $individual, array $options = []): array
     {
@@ -83,14 +76,14 @@ final class ReportService
             'include_sources' => true,
             'include_notes' => false,
             'format' => 'pdf',
-            'detailed' => true
+            'detailed' => true,
         ];
 
         $config = array_merge($defaultOptions, $options);
 
         // Get ancestors
         $ancestors = $this->getAncestors($individual, $config['generations']);
-        
+
         // Get additional data if requested
         $additionalData = [];
         if ($config['include_siblings']) {
@@ -103,7 +96,7 @@ final class ReportService
             'ancestors' => $ancestors,
             'additional_data' => $additionalData,
             'generated_at' => now(),
-            'options' => $config
+            'options' => $config,
         ];
 
         if ($config['format'] === 'pdf') {
@@ -115,10 +108,6 @@ final class ReportService
 
     /**
      * Generate descendant report
-     *
-     * @param Individual $individual
-     * @param array $options
-     * @return array
      */
     public function generateDescendantReport(Individual $individual, array $options = []): array
     {
@@ -127,7 +116,7 @@ final class ReportService
             'include_spouses' => true,
             'include_statistics' => true,
             'format' => 'pdf',
-            'group_by_generation' => true
+            'group_by_generation' => true,
         ];
 
         $config = array_merge($defaultOptions, $options);
@@ -146,7 +135,7 @@ final class ReportService
             'descendants' => $descendants,
             'statistics' => $this->calculateDescendantStatistics($descendants),
             'generated_at' => now(),
-            'options' => $config
+            'options' => $config,
         ];
 
         if ($config['format'] === 'pdf') {
@@ -158,10 +147,6 @@ final class ReportService
 
     /**
      * Generate comprehensive tree statistics report
-     *
-     * @param Tree $tree
-     * @param array $options
-     * @return array
      */
     public function generateStatisticsReport(Tree $tree, array $options = []): array
     {
@@ -170,7 +155,7 @@ final class ReportService
             'include_surname_analysis' => true,
             'include_geographic_analysis' => false,
             'include_timeline' => true,
-            'format' => 'pdf'
+            'format' => 'pdf',
         ];
 
         $config = array_merge($defaultOptions, $options);
@@ -178,7 +163,7 @@ final class ReportService
         // Gather comprehensive statistics
         $statistics = $this->graphService->calculateTreeStatistics($tree->id);
         $surnameDistribution = $this->graphService->analyzeSurnameDistribution($tree->id);
-        
+
         $reportData = [
             'title' => "Statistics Report: {$tree->name}",
             'tree' => $tree,
@@ -187,7 +172,7 @@ final class ReportService
             'demographic_data' => $this->calculateDemographics($tree),
             'timeline_data' => $this->generateTimelineData($tree),
             'generated_at' => now(),
-            'options' => $config
+            'options' => $config,
         ];
 
         if ($config['format'] === 'pdf') {
@@ -199,10 +184,6 @@ final class ReportService
 
     /**
      * Generate family history book
-     *
-     * @param Tree $tree
-     * @param array $options
-     * @return array
      */
     public function generateFamilyBook(Tree $tree, array $options = []): array
     {
@@ -217,10 +198,10 @@ final class ReportService
                 'individuals',
                 'timeline',
                 'statistics',
-                'appendix'
+                'appendix',
             ],
             'format' => 'pdf',
-            'style' => 'professional'
+            'style' => 'professional',
         ];
 
         $config = array_merge($defaultOptions, $options);
@@ -232,14 +213,14 @@ final class ReportService
             'chapters' => $this->buildBookChapters($tree, $config),
             'table_of_contents' => $this->generateTableOfContents($tree, $config),
             'generated_at' => now(),
-            'options' => $config
+            'options' => $config,
         ];
 
         if ($config['format'] === 'pdf') {
             return $this->generatePdfReport($bookData, 'reports.family-book', [
                 'orientation' => 'portrait',
                 'paper' => 'a4',
-                'margin' => '20mm'
+                'margin' => '20mm',
             ]);
         }
 
@@ -248,25 +229,20 @@ final class ReportService
 
     /**
      * Generate custom report based on template
-     *
-     * @param string $templateName
-     * @param array $data
-     * @param array $options
-     * @return array
      */
     public function generateCustomReport(string $templateName, array $data, array $options = []): array
     {
         $defaultOptions = [
             'format' => 'pdf',
             'orientation' => 'portrait',
-            'paper' => 'a4'
+            'paper' => 'a4',
         ];
 
         $config = array_merge($defaultOptions, $options);
 
         $reportData = array_merge($data, [
             'generated_at' => now(),
-            'options' => $config
+            'options' => $config,
         ]);
 
         if ($config['format'] === 'pdf') {
@@ -278,18 +254,13 @@ final class ReportService
 
     /**
      * Generate PDF report from data and template
-     *
-     * @param array $data
-     * @param string $template
-     * @param array $pdfOptions
-     * @return array
      */
     private function generatePdfReport(array $data, string $template, array $pdfOptions = []): array
     {
         $defaultPdfOptions = [
             'orientation' => 'portrait',
             'paper' => 'a4',
-            'margin' => '15mm'
+            'margin' => '15mm',
         ];
 
         $options = array_merge($defaultPdfOptions, $pdfOptions);
@@ -305,7 +276,7 @@ final class ReportService
         // Generate filename and store
         $filename = $this->generateReportFilename($data['title']);
         $path = "reports/{$filename}.pdf";
-        
+
         Storage::disk('local')->put($path, $pdf->output());
 
         return [
@@ -315,7 +286,7 @@ final class ReportService
             'size' => Storage::disk('local')->size($path),
             'url' => Storage::disk('local')->url($path),
             'generated_at' => $data['generated_at'],
-            'data' => $data
+            'data' => $data,
         ];
     }
 
@@ -335,7 +306,7 @@ final class ReportService
         $chart = [
             'nodes' => [],
             'connections' => [],
-            'layout' => $config['style']
+            'layout' => $config['style'],
         ];
 
         foreach ($individuals as $individual) {
@@ -345,7 +316,7 @@ final class ReportService
                 'birth_year' => $individual['birth_year'],
                 'death_year' => $individual['death_year'],
                 'gender' => $individual['sex'],
-                'generation' => $this->calculateGenerationLevel($individual)
+                'generation' => $this->calculateGenerationLevel($individual),
             ];
         }
 
@@ -362,20 +333,20 @@ final class ReportService
     {
         // Get siblings for each ancestor
         $siblings = [];
-        
+
         foreach ($ancestors as $ancestor) {
             if (isset($ancestor['parents'])) {
                 // Find other children of the same parents
                 $siblings[$ancestor['id']] = $this->findSiblingsOfIndividual($ancestor);
             }
         }
-        
+
         return $siblings;
     }
 
     private function calculateDescendantStatistics(array $descendants): array
     {
-        if (is_array($descendants) && isset($descendants[0]) && !is_array($descendants[0])) {
+        if (is_array($descendants) && isset($descendants[0]) && ! is_array($descendants[0])) {
             // Flat array
             $total = count($descendants);
         } else {
@@ -385,61 +356,61 @@ final class ReportService
 
         return [
             'total_descendants' => $total,
-            'generations' => is_array($descendants) && isset($descendants[0]) && is_array($descendants[0]) 
+            'generations' => is_array($descendants) && isset($descendants[0]) && is_array($descendants[0])
                 ? count($descendants) : 0,
-            'average_per_generation' => $total > 0 ? round($total / max(1, count($descendants))) : 0
+            'average_per_generation' => $total > 0 ? round($total / max(1, count($descendants))) : 0,
         ];
     }
 
     private function calculateDemographics(Tree $tree): array
     {
         $individuals = $tree->individuals;
-        
+
         return [
             'gender_distribution' => [
                 'male' => $individuals->where('sex', 'M')->count(),
                 'female' => $individuals->where('sex', 'F')->count(),
-                'unknown' => $individuals->whereNotIn('sex', ['M', 'F'])->count()
+                'unknown' => $individuals->whereNotIn('sex', ['M', 'F'])->count(),
             ],
             'birth_year_range' => [
                 'earliest' => $individuals->whereNotNull('birth_year')->min('birth_year'),
-                'latest' => $individuals->whereNotNull('birth_year')->max('birth_year')
+                'latest' => $individuals->whereNotNull('birth_year')->max('birth_year'),
             ],
-            'completeness' => $this->calculateDataCompleteness($individuals)
+            'completeness' => $this->calculateDataCompleteness($individuals),
         ];
     }
 
     private function generateTimelineData(Tree $tree): array
     {
         $events = [];
-        
+
         foreach ($tree->individuals as $individual) {
             if ($individual->birth_year) {
                 $events[] = [
                     'year' => $individual->birth_year,
                     'type' => 'birth',
                     'individual' => "{$individual->first_name} {$individual->last_name}",
-                    'description' => "Birth of {$individual->first_name}"
+                    'description' => "Birth of {$individual->first_name}",
                 ];
             }
-            
+
             if ($individual->death_year) {
                 $events[] = [
                     'year' => $individual->death_year,
                     'type' => 'death',
                     'individual' => "{$individual->first_name} {$individual->last_name}",
-                    'description' => "Death of {$individual->first_name}"
+                    'description' => "Death of {$individual->first_name}",
                 ];
             }
         }
-        
+
         return collect($events)->sortBy('year')->values()->toArray();
     }
 
     private function buildBookChapters(Tree $tree, array $config): array
     {
         $chapters = [];
-        
+
         foreach ($config['chapters'] as $chapterType) {
             switch ($chapterType) {
                 case 'introduction':
@@ -462,7 +433,7 @@ final class ReportService
                     break;
             }
         }
-        
+
         return $chapters;
     }
 
@@ -471,7 +442,7 @@ final class ReportService
         return [
             'title' => 'Introduction',
             'content' => "This family history book contains the genealogical research for the {$tree->name} family tree.",
-            'tree_overview' => $this->graphService->calculateTreeStatistics($tree->id)
+            'tree_overview' => $this->graphService->calculateTreeStatistics($tree->id),
         ];
     }
 
@@ -480,7 +451,7 @@ final class ReportService
         return [
             'title' => 'Family Tree',
             'chart_data' => $this->generateFamilyTreeChart($tree, ['format' => 'data']),
-            'description' => 'Visual representation of the family relationships'
+            'description' => 'Visual representation of the family relationships',
         ];
     }
 
@@ -496,7 +467,7 @@ final class ReportService
         return [
             'title' => 'Individual Profiles',
             'individuals' => $individuals,
-            'total_count' => $individuals->count()
+            'total_count' => $individuals->count(),
         ];
     }
 
@@ -505,7 +476,7 @@ final class ReportService
         return [
             'title' => 'Family Timeline',
             'timeline_data' => $this->generateTimelineData($tree),
-            'description' => 'Chronological view of family events'
+            'description' => 'Chronological view of family events',
         ];
     }
 
@@ -515,7 +486,7 @@ final class ReportService
             'title' => 'Family Statistics',
             'statistics' => $this->graphService->calculateTreeStatistics($tree->id),
             'demographics' => $this->calculateDemographics($tree),
-            'surname_analysis' => $this->graphService->analyzeSurnameDistribution($tree->id)
+            'surname_analysis' => $this->graphService->analyzeSurnameDistribution($tree->id),
         ];
     }
 
@@ -528,8 +499,8 @@ final class ReportService
             'technical_info' => [
                 'generated_date' => now()->toDateString(),
                 'software' => 'LEG - Lineage Exploration & Genealogy',
-                'version' => config('app.version', '1.0.0')
-            ]
+                'version' => config('app.version', '1.0.0'),
+            ],
         ];
     }
 
@@ -537,15 +508,15 @@ final class ReportService
     {
         $toc = [];
         $pageNumber = 1;
-        
+
         foreach ($config['chapters'] as $chapter) {
             $toc[] = [
                 'title' => ucwords(str_replace('_', ' ', $chapter)),
-                'page' => $pageNumber
+                'page' => $pageNumber,
             ];
             $pageNumber += $this->estimateChapterPages($chapter, $tree);
         }
-        
+
         return $toc;
     }
 
@@ -566,20 +537,20 @@ final class ReportService
     {
         $fields = ['first_name', 'last_name', 'birth_date', 'death_date', 'birth_location', 'death_location'];
         $totalFields = $individuals->count() * count($fields);
-        
+
         if ($totalFields === 0) {
             return 0.0;
         }
-        
+
         $filledFields = 0;
         foreach ($individuals as $individual) {
             foreach ($fields as $field) {
-                if (!empty($individual->$field)) {
+                if (! empty($individual->$field)) {
                     $filledFields++;
                 }
             }
         }
-        
+
         return round(($filledFields / $totalFields) * 100, 1);
     }
 
@@ -599,6 +570,7 @@ final class ReportService
     {
         $slug = \Illuminate\Support\Str::slug($title);
         $timestamp = now()->format('Y-m-d_H-i-s');
+
         return "{$slug}_{$timestamp}";
     }
 }

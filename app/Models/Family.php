@@ -31,9 +31,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 final class Family extends Model
 {
+    use HasCommonModelAttributes;
     use HasFactory;
     use HasTreeRelationship;
-    use HasCommonModelAttributes;
 
     protected $fillable = [
         'tree_id',

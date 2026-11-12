@@ -11,7 +11,6 @@ use App\Models\Note;
 use App\Models\Repository;
 use App\Models\Source;
 use App\Models\Tree;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -23,10 +22,10 @@ trait HandlesDataExport
     /**
      * Export tree data to JSON format.
      *
-     * @param Tree $tree The tree to export
-     * @param bool $includeMedia Whether to include media references
-     * @param bool $includePrivateData Whether to include private data
-     * @param string $disk Storage disk to use
+     * @param  Tree  $tree  The tree to export
+     * @param  bool  $includeMedia  Whether to include media references
+     * @param  bool  $includePrivateData  Whether to include private data
+     * @param  string  $disk  Storage disk to use
      * @return string The path to the generated JSON file
      */
     protected function exportTreeToJson(
@@ -36,13 +35,13 @@ trait HandlesDataExport
         string $disk = 'local'
     ): string {
         // Generate a unique filename
-        $filename = 'tree_' . $tree->id . '_' . Str::uuid() . '.json';
+        $filename = 'tree_'.$tree->id.'_'.Str::uuid().'.json';
         $directory = 'exports';
-        $path = $directory . '/' . $filename;
-        
+        $path = $directory.'/'.$filename;
+
         // Ensure the directory exists
         Storage::disk($disk)->makeDirectory($directory);
-        
+
         // Build the export data
         $exportData = [
             'tree' => $this->formatTreeForExport($tree),
@@ -52,39 +51,38 @@ trait HandlesDataExport
             'repositories' => [],
             'notes' => [],
         ];
-        
+
         // Add individuals
         $individuals = Individual::where('tree_id', $tree->id)->get();
         foreach ($individuals as $individual) {
             $exportData['individuals'][] = $this->formatIndividualForExport($individual, $includePrivateData);
         }
-        
+
         // Add families
         $families = Family::where('tree_id', $tree->id)->get();
         foreach ($families as $family) {
             $exportData['families'][] = $this->formatFamilyForExport($family, $includePrivateData);
         }
-        
+
         // Add sources
         $sources = Source::where('tree_id', $tree->id)->get();
         foreach ($sources as $source) {
             $exportData['sources'][] = $this->formatSourceForExport($source);
         }
-        
+
         // Add repositories
         $repositories = Repository::where('tree_id', $tree->id)->get();
         foreach ($repositories as $repository) {
             $exportData['repositories'][] = $this->formatRepositoryForExport($repository);
         }
-        
-        // Add notes
-        $notes = \App\Models\Note::where('tree_id', $tree->id)->get();
 
+        // Add notes
+        $notes = Note::where('tree_id', $tree->id)->get();
 
         foreach ($notes as $note) {
             $exportData['notes'][] = $this->formatNoteForExport($note);
         }
-        
+
         // Add media if requested
         if ($includeMedia) {
             $exportData['media'] = [];
@@ -93,20 +91,20 @@ trait HandlesDataExport
                 $exportData['media'][] = $this->formatMediaForExport($mediaItem);
             }
         }
-        
+
         // Write the JSON content to the file
         Storage::disk($disk)->put($path, json_encode($exportData, JSON_PRETTY_PRINT));
-        
+
         return $path;
     }
-    
+
     /**
      * Export tree data to CSV format.
      *
-     * @param Tree $tree The tree to export
-     * @param string $entityType The entity type to export (individuals, families, sources, etc.)
-     * @param bool $includePrivateData Whether to include private data
-     * @param string $disk Storage disk to use
+     * @param  Tree  $tree  The tree to export
+     * @param  string  $entityType  The entity type to export (individuals, families, sources, etc.)
+     * @param  bool  $includePrivateData  Whether to include private data
+     * @param  string  $disk  Storage disk to use
      * @return string The path to the generated CSV file
      */
     protected function exportTreeToCsv(
@@ -116,58 +114,58 @@ trait HandlesDataExport
         string $disk = 'local'
     ): string {
         // Generate a unique filename
-        $filename = 'tree_' . $tree->id . '_' . $entityType . '_' . Str::uuid() . '.csv';
+        $filename = 'tree_'.$tree->id.'_'.$entityType.'_'.Str::uuid().'.csv';
         $directory = 'exports';
-        $path = $directory . '/' . $filename;
-        
+        $path = $directory.'/'.$filename;
+
         // Ensure the directory exists
         Storage::disk($disk)->makeDirectory($directory);
-        
+
         // Get the data to export
         $data = $this->getEntityDataForCsvExport($tree, $entityType, $includePrivateData);
-        
+
         // Create CSV content
         $csvContent = $this->generateCsvContent($data['headers'], $data['rows']);
-        
+
         // Write the CSV content to the file
         Storage::disk($disk)->put($path, $csvContent);
-        
+
         return $path;
     }
-    
+
     /**
      * Generate CSV content from headers and rows.
      *
-     * @param array $headers The CSV headers
-     * @param array $rows The CSV data rows
+     * @param  array  $headers  The CSV headers
+     * @param  array  $rows  The CSV data rows
      * @return string The generated CSV content
      */
     protected function generateCsvContent(array $headers, array $rows): string
     {
         $handle = fopen('php://temp', 'r+');
-        
+
         // Add headers
         fputcsv($handle, $headers);
-        
+
         // Add data rows
         foreach ($rows as $row) {
             fputcsv($handle, $row);
         }
-        
+
         // Get the content
         rewind($handle);
         $content = stream_get_contents($handle);
         fclose($handle);
-        
+
         return $content;
     }
-    
+
     /**
      * Get entity data for CSV export.
      *
-     * @param Tree $tree The tree
-     * @param string $entityType The entity type to export
-     * @param bool $includePrivateData Whether to include private data
+     * @param  Tree  $tree  The tree
+     * @param  string  $entityType  The entity type to export
+     * @param  bool  $includePrivateData  Whether to include private data
      * @return array The headers and rows for CSV export
      */
     protected function getEntityDataForCsvExport(
@@ -177,14 +175,14 @@ trait HandlesDataExport
     ): array {
         $headers = [];
         $rows = [];
-        
+
         switch ($entityType) {
             case 'individuals':
                 $headers = [
                     'ID', 'GEDCOM Xref', 'Given Name', 'Surname', 'Nickname', 'Sex',
-                    'Birth Date', 'Birth Place', 'Death Date', 'Death Place', 'Occupation', 'Note'
+                    'Birth Date', 'Birth Place', 'Death Date', 'Death Place', 'Occupation', 'Note',
                 ];
-                
+
                 $individuals = Individual::where('tree_id', $tree->id)->get();
                 foreach ($individuals as $individual) {
                     $row = [
@@ -204,13 +202,13 @@ trait HandlesDataExport
                     $rows[] = $row;
                 }
                 break;
-                
+
             case 'families':
                 $headers = [
                     'ID', 'GEDCOM Xref', 'Husband ID', 'Husband Name', 'Wife ID', 'Wife Name',
-                    'Marriage Date', 'Marriage Place', 'Marriage Type', 'Divorce Date', 'Divorce Place'
+                    'Marriage Date', 'Marriage Place', 'Marriage Type', 'Divorce Date', 'Divorce Place',
                 ];
-                
+
                 $families = Family::where('tree_id', $tree->id)->get();
                 foreach ($families as $family) {
                     $row = [
@@ -229,13 +227,13 @@ trait HandlesDataExport
                     $rows[] = $row;
                 }
                 break;
-                
+
             case 'sources':
                 $headers = [
                     'ID', 'GEDCOM Xref', 'Title', 'Author', 'Publication',
-                    'Repository ID', 'Repository Name', 'Call Number', 'Data Quality', 'Citation'
+                    'Repository ID', 'Repository Name', 'Call Number', 'Data Quality', 'Citation',
                 ];
-                
+
                 $sources = Source::where('tree_id', $tree->id)->get();
                 foreach ($sources as $source) {
                     $row = [
@@ -253,10 +251,10 @@ trait HandlesDataExport
                     $rows[] = $row;
                 }
                 break;
-                
+
             case 'repositories':
                 $headers = ['ID', 'GEDCOM Xref', 'Name', 'Address'];
-                
+
                 $repositories = Repository::where('tree_id', $tree->id)->get();
                 foreach ($repositories as $repository) {
                     $row = [
@@ -268,10 +266,10 @@ trait HandlesDataExport
                     $rows[] = $row;
                 }
                 break;
-                
+
             case 'media':
                 $headers = ['ID', 'Title', 'Description', 'File Name', 'File Type', 'File Path'];
-                
+
                 $media = Media::where('tree_id', $tree->id)->get();
                 foreach ($media as $mediaItem) {
                     $row = [
@@ -285,24 +283,24 @@ trait HandlesDataExport
                     $rows[] = $row;
                 }
                 break;
-                
+
             default:
                 // Unknown entity type
                 $headers = ['Error'];
-                $rows[] = ['Unknown entity type: ' . $entityType];
+                $rows[] = ['Unknown entity type: '.$entityType];
                 break;
         }
-        
+
         return [
             'headers' => $headers,
             'rows' => $rows,
         ];
     }
-    
+
     /**
      * Format a tree for export.
      *
-     * @param Tree $tree The tree to format
+     * @param  Tree  $tree  The tree to format
      * @return array The formatted tree data
      */
     protected function formatTreeForExport(Tree $tree): array
@@ -318,12 +316,12 @@ trait HandlesDataExport
             'user_name' => $tree->user ? $tree->user->name : null,
         ];
     }
-    
+
     /**
      * Format an individual for export.
      *
-     * @param Individual $individual The individual to format
-     * @param bool $includePrivateData Whether to include private data
+     * @param  Individual  $individual  The individual to format
+     * @param  bool  $includePrivateData  Whether to include private data
      * @return array The formatted individual data
      */
     protected function formatIndividualForExport(Individual $individual, bool $includePrivateData = false): array
@@ -345,22 +343,22 @@ trait HandlesDataExport
             'families_as_wife' => $individual->familiesAsWife->pluck('id')->toArray(),
             'families_as_child' => $individual->familiesAsChild->pluck('id')->toArray(),
         ];
-        
+
         // Include private data if requested
         if ($includePrivateData) {
             $data['created_at'] = $individual->created_at->toIso8601String();
             $data['updated_at'] = $individual->updated_at->toIso8601String();
             $data['user_id'] = $individual->user_id;
         }
-        
+
         return $data;
     }
-    
+
     /**
      * Format a family for export.
      *
-     * @param Family $family The family to format
-     * @param bool $includePrivateData Whether to include private data
+     * @param  Family  $family  The family to format
+     * @param  bool  $includePrivateData  Whether to include private data
      * @return array The formatted family data
      */
     protected function formatFamilyForExport(Family $family, bool $includePrivateData = false): array
@@ -377,20 +375,20 @@ trait HandlesDataExport
             'divorce_place' => $family->divorce_place,
             'children' => $family->children->pluck('id')->toArray(),
         ];
-        
+
         // Include private data if requested
         if ($includePrivateData) {
             $data['created_at'] = $family->created_at->toIso8601String();
             $data['updated_at'] = $family->updated_at->toIso8601String();
         }
-        
+
         return $data;
     }
-    
+
     /**
      * Format a source for export.
      *
-     * @param Source $source The source to format
+     * @param  Source  $source  The source to format
      * @return array The formatted source data
      */
     protected function formatSourceForExport(Source $source): array
@@ -410,11 +408,11 @@ trait HandlesDataExport
             'user_id' => $source->user_id,
         ];
     }
-    
+
     /**
      * Format a repository for export.
      *
-     * @param Repository $repository The repository to format
+     * @param  Repository  $repository  The repository to format
      * @return array The formatted repository data
      */
     protected function formatRepositoryForExport(Repository $repository): array
@@ -429,11 +427,11 @@ trait HandlesDataExport
             'tree_id' => $repository->tree_id,
         ];
     }
-    
+
     /**
      * Format a note for export.
      *
-     * @param Note $note The note to format
+     * @param  Note  $note  The note to format
      * @return array The formatted note data
      */
     protected function formatNoteForExport(Note $note): array
@@ -448,11 +446,11 @@ trait HandlesDataExport
             'user_id' => $note->user_id,
         ];
     }
-    
+
     /**
      * Format a media item for export.
      *
-     * @param Media $media The media item to format
+     * @param  Media  $media  The media item to format
      * @return array The formatted media data
      */
     protected function formatMediaForExport(Media $media): array

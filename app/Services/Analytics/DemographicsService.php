@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Analytics;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Demographics Analytics Service
@@ -15,6 +14,7 @@ use Carbon\Carbon;
 final class DemographicsService
 {
     private const CACHE_TTL = 3600; // 1 hour
+
     private const CACHE_PREFIX = 'demographics:';
 
     /**
@@ -22,8 +22,8 @@ final class DemographicsService
      */
     public function getTreeDemographics(int $treeId): array
     {
-        $cacheKey = self::CACHE_PREFIX . "tree:{$treeId}";
-        
+        $cacheKey = self::CACHE_PREFIX."tree:{$treeId}";
+
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($treeId) {
             return [
                 'population_summary' => $this->getPopulationSummary($treeId),
@@ -31,7 +31,7 @@ final class DemographicsService
                 'gender_distribution' => $this->getGenderDistribution($treeId),
                 'lifespan_analysis' => $this->getLifespanAnalysis($treeId),
                 'birth_trends' => $this->getBirthTrends($treeId),
-                'generation_statistics' => $this->getGenerationStatistics($treeId)
+                'generation_statistics' => $this->getGenerationStatistics($treeId),
             ];
         });
     }
@@ -46,7 +46,7 @@ final class DemographicsService
             ->orderBy('snapshot_date', 'desc')
             ->first();
 
-        if (!$metrics) {
+        if (! $metrics) {
             return $this->getEmptyPopulationSummary();
         }
 
@@ -62,9 +62,9 @@ final class DemographicsService
             'data_completeness' => [
                 'birth_dates' => round($metrics->birth_date_completeness, 1),
                 'death_dates' => round($metrics->death_date_completeness, 1),
-                'locations' => round($metrics->location_completeness, 1)
+                'locations' => round($metrics->location_completeness, 1),
             ],
-            'last_updated' => $metrics->updated_at
+            'last_updated' => $metrics->updated_at,
         ];
     }
 
@@ -94,10 +94,10 @@ final class DemographicsService
             ->groupBy('age_group')
             ->get()
             ->keyBy('age_group')
-            ->map(fn($item) => $item->count)
+            ->map(fn ($item) => $item->count)
             ->toArray();
 
-        // Age at death distribution  
+        // Age at death distribution
         $deathAges = DB::table('fact_individuals')
             ->where('tree_id', $treeId)
             ->whereNotNull('lifespan_days')
@@ -115,14 +115,14 @@ final class DemographicsService
             ->groupBy('age_group')
             ->get()
             ->keyBy('age_group')
-            ->map(fn($item) => $item->count)
+            ->map(fn ($item) => $item->count)
             ->toArray();
 
         return [
             'current_age_distribution' => $currentAges,
             'death_age_distribution' => $deathAges,
             'median_age_at_death' => $this->calculateMedianLifespan($treeId),
-            'life_expectancy_trends' => $this->getLifeExpectancyTrends($treeId)
+            'life_expectancy_trends' => $this->getLifeExpectancyTrends($treeId),
         ];
     }
 
@@ -137,12 +137,12 @@ final class DemographicsService
             ->groupBy('sex')
             ->get()
             ->keyBy('sex')
-            ->map(fn($item) => $item->count)
+            ->map(fn ($item) => $item->count)
             ->toArray();
 
         $total = array_sum($distribution);
         $percentages = [];
-        
+
         if ($total > 0) {
             foreach ($distribution as $sex => $count) {
                 $percentages[$sex] = round(($count / $total) * 100, 1);
@@ -159,18 +159,18 @@ final class DemographicsService
             ->get()
             ->groupBy('generation')
             ->map(function ($group) {
-                return $group->keyBy('sex')->map(fn($item) => $item->count)->toArray();
+                return $group->keyBy('sex')->map(fn ($item) => $item->count)->toArray();
             })
             ->toArray();
 
         return [
             'total_distribution' => [
                 'counts' => $distribution,
-                'percentages' => $percentages
+                'percentages' => $percentages,
             ],
             'by_generation' => $byGeneration,
             'gender_ratio' => $this->calculateGenderRatio($distribution),
-            'birth_sex_ratio' => $this->getBirthSexRatio($treeId)
+            'birth_sex_ratio' => $this->getBirthSexRatio($treeId),
         ];
     }
 
@@ -191,7 +191,7 @@ final class DemographicsService
             ')
             ->first();
 
-        if (!$lifespans || $lifespans->total_with_lifespan === 0) {
+        if (! $lifespans || $lifespans->total_with_lifespan === 0) {
             return $this->getEmptyLifespanAnalysis();
         }
 
@@ -204,7 +204,7 @@ final class DemographicsService
             ->groupBy('sex')
             ->get()
             ->keyBy('sex')
-            ->map(fn($item) => round($item->avg_lifespan, 1))
+            ->map(fn ($item) => round($item->avg_lifespan, 1))
             ->toArray();
 
         // Lifespan by birth century
@@ -217,7 +217,7 @@ final class DemographicsService
             ->orderBy('birth_century')
             ->get()
             ->keyBy('birth_century')
-            ->map(fn($item) => round($item->avg_lifespan, 1))
+            ->map(fn ($item) => round($item->avg_lifespan, 1))
             ->toArray();
 
         return [
@@ -226,11 +226,11 @@ final class DemographicsService
                 'minimum_years' => round($lifespans->min_lifespan, 1),
                 'maximum_years' => round($lifespans->max_lifespan, 1),
                 'standard_deviation' => round($lifespans->lifespan_stddev ?? 0, 1),
-                'sample_size' => $lifespans->total_with_lifespan
+                'sample_size' => $lifespans->total_with_lifespan,
             ],
             'by_gender' => $lifespanByGender,
             'by_century' => $lifespanByCentury,
-            'percentiles' => $this->calculateLifespanPercentiles($treeId)
+            'percentiles' => $this->calculateLifespanPercentiles($treeId),
         ];
     }
 
@@ -248,7 +248,7 @@ final class DemographicsService
             ->orderBy('birth_decade')
             ->get()
             ->keyBy('birth_decade')
-            ->map(fn($item) => $item->births)
+            ->map(fn ($item) => $item->births)
             ->toArray();
 
         // Births by season (for individuals with full birth dates)
@@ -267,7 +267,7 @@ final class DemographicsService
             ->groupBy('season')
             ->get()
             ->keyBy('season')
-            ->map(fn($item) => $item->births)
+            ->map(fn ($item) => $item->births)
             ->toArray();
 
         // Population growth rate
@@ -278,7 +278,7 @@ final class DemographicsService
             'by_season' => $birthsBySeason,
             'peak_birth_decade' => $this->findPeakBirthDecade($birthsByDecade),
             'population_growth_rate' => $growthRate,
-            'birth_rate_trends' => $this->analyzeBirthRateTrends($birthsByDecade)
+            'birth_rate_trends' => $this->analyzeBirthRateTrends($birthsByDecade),
         ];
     }
 
@@ -308,8 +308,8 @@ final class DemographicsService
                     'gender_distribution' => [
                         'male' => $stat->males,
                         'female' => $stat->females,
-                        'ratio' => $stat->females > 0 ? round($stat->males / $stat->females, 2) : null
-                    ]
+                        'ratio' => $stat->females > 0 ? round($stat->males / $stat->females, 2) : null,
+                    ],
                 ];
             })
             ->keyBy('generation')
@@ -318,7 +318,7 @@ final class DemographicsService
         return [
             'by_generation' => $stats,
             'generation_span' => $this->calculateGenerationSpan($treeId),
-            'average_generation_size' => $this->calculateAverageGenerationSize($stats)
+            'average_generation_size' => $this->calculateAverageGenerationSize($stats),
         ];
     }
 
@@ -333,7 +333,7 @@ final class DemographicsService
         return [
             'tree_1' => $tree1Demographics,
             'tree_2' => $tree2Demographics,
-            'comparison' => $this->calculateDemographicComparison($tree1Demographics, $tree2Demographics)
+            'comparison' => $this->calculateDemographicComparison($tree1Demographics, $tree2Demographics),
         ];
     }
 
@@ -351,13 +351,13 @@ final class DemographicsService
             $insights[] = [
                 'type' => 'small_tree',
                 'message' => 'This is a relatively small family tree. Consider expanding research to include more distant relatives.',
-                'priority' => 'low'
+                'priority' => 'low',
             ];
         } elseif ($totalPop > 1000) {
             $insights[] = [
                 'type' => 'large_tree',
                 'message' => 'This is a comprehensive family tree with rich genealogical data.',
-                'priority' => 'info'
+                'priority' => 'info',
             ];
         }
 
@@ -367,7 +367,7 @@ final class DemographicsService
             $insights[] = [
                 'type' => 'missing_birth_dates',
                 'message' => 'Many individuals are missing birth dates. This limits demographic analysis accuracy.',
-                'priority' => 'medium'
+                'priority' => 'medium',
             ];
         }
 
@@ -375,18 +375,18 @@ final class DemographicsService
         $genderDist = $demographics['gender_distribution']['total_distribution']['percentages'];
         $malePercent = $genderDist['M'] ?? 0;
         $femalePercent = $genderDist['F'] ?? 0;
-        
+
         if (abs($malePercent - $femalePercent) > 10) {
             $insights[] = [
                 'type' => 'gender_imbalance',
                 'message' => 'Significant gender imbalance detected. This may indicate research bias or naming traditions.',
-                'priority' => 'medium'
+                'priority' => 'medium',
             ];
         }
 
         return [
             'insights' => $insights,
-            'recommendations' => $this->generateRecommendations($demographics)
+            'recommendations' => $this->generateRecommendations($demographics),
         ];
     }
 
@@ -403,9 +403,9 @@ final class DemographicsService
             'data_completeness' => [
                 'birth_dates' => 0,
                 'death_dates' => 0,
-                'locations' => 0
+                'locations' => 0,
             ],
-            'last_updated' => null
+            'last_updated' => null,
         ];
     }
 
@@ -417,11 +417,11 @@ final class DemographicsService
                 'minimum_years' => null,
                 'maximum_years' => null,
                 'standard_deviation' => null,
-                'sample_size' => 0
+                'sample_size' => 0,
             ],
             'by_gender' => [],
             'by_century' => [],
-            'percentiles' => []
+            'percentiles' => [],
         ];
     }
 
@@ -452,11 +452,12 @@ final class DemographicsService
         $count = count($lifespans);
         $middle = floor($count / 2);
 
-        if ($count % 2 == 0) {
+        if ($count % 2 === 0) {
             return round(($lifespans[$middle - 1] + $lifespans[$middle]) / 2, 1);
-        } else {
-            return round($lifespans[$middle], 1);
         }
+
+        return round($lifespans[$middle], 1);
+
     }
 
     private function getLifeExpectancyTrends(int $treeId): array
@@ -478,7 +479,7 @@ final class DemographicsService
                 return [
                     'decade' => $item->birth_decade,
                     'life_expectancy' => round($item->avg_lifespan, 1),
-                    'sample_size' => $item->sample_size
+                    'sample_size' => $item->sample_size,
                 ];
             })
             ->toArray();
@@ -507,7 +508,7 @@ final class DemographicsService
             ->groupBy('sex')
             ->get()
             ->keyBy('sex')
-            ->map(fn($item) => $item->count)
+            ->map(fn ($item) => $item->count)
             ->toArray();
 
         if (empty($births['F']) || $births['F'] === 0) {
@@ -552,7 +553,7 @@ final class DemographicsService
 
         return [
             'decade' => $peakDecade,
-            'birth_count' => $peakCount
+            'birth_count' => $peakCount,
         ];
     }
 
@@ -576,7 +577,7 @@ final class DemographicsService
         for ($i = 1; $i < count($decades); $i++) {
             $previous = $decades[$i - 1];
             $current = $decades[$i];
-            
+
             if ($previous->births > 0) {
                 $growthRate = (($current->births - $previous->births) / $previous->births) * 100;
                 $growthRates[] = $growthRate;
@@ -588,10 +589,10 @@ final class DemographicsService
         }
 
         $avgGrowthRate = array_sum($growthRates) / count($growthRates);
-        
+
         return [
             'rate' => round($avgGrowthRate, 1),
-            'trend' => $avgGrowthRate > 5 ? 'expanding' : ($avgGrowthRate < -5 ? 'declining' : 'stable')
+            'trend' => $avgGrowthRate > 5 ? 'expanding' : ($avgGrowthRate < -5 ? 'declining' : 'stable'),
         ];
     }
 
@@ -603,22 +604,22 @@ final class DemographicsService
 
         $decades = array_keys($birthsByDecade);
         $births = array_values($birthsByDecade);
-        
+
         // Simple trend analysis: compare first third to last third
         $firstThird = array_slice($births, 0, floor(count($births) / 3));
         $lastThird = array_slice($births, -floor(count($births) / 3));
-        
+
         $firstAvg = array_sum($firstThird) / count($firstThird);
         $lastAvg = array_sum($lastThird) / count($lastThird);
-        
-        $trendDirection = $lastAvg > $firstAvg * 1.1 ? 'increasing' : 
+
+        $trendDirection = $lastAvg > $firstAvg * 1.1 ? 'increasing' :
                          ($lastAvg < $firstAvg * 0.9 ? 'decreasing' : 'stable');
 
         return [
             'trend' => $trendDirection,
             'early_average' => round($firstAvg, 1),
             'recent_average' => round($lastAvg, 1),
-            'change_percent' => round((($lastAvg - $firstAvg) / $firstAvg) * 100, 1)
+            'change_percent' => round((($lastAvg - $firstAvg) / $firstAvg) * 100, 1),
         ];
     }
 
@@ -630,14 +631,14 @@ final class DemographicsService
             ->selectRaw('MIN(generation) as earliest, MAX(generation) as latest')
             ->first();
 
-        if (!$generations) {
+        if (! $generations) {
             return ['span' => 0, 'earliest' => null, 'latest' => null];
         }
 
         return [
             'span' => $generations->latest - $generations->earliest + 1,
             'earliest' => $generations->earliest,
-            'latest' => $generations->latest
+            'latest' => $generations->latest,
         ];
     }
 
@@ -660,21 +661,21 @@ final class DemographicsService
             'lifespan_difference' => ($tree1['lifespan_analysis']['overall']['average_years'] ?? 0) - ($tree2['lifespan_analysis']['overall']['average_years'] ?? 0),
             'data_quality_comparison' => [
                 'birth_dates' => $tree1['population_summary']['data_completeness']['birth_dates'] - $tree2['population_summary']['data_completeness']['birth_dates'],
-                'death_dates' => $tree1['population_summary']['data_completeness']['death_dates'] - $tree2['population_summary']['data_completeness']['death_dates']
-            ]
+                'death_dates' => $tree1['population_summary']['data_completeness']['death_dates'] - $tree2['population_summary']['data_completeness']['death_dates'],
+            ],
         ];
     }
 
     private function generateRecommendations(array $demographics): array
     {
         $recommendations = [];
-        
+
         $completeness = $demographics['population_summary']['data_completeness'];
-        
+
         if ($completeness['birth_dates'] < 80) {
             $recommendations[] = 'Focus on collecting birth dates to improve demographic analysis accuracy.';
         }
-        
+
         if ($completeness['locations'] < 60) {
             $recommendations[] = 'Add location data to enable geographic and migration analysis.';
         }

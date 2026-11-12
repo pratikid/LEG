@@ -33,10 +33,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 final class Source extends Model
 {
+    use HasCommonModelAttributes;
     use HasFactory;
     use HasTreeRelationship;
     use HasUserRelationship;
-    use HasCommonModelAttributes;
 
     protected $fillable = [
         'gedcom_xref',
