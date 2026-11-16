@@ -22,7 +22,7 @@
 	"pestphp/pest": "*"
     },
     "require-dev": {
-        "barryvdh/laravel-debugbar": "^3.15.4",
+        "barryvdh/laravel-debugbar": "^4.4.5",
         "barryvdh/laravel-ide-helper": "^3.5.5",
         "exin/enlightn": "^2.11.2",
         "fakerphp/faker": "^1.24.1",
