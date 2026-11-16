@@ -2417,16 +2417,16 @@
         },
         {
             "name": "laudis/neo4j-php-client",
-            "version": "3.3.0",
+            "version": "3.7.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/neo4j-php/neo4j-php-client.git",
-                "reference": "344f1a18cd81c91c3c638a65795000ef93ee665a"
+                "reference": "d6d90e436689699803ce7132da796dc22f8c39cb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/neo4j-php/neo4j-php-client/zipball/344f1a18cd81c91c3c638a65795000ef93ee665a",
-                "reference": "344f1a18cd81c91c3c638a65795000ef93ee665a",
+                "url": "https://api.github.com/repos/neo4j-php/neo4j-php-client/zipball/d6d90e436689699803ce7132da796dc22f8c39cb",
+                "reference": "d6d90e436689699803ce7132da796dc22f8c39cb",
                 "shasum": ""
             },
             "require": {
@@ -2440,14 +2440,13 @@
                 "psr/http-factory": "^1.0",
                 "psr/http-message": "^1.0|^2.0",
                 "psr/simple-cache": ">=2.0",
-                "stefanak-michal/bolt": "^7.1.4",
-                "symfony/polyfill-php80": "^1.2"
+                "stefanak-michal/bolt": "^7.4.0"
             },
             "provide": {
                 "psr/simple-cache-implementation": "2.0|3.0"
             },
             "require-dev": {
-                "cache/integration-tests": "dev-master",
+                "cache/integration-tests": "0.17.0",
                 "friendsofphp/php-cs-fixer": "3.68.5",
                 "kriswallsmith/buzz": "^1.2",
                 "kubawerlos/php-cs-fixer-custom-fixers": "3.13.*",
@@ -2499,9 +2498,9 @@
             ],
             "support": {
                 "issues": "https://github.com/neo4j-php/neo4j-php-client/issues",
-                "source": "https://github.com/neo4j-php/neo4j-php-client/tree/3.3.0"
+                "source": "https://github.com/neo4j-php/neo4j-php-client/tree/3.7.1"
             },
-            "time": "2025-05-14T12:37:35+00:00"
+            "time": "2026-10-22T07:00:08+00:00"
         },
         {
             "name": "laudis/typed-enum",
@@ -7455,22 +7454,23 @@
         },
         {
             "name": "stefanak-michal/bolt",
-            "version": "v7.2.5",
+            "version": "v7.5.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stefanak-michal/php-bolt-driver.git",
-                "reference": "bd59d95d858f54e38ef654b0c513c2a1836e760f"
+                "reference": "b3fc15d42413ce335515eb5c0b2dc40d27b0eb34"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stefanak-michal/php-bolt-driver/zipball/bd59d95d858f54e38ef654b0c513c2a1836e760f",
-                "reference": "bd59d95d858f54e38ef654b0c513c2a1836e760f",
+                "url": "https://api.github.com/repos/stefanak-michal/php-bolt-driver/zipball/b3fc15d42413ce335515eb5c0b2dc40d27b0eb34",
+                "reference": "b3fc15d42413ce335515eb5c0b2dc40d27b0eb34",
                 "shasum": ""
             },
             "require": {
                 "ext-curl": "*",
                 "ext-mbstring": "*",
                 "php": "^8.1",
+                "psr/log": "^3.0",
                 "psr/simple-cache": "^3.0"
             },
             "require-dev": {
@@ -7478,9 +7478,7 @@
             },
             "suggest": {
                 "ext-openssl": "Needed when using StreamSocket connection class with SSL",
-                "ext-sockets": "Needed when using Socket connection class",
-                "laudis/neo4j-php-client": "Neo4j-PHP-Client is the most advanced PHP Client for Neo4j",
-                "stefanak-michal/neo4j-bolt-wrapper": "Wrapper for Neo4j PHP Bolt library to simplify usage."
+                "ext-sockets": "Needed when using Socket connection class"
             },
             "type": "library",
             "autoload": {
@@ -7500,17 +7498,21 @@
                 }
             ],
             "description": "PHP library to provide connectivity to graph database over TCP socket with Bolt specification",
-            "homepage": "https://github.com/neo4j-php/Bolt",
+            "homepage": "https://github.com/stefanak-michal/php-bolt-driver",
             "keywords": [
                 "Socket",
                 "bolt",
                 "database",
-                "neo4j"
+                "driver",
+                "graph",
+                "memgraph",
+                "neo4j",
+                "tcp"
             ],
             "support": {
                 "docs": "https://www.neo4j.com/docs/bolt/current/",
-                "issues": "https://github.com/neo4j-php/Bolt/issues",
-                "source": "https://github.com/neo4j-php/Bolt"
+                "issues": "https://github.com/stefanak-michal/php-bolt-driver/issues",
+                "source": "https://github.com/stefanak-michal/php-bolt-driver"
             },
             "funding": [
                 {
@@ -7518,7 +7520,7 @@
                     "type": "ko-fi"
                 }
             ],
-            "time": "2025-07-18T06:32:36+00:00"
+            "time": "2026-11-10T14:19:57+00:00"
         },
         {
             "name": "symfony/clock",
@@ -13103,12 +13105,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.4"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.6.0"
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
 }
